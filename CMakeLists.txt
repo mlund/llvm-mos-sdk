@@ -14,32 +14,29 @@ if (NOT DEFINED LLVM_MOS_COMPILE_TARGET)
     DESCRIPTION "${LLVM_MOS_PROJECT_DESCRIPTION}"
     HOMEPAGE_URL "${LLVM_MOS_PROJECT_URL}")
 else()
-if(${LLVM_MOS_COMPILE_TARGET} STREQUAL "mos")
-    # Change compiler settings before asserting the project
-    include(BootstrapCompiler)
-    include(DetectCompiler)
-    detect_compiler(_result)
-    if (NOT result)
-        message("failed to detect LLVM-MOS compiler; compilation may not work")
-    endif()
-    project(llvm-mos-sdk-mos 
+    if(${LLVM_MOS_COMPILE_TARGET} STREQUAL "mos")
+        # Change compiler settings before asserting the project
+        include(BootstrapCompiler)
+        include(DetectCompiler)
+        detect_compiler(_result)
+        if (NOT _result)
+            message("-- Failed to detect LLVM-MOS compiler; compilation may not work")
+        endif()
+        project(llvm-mos-sdk-mos 
+            LANGUAGES C CXX ASM
+            DESCRIPTION "${LLVM_MOS_PROJECT_DESCRIPTION} (MOS target)"
+            HOMEPAGE_URL "${LLVM_MOS_PROJECT_URL}")
+        include(Platform/llvm-mos)
+        add_subdirectory(common/lib)
+    elseif(${LLVM_MOS_COMPILE_TARGET} STREQUAL "host")
+        project(llvm-mos-sdk-host 
         LANGUAGES C CXX ASM
-        DESCRIPTION "${LLVM_MOS_PROJECT_DESCRIPTION} (MOS target)"
+        DESCRIPTION "${LLVM_MOS_PROJECT_DESCRIPTION} (host tools)"
         HOMEPAGE_URL "${LLVM_MOS_PROJECT_URL}")
-    include(Platform/llvm-mos)
-    add_subdirectory(common/lib)
-elseif(${LLVM_MOS_COMPILE_TARGET} STREQUAL "host")
-    project(llvm-mos-sdk-host 
-    LANGUAGES C CXX ASM
-    DESCRIPTION "${LLVM_MOS_PROJECT_DESCRIPTION} (host tools)"
-    HOMEPAGE_URL "${LLVM_MOS_PROJECT_URL}")
-    add_subdirectory(utils/sim/sim)
+        add_subdirectory(utils/sim/sim)
+    endif()
 endif()
 
-
-endif()
-
-include(CMakePrintSystemInformation)
 
 
 
