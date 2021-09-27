@@ -130,6 +130,16 @@ function(detect_compiler ret)
         endif()
     endif()
 
+    # Since this is the MOS build, and we've found our own compiler, don't run 
+    # the command line tests on CMake startup
+    # https://stackoverflow.com/questions/41589430/cmake-c-compiler-identification-fails
+    SET(CMAKE_C_COMPILER_WORKS TRUE CACHE INTERNAL "")
+    SET(CMAKE_CXX_COMPILER_WORKS TRUE CACHE INTERNAL "")
+    SET(CMAKE_C_COMPILER_FORCED TRUE CACHE INTERNAL "")
+    SET(CMAKE_CXX_COMPILER_FORCED TRUE CACHE INTERNAL "")
+    SET(CMAKE_C_COMPILER_ID_RUN TRUE CACHE INTERNAL "")
+    SET(CMAKE_CXX_COMPILER_ID_RUN TRUE CACHE INTERNAL "")
+
     set(${ret} TRUE PARENT_SCOPE)
     return()
 

@@ -1,16 +1,6 @@
 # TargetMOS.cmake
 # CMake pass for targeting MOS.
 
-# Since this is the MOS build, and we've found our own compiler, don't run 
-# the command line tests on CMake startup
-# https://stackoverflow.com/questions/41589430/cmake-c-compiler-identification-fails
-SET(CMAKE_C_COMPILER_WORKS TRUE CACHE INTERNAL "")
-SET(CMAKE_CXX_COMPILER_WORKS TRUE CACHE INTERNAL "")
-SET(CMAKE_C_COMPILER_FORCED TRUE CACHE INTERNAL "")
-SET(CMAKE_CXX_COMPILER_FORCED TRUE CACHE INTERNAL "")
-SET(CMAKE_C_COMPILER_ID_RUN TRUE CACHE INTERNAL "")
-SET(CMAKE_CXX_COMPILER_ID_RUN TRUE CACHE INTERNAL "")
-
 include(ExternalProject)
 
 ExternalProject_Add(llvm_mos_sdk_mos
