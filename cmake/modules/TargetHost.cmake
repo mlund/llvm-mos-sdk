@@ -3,16 +3,18 @@
 
 include(ExternalProject)
 
-add_subdirectory(utils/sim/sim)
-
 # Run the superbuild-style rebuild of this project, with the compiler
 # suite for local builds
-ExternalProject_Add(llvm_mos_sdk_mos
-    SOURCE_DIR ${PROJECT_SOURCE_DIR}
-    CMAKE_ARGS -DLLVM_MOS_COMPILE_TARGET_MOS=On ${CMAKE_ARGS}
-    BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/mos
+ExternalProject_Add(llvm_mos_sdk_host
+    SOURCE_DIR ${CMAKE_SOURCE_DIR}
+    CMAKE_ARGS 
+        -DLLVM_MOS_COMPILE_TARGET=host
+        ${CMAKE_ARGS}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/host
     BUILD_COMMAND ${CMAKE_COMMAND} --build .
     USES_TERMINAL_CONFIGURE Yes 
     USES_TERMINAL_BUILD Yes 
     INSTALL_COMMAND ""
+    UPDATE_COMMAND ""
     )

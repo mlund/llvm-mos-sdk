@@ -1,7 +1,7 @@
 # If the LLVM_MOS_BOOTSTRAP_COMPILER variable is defined, then attempt to
 # download it and use it.
 
-if(DEFINED LLVM_MOS_BOOTSTRAP_COMPILER)
+if(${LLVM_MOS_BOOTSTRAP_COMPILER})
     if(NOT DEFINED LLVM_MOS_PRECOMPILED_TOOLS)
         string(TOLOWER ${CMAKE_HOST_SYSTEM_NAME} _cmake_host_system_name_lowercase)
         set(LLVM_MOS_PRECOMPILED_TOOLS llvm-mos-${_cmake_host_system_name_lowercase}-main

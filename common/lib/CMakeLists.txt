@@ -1,8 +1,3 @@
-include(AddObjectFile)
-include(CompileForMOS)
-
-compile_for_mos()
-
 add_library(common_crt OBJECT
    const.s
    zero_bss.c
@@ -27,6 +22,10 @@ add_library(common_c OBJECT
    # string.h
    mem.c
    string.c
+)
+
+set_property(TARGET common_c
+   APPEND PROPERTY INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
 
 add_library(m STATIC stub.c)
