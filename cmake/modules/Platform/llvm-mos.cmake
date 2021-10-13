@@ -11,6 +11,8 @@
 # We work around this conflict by setting sensible compilation and link command
 # lines in this file.  Then, we include this file exclusively in any CMakeFile
 # that targets MOS.
+include_guard()
+
 set(CMAKE_C_LINK_EXECUTABLE
     "<CMAKE_LINKER> <FLAGS> <CMAKE_C_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> <LINK_LIBRARIES> -o <TARGET>")
 set(CMAKE_CXX_LINK_EXECUTABLE
@@ -18,13 +20,12 @@ set(CMAKE_CXX_LINK_EXECUTABLE
 set(LLVM_MOS_OBJCOPY_FLAGS --output-target binary
     CACHE STRING "Flags for stripping executables with llvm-objcopy")
 
-set(LLVM_MOS_SOURCE_LEVEL_DEBUG_INFO "-gdwarf")
+string(APPEND LLVM_MOS_FLAGS "--target=mos")
+string(APPEND LLVM_MOS_SOURCE_LEVEL_DEBUG_INFO "-gdwarf")
 
 foreach(lang in ITEMS "ASM" "C" "CXX")
-    string(CONCAT CMAKE_${lang}_FLAGS_DEBUG "-O0 ${LLVM_MOS_FLAGS_DEBUG} ${LLVM_MOS_SOURCE_LEVEL_DEBUG_INFO}")
+    string(CONCAT CMAKE_${lang}_FLAGS_DEBUG "-O0 ${LLVM_MOS_FLAGS_DEBUG} ${LLVM_MOS_FLAGS} ${LLVM_MOS_SOURCE_LEVEL_DEBUG_INFO}")
     string(CONCAT CMAKE_${lang}_FLAGS_MINSIZEREL "-Os ${LLVM_MOS_FLAGS} ${LLVM_MOS_SOURCE_LEVEL_DEBUG_INFO}")
     string(CONCAT CMAKE_${lang}_FLAGS_RELEASE "-O3 ${LLVM_MOS_FLAGS} ${LLVM_MOS_SOURCE_LEVEL_DEBUG_INFO}")
     string(CONCAT CMAKE_${lang}_FLAGS_RELWITHDEBINFO "-O2 ${LLVM_MOS_FLAGS} ${LLVM_MOS_SOURCE_LEVEL_DEBUG_INFO}")
 endforeach()
-
-set(CMAKE_ASM_FLAGS "--target=mos")
