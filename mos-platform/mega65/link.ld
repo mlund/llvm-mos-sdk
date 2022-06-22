@@ -6,7 +6,7 @@
  */
 
 MEMORY {
-    ram (rw) : ORIGIN = 0x0801, LENGTH = 0x97ff
+    ram (rw) : ORIGIN = 0x2001, LENGTH = 0x97ff
 }
 
 INPUT(basic-header.o)
@@ -28,7 +28,7 @@ ASSERT(__rc31 == 0x0021, "Inconsistent zero page map.")
 __stack = 0x9FFF;
 
 OUTPUT_FORMAT {
-    /* Tells the C64 LOAD command where to place the file's contents. */
-    SHORT(0x0801)
+    /* Tells the MEGA65 LOAD command where to place the file's contents. */
+    SHORT(0x2001)
     TRIM(ram)
 }
