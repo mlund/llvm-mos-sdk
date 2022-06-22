@@ -1,12 +1,13 @@
 /* MEGA65 PRG file linker script.
  *
- * BASIC memory regions are freely overwritten, but any KERNAL regions are left alone.
+ * C64 BASIC memory regions are freely overwritten up until $E000
+ * (the basic header switches to bank 0, i.e. C64 layout)
  *
  * Produces a PRG file with a SYS command to start the program.
  */
 
 MEMORY {
-    ram (rw) : ORIGIN = 0x2001, LENGTH = 0x97ff
+    ram (rw) : ORIGIN = 0x2001, LENGTH = 0xbfff
 }
 
 INPUT(basic-header.o)
