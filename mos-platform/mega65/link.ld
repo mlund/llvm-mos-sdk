@@ -26,7 +26,7 @@ ASSERT(__rc0 == 0x0002, "Inconsistent zero page map.")
 ASSERT(__rc31 == 0x0021, "Inconsistent zero page map.")
 
 /* Set initial soft stack address to end of BASIC area. (It grows down.) */
-__stack = 0x9FFF;
+__stack = 0xdfff;
 
 OUTPUT_FORMAT {
     /* Tells the MEGA65 LOAD command where to place the file's contents. */
