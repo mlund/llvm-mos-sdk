@@ -228,16 +228,15 @@ struct __vic4 {
   /// Sprite H640 X Super-MSBs (offset 0x5F)
   uint8_t spr_xsmsbs;
   union {
-    /// Screen RAM precise base address (24 bit address) (offset 0x60)
-    uint32_t scrnptr;
+#ifdef __clang__
+    /// Screen RAM precise base address (28 bit address) (offset 0x60)
+    unsigned _BitInt(28) scrnptr;
+#endif
     struct {
-      uint8_t scrnptr_lsb; //!< Screen RAM precise base address (bits 0 - 7)
-                           //!< (offset 0x60)
-      uint8_t scrnptr_msb; //!< Screen RAM precise base address (bits 15 - 8)
-                           //!< (offset 0x61)
-      uint8_t scrnptr_bnk; //!! screen RAM precise base address (bits 23 - 16)
-                           //!(offset 0x62)
-      /// Screen RAM precise base address (bits 31 - 24) (offset 0x63)
+      uint8_t scrnptr_lsb; //!< Screen RAM precise base address (bits 0 - 7) (offset 0x60)
+      uint8_t scrnptr_msb; //!< Screen RAM precise base address (bits 15 - 8) (offset 0x61)
+      uint8_t scrnptr_bnk; //!< screen RAM precise base address (bits 23 - 16) (offset 0x62)
+      /// Screen RAM precise base address (bits 27 - 24) (offset 0x63)
       /// CHRCOUNT Number of characters to display per.
       /// EXGLYPH source full-colour character data from expansion RAM.
       uint8_t scrnptr_mb;
@@ -250,22 +249,26 @@ struct __vic4 {
   /// Sprite/bitplane first X (DEBUG WILL BE REMOVED) (offset 0x67)
   uint8_t sbpdebug;
   union {
+#ifdef __clang__
     /// Character set precise base address (24 bit address) (offset 0x68)
-    uint32_t charptr;
+    unsigned _BitInt(24) charptr;
+#endif
     struct {
-      /// Character set precise base address (bits 0 - 7)
+      /// Character set precise base address (bits 0 - 7) (offset 0x68)
       uint8_t charptr_lsb;
-      /// Character set precise base address (bits 15 - 8)
+      /// Character set precise base address (bits 15 - 8) (offset 0x69)
       uint8_t charptr_msb;
-      /// Character set precise base address (bits 23 - 16)
+      /// Character set precise base address (bits 23 - 16) (offset 0x6a)
       uint8_t charptr_bnk;
-      /// Sprite 16-colour mode enables
-      uint8_t spr_16en;
     };
   };
+  /// Sprite 16-colour mode enables (offset 0x6b)
+  uint8_t spr_16en;
   union {
+#ifdef __clang__
     /// Sprite pointer address (24 bit address) (offset 0x6C)
-    uint32_t spr_ptradr;
+    unsigned _BitInt(24) spr_ptradr;
+#endif
     struct {
       /// Sprite pointer address (bits 7 - 0)
       uint8_t spr_ptradr_lsb;
@@ -273,10 +276,10 @@ struct __vic4 {
       uint8_t spr_ptradr_msb;
       /// Sprite pointer address (bits 22 - 16)
       uint8_t spr_ptradr_bnk;
-      /// First VIC-II raster line (offset 0x6F)
-      uint8_t rasline0;
     };
   };
+  /// First VIC-II raster line (offset 0x6F)
+  uint8_t rasline0;
   /// VIC-IV palette bank selection (offset 0x70)
   uint8_t palsel;
   /// VIC-IV 16-colour bitplane enable flags (offset 0x71)
