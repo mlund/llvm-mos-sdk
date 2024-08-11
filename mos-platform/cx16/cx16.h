@@ -47,6 +47,10 @@ extern "C" {
 #endif
 
 
+#ifdef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wgnu-anonymous-struct"
+#endif
 
 /*****************************************************************************/
 /*                                   Data                                    */
@@ -149,7 +153,11 @@ extern "C" {
 ** set_tv() argument codes
 ** NOTE: llvm-mos-sdk added newer 240P modes
 */
-enum {
+enum
+#ifndef __cc65__
+: uint8_t
+#endif
+{
     TV_NONE                     = 0x00,
     TV_VGA,
     TV_NTSC_COLOR,
@@ -182,7 +190,11 @@ enum {
 #define VIDEOMODE_SWAP          (-1)
 
 /* VERA's address increment/decrement numbers */
-enum {
+enum
+#ifndef __cc65__
+: uint8_t
+#endif
+{
     VERA_DEC_0                  = ((0 << 1) | 1) << 3,
     VERA_DEC_1                  = ((1 << 1) | 1) << 3,
     VERA_DEC_2                  = ((2 << 1) | 1) << 3,
@@ -224,21 +236,21 @@ enum {
 #define VERA_IRQ_AUDIO_LOW      0b00001000
 
 /* VERA's sprite color mode mask */
-#ifdef __clang__
-enum : uint8_t {
-#else
-enum {
+enum
+#ifndef __cc65__
+: uint8_t
 #endif
+{
   SPR_4BPP_MODE = 0b00000000, //!< 16 colors
   SPR_8BPP_MODE = 0b10000000, //!< 256 colors
 };
 
 /* VERA's sprite Z depth masks and H/V flip */
-#ifdef __clang__
-enum : uint8_t {
-#else
-enum {
+enum
+#ifndef __cc65__
+: uint8_t
 #endif
+{
   SPR_DISABLED = 0,
   SPR_BETWEEN_BG_AND_LAYER1 = 0b00000100,
   SPR_BETWEEN_LAYER1_AND_2 = 0b00001000,
@@ -248,11 +260,11 @@ enum {
 };
 
 /* VERA's sprite dimension masks */
-#ifdef __clang__
-enum : uint8_t {
-#else
-enum {
+enum
+#ifndef __cc65__
+: uint8_t
 #endif
+{
   SPR_HEIGHT8 = 0 << 6,
   SPR_HEIGHT16 = 1 << 6,
   SPR_HEIGHT32 = 2 << 6,
@@ -546,6 +558,10 @@ unsigned char vpeek(unsigned long addr) __attribute__((leaf));    // read byte f
 void vpoke(unsigned char data, unsigned long addr) __attribute__((leaf)); // write byte value to VERA VRAM address
 
 void waitvsync(void);  // wait for the vertical blank interrupt
+
+#ifdef __clang__
+#pragma GCC diagnostic pop
+#endif
 
 #ifdef __cplusplus
 }
