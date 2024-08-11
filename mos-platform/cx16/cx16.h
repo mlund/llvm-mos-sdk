@@ -154,7 +154,7 @@ extern "C" {
 ** NOTE: llvm-mos-sdk added newer 240P modes
 */
 enum
-#ifndef __cc65__
+#ifndef __CC65__
 : uint8_t
 #endif
 {
@@ -191,7 +191,7 @@ enum
 
 /* VERA's address increment/decrement numbers */
 enum
-#ifndef __cc65__
+#ifndef __CC65__
 : uint8_t
 #endif
 {
@@ -237,7 +237,7 @@ enum
 
 /* VERA's sprite color mode mask */
 enum
-#ifndef __cc65__
+#ifndef __CC65__
 : uint8_t
 #endif
 {
@@ -247,7 +247,7 @@ enum
 
 /* VERA's sprite Z depth masks and H/V flip */
 enum
-#ifndef __cc65__
+#ifndef __CC65__
 : uint8_t
 #endif
 {
@@ -261,7 +261,7 @@ enum
 
 /* VERA's sprite dimension masks */
 enum
-#ifndef __cc65__
+#ifndef __CC65__
 : uint8_t
 #endif
 {
