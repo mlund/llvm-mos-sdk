@@ -224,13 +224,21 @@ enum {
 #define VERA_IRQ_AUDIO_LOW      0b00001000
 
 /* VERA's sprite color mode mask */
+#ifdef __clang__
 enum : uint8_t {
+#else
+enum {
+#endif
   SPR_4BPP_MODE = 0b00000000, //!< 16 colors
   SPR_8BPP_MODE = 0b10000000, //!< 256 colors
 };
 
 /* VERA's sprite Z depth masks and H/V flip */
+#ifdef __clang__
 enum : uint8_t {
+#else
+enum {
+#endif
   SPR_DISABLED = 0,
   SPR_BETWEEN_BG_AND_LAYER1 = 0b00000100,
   SPR_BETWEEN_LAYER1_AND_2 = 0b00001000,
@@ -240,7 +248,11 @@ enum : uint8_t {
 };
 
 /* VERA's sprite dimension masks */
+#ifdef __clang__
 enum : uint8_t {
+#else
+enum {
+#endif
   SPR_HEIGHT8 = 0 << 6,
   SPR_HEIGHT16 = 1 << 6,
   SPR_HEIGHT32 = 2 << 6,
