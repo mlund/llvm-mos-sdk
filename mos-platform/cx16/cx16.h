@@ -48,8 +48,8 @@ extern "C" {
 
 
 #ifdef __clang__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wgnu-anonymous-struct"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
 #endif
 
 /*****************************************************************************/
@@ -560,7 +560,7 @@ void vpoke(unsigned char data, unsigned long addr) __attribute__((leaf)); // wri
 void waitvsync(void);  // wait for the vertical blank interrupt
 
 #ifdef __clang__
-#pragma GCC diagnostic pop
+#pragma clang diagnostic pop
 #endif
 
 #ifdef __cplusplus
