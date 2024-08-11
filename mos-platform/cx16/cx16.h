@@ -223,6 +223,34 @@ enum {
 #define VERA_IRQ_SPR_COLL       0b00000100
 #define VERA_IRQ_AUDIO_LOW      0b00001000
 
+/* VERA's sprite color mode mask */
+enum : uint8_t {
+  SPR_4BPP_MODE = 0b00000000, //!< 16 colors
+  SPR_8BPP_MODE = 0b10000000, //!< 256 colors
+};
+
+/* VERA's sprite Z depth masks and H/V flip */
+enum : uint8_t {
+  SPR_DISABLED = 0,
+  SPR_BETWEEN_BG_AND_LAYER1 = 0b00000100,
+  SPR_BETWEEN_LAYER1_AND_2 = 0b00001000,
+  SPR_IN_FRONT_OF_LAYER1 = 0b00001100,
+  SPR_VFLIP = 0b00000010,
+  SPR_HFLIP = 0b00000001,
+};
+
+/* VERA's sprite dimension masks */
+enum : uint8_t {
+  SPR_HEIGHT8 = 0 << 6,
+  SPR_HEIGHT16 = 1 << 6,
+  SPR_HEIGHT32 = 2 << 6,
+  SPR_HEIGHT64 = 3 << 6,
+  SPR_WIDTH8 = 0 << 4,
+  SPR_WIDTH16 = 1 << 4,
+  SPR_WIDTH32 = 2 << 4,
+  SPR_WIDTH64 = 3 << 4
+};
+
 /* Define hardware. */
 
 #define RAM_BANK        (*(volatile unsigned char *)0x00)
