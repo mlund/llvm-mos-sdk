@@ -9,7 +9,6 @@
 // - Compile time sprite generation
 // - Inspiration from https://github.com/mwiedmann/cx16CodingInC
 
-#include <array>
 #include <cstdio>
 #include <cx16.h>
 
@@ -19,7 +18,7 @@ inline void vram_destination(const uint32_t address) {
   VERA.address_hi = (uint8_t)(address >> 16) | VERA_INC_1;
 }
 
-// Copy bytes to VRAM
+// Copy bytes to VRAM address
 template <typename T> void to_vram(const T &bytes, const uint32_t dst_address) {
   vram_destination(dst_address);
   for (const auto byte : bytes) {
