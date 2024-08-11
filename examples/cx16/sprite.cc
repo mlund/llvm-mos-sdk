@@ -3,12 +3,10 @@
 // See https://github.com/llvm-mos/llvm-mos-sdk/blob/main/LICENSE for license
 // information.
 
-/*
- * This example illustrates the following:
- *
- * - Manual sprite attribute setup using VERA
- * - Compile time sprite generation
- */
+// Notes:
+// - Manual sprite attribute setup using VERA
+// - Compile time sprite generation
+// - Inspired by https://github.com/mwiedmann/cx16CodingInC
 
 #include <array>
 #include <cstdio>
