@@ -4,9 +4,10 @@
 // information.
 
 // Notes:
+// - Requires `-std=c++20`
 // - Manual sprite attribute setup using VERA
 // - Compile time sprite generation
-// - Inspired by https://github.com/mwiedmann/cx16CodingInC
+// - Inspiration from https://github.com/mwiedmann/cx16CodingInC
 
 #include <array>
 #include <cstdio>
@@ -45,9 +46,7 @@ template <size_t H, size_t W> struct ColoredSprite {
   }
 };
 
-/*
- * Compile time constants
- */
+// Compile time constants
 constexpr uint16_t SCREEN_WIDTH = 640;
 constexpr uint16_t SCREEN_HEIGHT = 480;
 constexpr uint32_t SPR_ADDR = 0x12c00;
