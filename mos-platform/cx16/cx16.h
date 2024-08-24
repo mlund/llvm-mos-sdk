@@ -49,10 +49,6 @@ extern "C" {
 #endif
 
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
-#endif
 
 /*****************************************************************************/
 /*                                   Data                                    */
@@ -189,11 +185,7 @@ struct JoyState {
 ** set_tv() argument codes
 ** NOTE: llvm-mos-sdk added newer 240P modes
 */
-enum
-#ifndef __CC65__
-: uint8_t
-#endif
-{
+enum {
     TV_NONE                     = 0x00,
     TV_VGA,
     TV_NTSC_COLOR,
@@ -226,11 +218,7 @@ enum
 #define VIDEOMODE_SWAP          (-1)
 
 /* VERA's address increment/decrement numbers */
-enum
-#ifndef __CC65__
-: uint8_t
-#endif
-{
+enum {
     VERA_DEC_0                  = ((0 << 1) | 1) << 3,
     VERA_DEC_1                  = ((1 << 1) | 1) << 3,
     VERA_DEC_2                  = ((2 << 1) | 1) << 3,
@@ -265,50 +253,39 @@ enum
     VERA_INC_640                = ((15 << 1) | 0) << 3
 };
 
-/* VERA's interrupt flags */
+/* VERA's interrupt flags ($9f26) */
 #define VERA_IRQ_VSYNC          0b00000001
 #define VERA_IRQ_RASTER         0b00000010
 #define VERA_IRQ_SPR_COLL       0b00000100
 #define VERA_IRQ_AUDIO_LOW      0b00001000
 
-/* VERA's sprite color mode mask */
-enum
-#ifndef __CC65__
-: uint8_t
-#endif
-{
-  SPR_4BPP_MODE = 0b00000000, //!< 16 colors
-  SPR_8BPP_MODE = 0b10000000, //!< 256 colors
+/* VERA's sprite color mode mask (attribute offset 0x01) */
+enum : unsigned int {
+  SPR_4BPP = 0 << 7, //!< 16 colors
+  SPR_8BPP = 1 << 7, //!< 256 colors
 };
 
-/* VERA's sprite Z depth masks and H/V flip */
-enum
-#ifndef __CC65__
-: uint8_t
-#endif
-{
+/* VERA's sprite Z depth masks and H/V flip (attribute offset 0x06) */
+enum : unsigned char {
   SPR_DISABLED = 0,
-  SPR_BETWEEN_BG_AND_LAYER1 = 0b00000100,
-  SPR_BETWEEN_LAYER1_AND_2 = 0b00001000,
-  SPR_IN_FRONT_OF_LAYER1 = 0b00001100,
-  SPR_VFLIP = 0b00000010,
-  SPR_HFLIP = 0b00000001,
+  SPR_BETWEEN_BG_AND_LAYER1 = 1 << 2,
+  SPR_BETWEEN_LAYER1_AND_2 = 2 << 2,
+  SPR_IN_FRONT_OF_LAYER1 = 3 << 2,
+  SPR_VFLIP = 1 << 1,
+  SPR_HFLIP = 1 << 0,
 };
 
-/* VERA's sprite dimension masks */
-enum
-#ifndef __CC65__
-: uint8_t
-#endif
-{
-  SPR_HEIGHT8 = 0 << 6,
-  SPR_HEIGHT16 = 1 << 6,
-  SPR_HEIGHT32 = 2 << 6,
-  SPR_HEIGHT64 = 3 << 6,
-  SPR_WIDTH8 = 0 << 4,
-  SPR_WIDTH16 = 1 << 4,
-  SPR_WIDTH32 = 2 << 4,
-  SPR_WIDTH64 = 3 << 4
+/* VERA's sprite dimension masks (attribute offset 0x07) */
+enum : unsigned char {
+  SPR_HEIGHT8 = 0 << 6,  // bits 7:6
+  SPR_HEIGHT16 = 1 << 6, // bits 7:6
+  SPR_HEIGHT32 = 2 << 6, // bits 7:6
+  SPR_HEIGHT64 = 3 << 6, // bits 7:6
+  SPR_WIDTH8 = 0 << 4,   // bits 5:4
+  SPR_WIDTH16 = 1 << 4,  // bits 5:4
+  SPR_WIDTH32 = 2 << 4,  // bits 5:4
+  SPR_WIDTH64 = 3 << 4,  // bits 5:4
+  SPR_PALETTE_OFFSET = 0b00001111, // bits 3:0
 };
 
 /* Define hardware. */
@@ -506,12 +483,12 @@ void cx16_k_fb_init(void) __attribute__((leaf));
 void cx16_k_fb_move_pixels(unsigned int sx, unsigned int sy, unsigned int tx, unsigned int ty, unsigned int count) __attribute__((leaf));
 void cx16_k_fb_set_8_pixels(unsigned char pattern, unsigned char color) __attribute__((leaf));
 void cx16_k_fb_set_8_pixels_opaque(unsigned char pattern, unsigned char mask, unsigned char color1, unsigned char color2) __attribute__((leaf));
-void cx16_k_fb_set_palette(void *paladdr, unsigned char index, unsigned char count) __attribute__((leaf));
+void cx16_k_fb_set_palette(void *paladdr, unsigned char index, unsigned char count __attribute__((leaf)));
 void cx16_k_graph_clear(void) __attribute__((leaf));
 void cx16_k_graph_draw_image(unsigned int x, unsigned int y, void *imageaddr, unsigned int width, unsigned int height) __attribute__((leaf));
 void cx16_k_graph_draw_line(unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2) __attribute__((leaf));
 void cx16_k_graph_draw_oval(unsigned int x, unsigned int y, unsigned int width, unsigned int height, unsigned int corner_radius, unsigned char fillflag) __attribute__((leaf));
-void cx16_k_graph_draw_rect(unsigned int x, unsigned int y, unsigned int width, unsigned int height, unsigned int corner_radius, unsigned char fillflag) __attribute__((leaf));
+void cx16_k_graph_draw_rect(unsigned int x, unsigned int y, unsigned int width, unsigned int height, unsigned int corner_radius, unsigned char fillflag __attribute__((leaf)));
 long cx16_k_graph_get_char_size(unsigned char c, unsigned char style) __attribute__((leaf)); // if printable returns info (0x00bbwwhh), else negative style byte (0xFF0000ss)
 void cx16_k_graph_init(graph_fb_functions_t *fb_funcs_ptr) __attribute__((leaf));
 void cx16_k_graph_move_rect(unsigned int sx, unsigned int sy, unsigned int tx, unsigned int ty, unsigned int width, unsigned int height) __attribute__((leaf));
@@ -606,10 +583,6 @@ unsigned char vpeek(unsigned long addr) __attribute__((leaf));    // read byte f
 void vpoke(unsigned char data, unsigned long addr) __attribute__((leaf)); // write byte value to VERA VRAM address
 
 void waitvsync(void);  // wait for the vertical blank interrupt
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
 
 #ifdef __cplusplus
 }

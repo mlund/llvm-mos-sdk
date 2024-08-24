@@ -26,11 +26,11 @@ consteval uint16_t sqrt_helper(uint16_t x, uint16_t lo, uint16_t hi) {
 }
 consteval uint16_t sqrt(uint16_t x) { return sqrt_helper(x, 0, x / 2 + 1); }
 
-namespace cx16 {
-// Set VRAM destination address and a stride of 1
-inline void vram_destination(const uint32_t address) {
+// Set VRAM destination address and a stride (of 1 by default)
+inline void vram_destination(const uint32_t address,
+                             const uint8_t stride = VERA_INC_1) {
   VERA.address = (uint16_t)address;
-  VERA.address_hi = (uint8_t)(address >> 16) | VERA_INC_1;
+  VERA.address_hi = (uint8_t)(address >> 16) | stride;
 }
 
 // Copy bytes to VRAM address
@@ -41,50 +41,52 @@ template <typename T> void to_vram(const T &bytes, const uint32_t dst_address) {
   }
 }
 
-namespace sprite {
 // Compile-time evaluation of sprite attribute VRAM address
 constexpr uint32_t sprite_attribute_addr(const uint8_t sprite_id) {
   return 0x1fc00 + sprite_id * 8;
 }
+
 // Compile-time generation of a H x W pixels colored sprite
 template <int H, int W> struct ColorBob {
   uint8_t bytes[H * W];
   consteval ColorBob() : bytes() {
+    // Pick grey-scale colors
+    auto get_color = [](auto radius) {
+      constexpr auto LAST_GREY = 31;
+      return radius >= 32 ? 0 : LAST_GREY - radius / 2;
+    };
     size_t i = 0;
     for (int h = 0; h < H; h++) {
       for (int w = 0; w < W; w++) {
         auto x = w - W / 2;
         auto y = h - H / 2;
         auto radius = sqrt(x * x + y * y);
-        bytes[i++] = radius >= 32 ? 0 : 31 - radius / 2;
+        bytes[i++] = get_color(radius);
       }
     }
   }
 };
 
-} // namespace sprite
-} // namespace cx16
-
 // Compile-time constants
 constexpr uint16_t SCREEN_WIDTH = 640;
 constexpr uint16_t SCREEN_HEIGHT = 480;
-constexpr uint32_t SPR_ADDR = 0x12c00;
-constexpr auto SPR_IMG = cx16::sprite::ColorBob<64, 64>();
-constexpr auto SPR1_ATTR_ADDR = cx16::sprite::sprite_attribute_addr(1);
+constexpr uint32_t SPR_ADDR = 0x13000;
+constexpr auto SPR_IMG = ColorBob<64, 64>();
+constexpr auto SPR1_ATTR_ADDR = sprite_attribute_addr(1);
 constexpr uint8_t SPR_ATTR[] = {(uint8_t)(SPR_ADDR >> 5),
-                                (uint8_t)(SPR_ADDR >> 13) | SPR_8BPP_MODE,
+                                (uint8_t)(SPR_ADDR >> 13) | SPR_8BPP,
                                 0, // xpos
-                                0,
+                                0, // xpos
                                 0, // ypos
-                                0,
+                                0, // ypos
                                 SPR_IN_FRONT_OF_LAYER1,
                                 SPR_HEIGHT64 | SPR_WIDTH64};
 
 int main(void) {
 
   // Copy sprite image and attributes to VRAM
-  cx16::to_vram(SPR_IMG.bytes, SPR_ADDR);
-  cx16::to_vram(SPR_ATTR, SPR1_ATTR_ADDR);
+  to_vram(SPR_IMG.bytes, SPR_ADDR);
+  to_vram(SPR_ATTR, SPR1_ATTR_ADDR);
 
   vera_sprites_enable(1);
 
@@ -92,7 +94,7 @@ int main(void) {
   uint16_t x = 0;
   uint16_t y = 200;
   while (true) {
-    cx16::vram_destination(SPR1_ATTR_ADDR + 2);
+    vram_destination(SPR1_ATTR_ADDR + 2);
     VERA.data0 = x;
     VERA.data0 = x >> 8;
     VERA.data0 = y;
