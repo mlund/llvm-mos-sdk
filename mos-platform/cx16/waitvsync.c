@@ -7,10 +7,13 @@
 
 void waitvsync() {
   [[maybe_unused]] unsigned char tmp; // avoid hard-coded imaginary register
-  __attribute__((leaf)) __asm__ volatile("   jsr __RDTIM \n"
-                                         "   sta %0      \n"
-                                         "1: jsr __RDTIM \n"
-                                         "   cmp %0      \n"
-                                         "   beq 1b      \n"
-                                         : "=r"(tmp)::"a", "x", "y", "p");
+  __attribute__((leaf)) __asm__ volatile(
+      R"ASM(
+               jsr __RDTIM
+               sta %0
+            1: jsr __RDTIM
+               cmp %0
+               beq 1b
+      )ASM"
+      : "=r"(tmp)::"a", "x", "y", "p");
 }
