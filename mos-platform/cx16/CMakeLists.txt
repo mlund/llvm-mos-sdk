@@ -90,7 +90,7 @@ add_platform_library(cx16-c
  videomode.s
  vpeek.s
  vpoke.s
- waitvsync.s
+ waitvsync.c
  kernal.S
 
  char-conv.c
