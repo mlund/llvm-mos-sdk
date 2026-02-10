@@ -146,7 +146,7 @@ enum : unsigned char {
 #define JOY_SNES_PORT4 4
 
 /// Status of SNES joystick populated by cx16_k_joystick_get();
-struct JoyState {
+typedef struct {
   union {
     struct {
       unsigned char data0; //!< Bits: B Y Select Start Up Down Left Right
@@ -176,7 +176,7 @@ struct JoyState {
   }
   bool south_west() const { return !(data0 & (JOY_DOWN_MASK | JOY_LEFT_MASK)); }
 #endif
-};
+} JoyState;
 
 /* Additional mouse button mask */
 #define MOUSE_BTN_MIDDLE        0x02
@@ -185,7 +185,7 @@ struct JoyState {
 ** set_tv() argument codes
 ** NOTE: llvm-mos-sdk added newer 240P modes
 */
-enum {
+enum : unsigned char {
     TV_NONE                     = 0x00,
     TV_VGA,
     TV_NTSC_COLOR,
@@ -218,7 +218,7 @@ enum {
 #define VIDEOMODE_SWAP          (-1)
 
 /* VERA's address increment/decrement numbers */
-enum {
+enum : unsigned char {
     VERA_DEC_0                  = ((0 << 1) | 1) << 3,
     VERA_DEC_1                  = ((1 << 1) | 1) << 3,
     VERA_DEC_2                  = ((2 << 1) | 1) << 3,
@@ -258,6 +258,26 @@ enum {
 #define VERA_IRQ_RASTER         0b00000010
 #define VERA_IRQ_SPR_COLL       0b00000100
 #define VERA_IRQ_AUDIO_LOW      0b00001000
+
+/** ROM bank labels */
+enum : unsigned char {
+  ROM_KERNAL = 0,    //!< KERNAL operating system and drivers
+  ROM_KEYBD = 1,     //!< Keyboard layout tables
+  ROM_CMDRDOS = 2,   //!< The computer-based CMDR-DOS for FAT32 SD cards
+  ROM_FAT32 = 3,     //!< The FAT32 driver itself
+  ROM_BASIC = 4,     //!< BASIC interpreter
+  ROM_MONITOR = 5,   //!< Machine Language Monitor
+  ROM_CHARSET = 6,   //!< PETSCII and ISO character sets (uploaded into VRAM)
+  ROM_DIAG = 7,      //!< Memory diagnostic
+  ROM_GRAPH = 8,     //!< Kernal graph and font routines
+  ROM_DEMO = 9,      //!< Demo routines
+  ROM_AUDIO = 10,    //!< Audio API routines
+  ROM_UTIL = 11,     //!< System Configuration (Date/Time, Display Preferences)
+  ROM_BANNEX = 12,   //!< BASIC Annex (code for some added BASIC functions)
+  ROM_X16EDIT1 = 13, //!< The built-in text editor
+  ROM_X16EDIT2 = 14, //!< The built-in text editor
+  ROM_BASLOAD = 15   //!< A transpiler that converts BASLOAD dialect to BASIC V2
+};
 
 /* Define hardware. */
 
@@ -352,6 +372,10 @@ struct __vera {
         unsigned char   control;
     } spi;                              /* SD card interface */
 };
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L) || (defined(__cplusplus) && __cplusplus >= 201103L)
+static_assert(sizeof(struct __vera) == 32, "struct __vera must be 32 bytes");
+#endif
+
 #define VERA    (*(volatile struct __vera *)0x9F20)
 
 /* Audio chip */
@@ -364,6 +388,22 @@ struct __ym2151 {
 };
 #define YM2151  (*(volatile struct __ym2151 *)0x9F40)
 
+/** VERA Programmable Sound Generator (PSG) layout */
+struct __vera_psg {
+    union {
+        unsigned short freq;
+        struct {
+            unsigned char freq_lo; //!< Frequency word (7:0)
+            unsigned char freq_hi; //!< Frequency word (15:8)
+        };
+    };
+    unsigned char volume;   //!< Left (bit 7); right (bit 6); volume (bit 5:0)
+    unsigned char waveform; //!< Waveform (bit 7:6) and pulse width (bit 5:0)
+};
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L) || (defined(__cplusplus) && __cplusplus >= 201103L)
+static_assert(sizeof(struct __vera_psg) == 4, "struct __vera_psg must be 4 bytes");
+#endif
+
 /* A structure with the x16emu's settings registers */
 struct __emul {
     unsigned char       debug;          /* Boolean: debugging enabled */
@@ -371,13 +411,18 @@ struct __emul {
     unsigned char       keyboard;       /* Boolean: displaying typed keys */
     unsigned char       echo;           /* How to send Kernal output to host */
     unsigned char       save_on_exit;   /* Boolean: save machine state on exit */
-    unsigned char       gif_method;     /* How GIF movie is being recorded */
-    unsigned char const unused1[2];
+    unsigned char       gif_method;     /* Control GIF (0=pause; 1=single; 2=resume) */
+    unsigned char       wav_method;     /* Control WAV (0=pause; 1=record; 2=autostart) */
+    unsigned char       cmd_key_off;    /* Boolean: disable emulator command keys */
     unsigned long const cycle_count;    /* Running total of CPU cycles (8 MHz.) */
     unsigned char const unused2[1];
     unsigned char const keymap;         /* Keyboard layout number */
              char const detect[2];      /* "16" if running on x16emu */
 };
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L) || (defined(__cplusplus) && __cplusplus >= 201103L)
+static_assert(sizeof(struct __emul) == 16, "struct __emul must be 16 bytes");
+#endif
+
 #define EMULATOR        (*(volatile struct __emul *)0x9FB0)
 
 /* An array window into the half Mebibyte or two Mebibytes of banked RAM */
@@ -454,12 +499,12 @@ void cx16_k_fb_init(void) __attribute__((leaf));
 void cx16_k_fb_move_pixels(unsigned int sx, unsigned int sy, unsigned int tx, unsigned int ty, unsigned int count) __attribute__((leaf));
 void cx16_k_fb_set_8_pixels(unsigned char pattern, unsigned char color) __attribute__((leaf));
 void cx16_k_fb_set_8_pixels_opaque(unsigned char pattern, unsigned char mask, unsigned char color1, unsigned char color2) __attribute__((leaf));
-void cx16_k_fb_set_palette(void *paladdr, unsigned char index, unsigned char count __attribute__((leaf)));
+void cx16_k_fb_set_palette(void *paladdr, unsigned char index, unsigned char count) __attribute__((leaf));
 void cx16_k_graph_clear(void) __attribute__((leaf));
 void cx16_k_graph_draw_image(unsigned int x, unsigned int y, void *imageaddr, unsigned int width, unsigned int height) __attribute__((leaf));
 void cx16_k_graph_draw_line(unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2) __attribute__((leaf));
 void cx16_k_graph_draw_oval(unsigned int x, unsigned int y, unsigned int width, unsigned int height, unsigned int corner_radius, unsigned char fillflag) __attribute__((leaf));
-void cx16_k_graph_draw_rect(unsigned int x, unsigned int y, unsigned int width, unsigned int height, unsigned int corner_radius, unsigned char fillflag __attribute__((leaf)));
+void cx16_k_graph_draw_rect(unsigned int x, unsigned int y, unsigned int width, unsigned int height, unsigned int corner_radius, unsigned char fillflag) __attribute__((leaf));
 long cx16_k_graph_get_char_size(unsigned char c, unsigned char style) __attribute__((leaf)); // if printable returns info (0x00bbwwhh), else negative style byte (0xFF0000ss)
 void cx16_k_graph_init(graph_fb_functions_t *fb_funcs_ptr) __attribute__((leaf));
 void cx16_k_graph_move_rect(unsigned int sx, unsigned int sy, unsigned int tx, unsigned int ty, unsigned int width, unsigned int height) __attribute__((leaf));
@@ -478,7 +523,7 @@ int cx16_k_i2c_write_byte(unsigned char device, unsigned char offset, unsigned c
  * @param joystick_num Keyboard joystick (0) or SNES controllers (1-4).
  * @returns Struct with current status.
  */
-struct JoyState cx16_k_joystick_get(unsigned char joystick_num);
+JoyState cx16_k_joystick_get(unsigned char joystick_num);
 
 void cx16_k_joystick_scan(void) __attribute__((leaf));
 unsigned char cx16_k_kbdbuf_get_modifiers(void) __attribute__((leaf));

@@ -77,12 +77,15 @@ FILE *stderr = &serr;
 static FILE *filelist = &sin;
 
 // This must happen before all POSIX open files are closed.
-asm(".section .fini.100,\"axR\",@progbits\n"
+asm(".section .fini.100,\"ax\",@progbits\n"
     "  jsr _stdio_closeall\n");
 
 void _stdio_closeall(void) {
-  for (FILE *f = filelist; f; f = f->next)
+  for (FILE *f = filelist; f;) {
+    FILE *next = f->next;
     fclose(f);
+    f = next;
+  }
 }
 
 /* A system call that writes a stream's buffer.

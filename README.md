@@ -32,6 +32,7 @@ The LLVM-MOS compiler toolchain and platform libraries.
 - [Commodore VIC-20](https://en.wikipedia.org/wiki/VIC-20)
 - [CP/M-65](https://github.com/davidgiven/cpm65)
 - [Dodo 6502 Game System](https://github.com/peternoyes/dodo)
+- [Commodore GEOS](https://en.wikipedia.org/wiki/GEOS_(8-bit_operating_system))
 - [MEGA65](https://mega65.org/)
 - [NES (Nintendo Entertainment System)](https://en.wikipedia.org/wiki/Nintendo_Entertainment_System)
   - [Action 53](https://www.nesdev.org/wiki/Action_53)
@@ -42,6 +43,7 @@ The LLVM-MOS compiler toolchain and platform libraries.
   - [UNROM-512](https://www.nesdev.org/wiki/UNROM_512)
   - [MMC1](https://www.nesdev.org/wiki/MMC1)
   - [MMC3](https://www.nesdev.org/wiki/MMC3)
+  - [Family Computer Disk System](https://www.nesdev.org/wiki/Family_Computer_Disk_System)
 - [Ohio Scientific Challenger 1P](https://en.wikipedia.org/wiki/Ohio_Scientific#Superboard_II,_Challenger_1P_(1978))
 - [OLIMEX Neo6502](https://www.olimex.com/Products/Retro-Computers/Neo6502/open-source-hardware)
 - [Picocomputer 6502](https://picocomputer.github.io) (RP6502)
@@ -165,6 +167,7 @@ executables and libraries for that target.
 | Commodore                       | VIC-20             | `mos-vic20-clang`                |
 | CP/M-65                         | -                  | `mos-cpm65-clang`                |
 | Dodo 6502 Game System           | -                  | `mos-dodo-clang`                 |
+| Commodore GEOS                  | 64, 128            | `mos-geos-cbm-clang`              |
 | MEGA65                          | -                  | `mos-mega65-clang`               |
 | NES                             | Action53 mapper    | `mos-nes-action53-clang`         |
 | NES                             | CNROM mapper       | `mos-nes-cnrom-clang`            |
@@ -229,6 +232,11 @@ of LLVM-MOS so `find_package` will work correctly.
 To modify the SDK, you'll need to be able to build it yourself. This requires a
 working LLVM-MOS compiler, which can be found in the current SDK release.
 Accordingly, make sure to install the SDK first using the instructions above.
+
+### Install a working host compiler and CMake
+
+The SDK builds with CMake and builds binaries that are intended to run on your host operating system (in addition to the libraries for the 6502).
+Accordingly, to build the SDK, you'll need to install a working CMake and host OS C/C++ compiler, such that CMake is able to build binaries.
 
 ### Install ninja
 

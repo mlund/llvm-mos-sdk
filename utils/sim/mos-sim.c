@@ -1,3 +1,4 @@
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -58,7 +59,9 @@ bool input_eof = false;
 
 uint64_t clockTicksAtAddress[65536];
 
-int8_t read6502(uint16_t address) {
+void finish(void);
+
+uint8_t read6502(uint16_t address) {
   if (address == 0xfff0) {
     *((uint32_t *)(memory + address)) = clockticks6502 - clock_start;
   } else if (address == 0xfff5) {
@@ -67,18 +70,22 @@ int8_t read6502(uint16_t address) {
     return (int8_t)c;
   } else if (address == 0xfff6) {
     return (int8_t)input_eof;
+  } else if (address == 0xfffe) {
+    fprintf(stderr, "%04x:%02x %02x %02x read fffe\n", pc, memory[pc], memory[pc+1], memory[pc+2]);
+    finish();
+    abort();
   }
   return memory[address];
 }
 
 void finish(void) {
   if (shouldPrintCycles)
-    fprintf(stderr, "%llu cycles\n", clockticks6502);
+    fprintf(stderr, "%" PRIu64 " cycles\n", clockticks6502);
 
   if (shouldProfile)
     for (int addr = 0; addr < 65536; ++addr)
       if (clockTicksAtAddress[addr])
-        fprintf(stderr, "%04x %llu\n", addr, clockTicksAtAddress[addr]);
+        fprintf(stderr, "%04x %" PRIu64 "\n", addr, clockTicksAtAddress[addr]);
 }
 
 void write6502(uint16_t address, uint8_t value) {
@@ -90,9 +97,13 @@ void write6502(uint16_t address, uint8_t value) {
     clock_start = clockticks6502;
     break;
   case 0xFFF7:
+    if (shouldProfile)
+      fprintf(stderr, "%04x:%02x %02x %02x write fff7\n", pc, memory[pc], memory[pc+1], memory[pc+2]);
     finish();
     abort();
   case 0xFFF8:
+    if (shouldProfile)
+      fprintf(stderr, "%04x:%02x %02x %02x write fff7\n", pc, memory[pc], memory[pc+1], memory[pc+2]);
     finish();
     exit(value);
   case 0xFFF9:
@@ -186,9 +197,21 @@ int main(int argc, const char *argv[]) {
 
   reset6502(cmos);
   for (;;) {
-    if (shouldTrace)
-      fprintf(stderr, "%04x a:%02x x:%02x y:%02x s: %02x st:%02x\n", pc, a, x,
-              y, sp, status);
+    char status_buf[9];
+    status_buf[8] = '\0';
+    const char statuses[] = "czidb1vn";
+
+    if (shouldTrace) {
+      for (int i=0; i<8; ++i) {
+        status_buf[7-i] = status&(1<<i) ?
+          statuses[i] : '.';
+      }
+      fprintf(stderr,
+	  "%04x a:%02x x:%02x y:%02x s:%02x st:%02x (%s)"
+	  " insn:%02x %02x %02x\n",
+	  pc, a, x, y, sp, status, status_buf,
+	  memory[pc], memory[(pc+1)&0xffff], memory[(pc+2)&0xffff]);
+    }
     uint32_t clockTicksBefore = clockticks6502;
     uint16_t addr = pc;
     step6502();
