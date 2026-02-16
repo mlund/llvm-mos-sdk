@@ -10,7 +10,7 @@
 #include <mega65.h>
 #include <stdint.h>
 
-#include "../xemu-test.h"
+#include "../mega65-common/xemu-test.h"
 
 // readdir requires a 256-byte aligned buffer
 static mega65_h_dirent dirent_buf __attribute__((aligned(256)));

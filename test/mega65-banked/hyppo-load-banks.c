@@ -12,7 +12,7 @@
 #include <mapper.h>
 #include <mega65.h>
 #include <stdint.h>
-#include "../xemu-test.h"
+#include "../mega65-common/xemu-test.h"
 
 // Override the CRT KERNAL bank loader — we load via Hyppo instead.
 void __load_banks(void) {}

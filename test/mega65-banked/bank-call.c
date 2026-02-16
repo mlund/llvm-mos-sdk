@@ -11,7 +11,7 @@
 
 #include <mapper.h>
 #include <stdint.h>
-#include "../xemu-test.h"
+#include "../mega65-common/xemu-test.h"
 
 // Signal address outside the banked window ($2000-$7FFF).
 // ZP byte $FC is free from compiler ($02-$8F) and never remapped.

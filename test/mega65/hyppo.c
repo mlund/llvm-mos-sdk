@@ -11,7 +11,7 @@
 #include <mega65.h>
 #include <stdint.h>
 
-#include "../xemu-test.h"
+#include "../mega65-common/xemu-test.h"
 
 static const uint8_t expected[] = {0xDE, 0xAD, 0xBE, 0xEF,
                                    0xCA, 0xFE, 0xBA, 0xBE};

@@ -18,14 +18,10 @@ function(add_test_target target)
       -DEMUTEST_COMMAND=${EMUTEST_COMMAND}
       -DLIBRETRO_STELLA_CORE=${LIBRETRO_STELLA_CORE}
       -DLIBRETRO_MESEN_CORE=${LIBRETRO_MESEN_CORE}
-      -DXMEGA65_COMMAND=${XMEGA65_COMMAND}
-      -DC1541_COMMAND=${C1541_COMMAND}
-      -DMAKE_D81_SCRIPT=${CMAKE_SOURCE_DIR}/mos-platform/mega65-banked/make-d81.sh
-      -DLUA_COMMAND=${LUA_COMMAND}
-      -DSPLIT_BANKS_SCRIPT=${CMAKE_SOURCE_DIR}/mos-platform/mega65-banked/misc/split-banks.lua
       -DCMAKE_C_FLAGS=${config_flag}
       -DCMAKE_CXX_FLAGS=${config_flag}
       -DCMAKE_TOOLCHAIN_FILE=${CMAKE_SOURCE_DIR}/cmake/llvm-mos-toolchain.cmake
+      ${ARGN}
     INSTALL_COMMAND ""
     BUILD_ALWAYS On
     TEST_AFTER_INSTALL On
@@ -60,5 +56,14 @@ add_test_target(atari2600-4k)
 add_test_target(atari2600-3e)
 add_test_target(atari8-dos)
 add_test_target(atari8-cart-std)
-add_test_target(mega65)
-add_test_target(mega65-banked)
+if(XMEGA65_COMMAND)
+  add_test_target(mega65
+    -DXMEGA65_COMMAND=${XMEGA65_COMMAND}
+    -DC1541_COMMAND=${C1541_COMMAND})
+  add_test_target(mega65-banked
+    -DXMEGA65_COMMAND=${XMEGA65_COMMAND}
+    -DC1541_COMMAND=${C1541_COMMAND}
+    -DMAKE_D81_SCRIPT=${CMAKE_SOURCE_DIR}/mos-platform/mega65-banked/make-d81.sh
+    -DLUA_COMMAND=${LUA_COMMAND}
+    -DSPLIT_BANKS_SCRIPT=${CMAKE_SOURCE_DIR}/mos-platform/mega65-banked/misc/split-banks.lua)
+endif()

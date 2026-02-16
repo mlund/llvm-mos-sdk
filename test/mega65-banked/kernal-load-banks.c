@@ -11,7 +11,7 @@
 
 #include <mapper.h>
 #include <stdint.h>
-#include "../xemu-test.h"
+#include "../mega65-common/xemu-test.h"
 
 // "retain" prevents the linker from discarding these unreferenced sections.
 // "used" prevents the compiler from dropping them before the linker sees them.

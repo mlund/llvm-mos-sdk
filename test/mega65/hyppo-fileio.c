@@ -11,7 +11,7 @@
 #include <mega65.h>
 #include <stdint.h>
 
-#include "../xemu-test.h"
+#include "../mega65-common/xemu-test.h"
 
 int main(void) {
   // --- Test 1: find and open the test file ---
