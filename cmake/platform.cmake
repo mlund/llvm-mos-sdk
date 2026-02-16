@@ -155,6 +155,14 @@ function(_add_platform_examples target)
   ExternalProject_Get_Property(mos-platform INSTALL_DIR)
   set(config_flag "--config ${INSTALL_DIR}/bin/mos-${PLATFORM}.cfg")
 
+  # D81 disk image tools — only passed when VICE c1541 is available.
+  set(d81_args "")
+  if(C1541_COMMAND)
+    set(d81_args
+      -DC1541_COMMAND=${C1541_COMMAND}
+      -DMAKE_D81_SCRIPT=${CMAKE_SOURCE_DIR}/mos-platform/mega65-banked/make-d81.sh)
+  endif()
+
   ExternalProject_Add(${target}
     SOURCE_DIR   ${CMAKE_SOURCE_DIR}/examples
     INSTALL_DIR  ${CMAKE_BINARY_DIR}/examples/${PLATFORM}
@@ -171,6 +179,7 @@ function(_add_platform_examples target)
       -DCMAKE_C_FLAGS=${config_flag}
       -DCMAKE_CXX_FLAGS=${config_flag}
       -DCMAKE_TOOLCHAIN_FILE=${CMAKE_SOURCE_DIR}/cmake/llvm-mos-toolchain.cmake
+      ${d81_args}
     BUILD_ALWAYS On
     EXCLUDE_FROM_ALL ${exclude_from_all}
     DEPENDS mos-platform)

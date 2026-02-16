@@ -64,6 +64,18 @@ if(NOT CMAKE_CROSSCOMPILING)
     PATHS /lib64/libretro ENV LIBRETRO_CORES_DIR)
   message(STATUS "Libretro MESEN core: ${LIBRETRO_MESEN_CORE}")
 
+  find_program(XMEGA65_COMMAND NAMES xmega65
+    PATHS ENV XMEGA65_DIR)
+  message(STATUS "MEGA65 emulator (xmega65): ${XMEGA65_COMMAND}")
+
+  find_program(C1541_COMMAND NAMES c1541
+    PATHS ENV VICE_DIR)
+  message(STATUS "VICE c1541 disk tool: ${C1541_COMMAND}")
+
+  find_program(LUA_COMMAND NAMES lua lua5.4 lua5.3
+    PATHS ENV LUA_DIR)
+  message(STATUS "Lua interpreter: ${LUA_COMMAND}")
+
   # Install toolchain and config file for users of find_package(llvm-mos-sdk).
   # CMake's find_package logic will discover
   # `$PATH/../lib/cmake/llvm-mos-sdk/llvm-mos-sdk-config.cmake` which in turn
