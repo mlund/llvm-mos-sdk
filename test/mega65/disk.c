@@ -1,12 +1,24 @@
-// MEGA65 D81 disk I/O test — boots from D81 via AUTOBOOT.C65,
-// reads a pre-populated test file via sequential I/O and verifies.
+// MEGA65 D81 disk I/O test — injected via -prg with D81 on device 8.
+// Reads/writes test files via KERNAL I/O and verifies.
 // The test data file is written to the D81 at build time by c1541.
+//
+// Does NOT use xemu's -testing / $D6CF exit protocol because KERNAL disk
+// I/O writes to $D6CF (FPGA reconfiguration register), causing premature
+// exit.  Instead, links with save-basic.o and returns from main() on
+// success (→ BASIC READY → xemu -prgexit exits 0).  On failure, loops
+// forever (→ CTest timeout → failure).
 
 #include <cbm.h>
 #include <mega65.h>
 #include <stdint.h>
 
-#include "../xemu-test.h"
+// On failure, set border to exit code and loop forever (CTest timeout = fail).
+#define test_fail(code)                                                        \
+  do {                                                                         \
+    *(volatile uint8_t *)0xD020 = (code);                                      \
+    while (1)                                                                  \
+      ;                                                                        \
+  } while (0)
 
 #define DEVICE 8             // disk drive device number
 #define LOAD_RAW 0x40        // LOAD/SAVEFL flag: raw mode (no PRG header)
@@ -89,7 +101,7 @@ static void verify(const volatile uint8_t *addr, const uint8_t *expected,
                    uint8_t len, uint8_t exit_base) {
   for (uint8_t i = 0; i < len; i++)
     if (addr[i] != expected[i])
-      xemu_exit(exit_base + i);
+      test_fail(exit_base + i);
 }
 
 int main(void) {
@@ -109,18 +121,18 @@ int main(void) {
   cbm_k_setlfs(2, DEVICE, 0);
   cbm_k_setnam("TEST");
   if (cbm_k_open())
-    xemu_exit(EXIT_SEQ_OPEN);
+    test_fail(EXIT_SEQ_OPEN);
   if (cbm_k_chkin(2))
-    xemu_exit(EXIT_SEQ_CHKIN);
+    test_fail(EXIT_SEQ_CHKIN);
 
   for (uint8_t i = 0; i < sizeof(seq_data); i++) {
     uint8_t ch = cbm_k_basin();
     uint8_t st = cbm_k_readst();
     // Allow EOI (bit 6) on the last byte
     if (i < sizeof(seq_data) - 1 && (st & READST_ERR_MASK))
-      xemu_exit(EXIT_SEQ_READST);
+      test_fail(EXIT_SEQ_READST);
     if (ch != seq_data[i])
-      xemu_exit(EXIT_SEQ_DATA + i);
+      test_fail(EXIT_SEQ_DATA + i);
   }
 
   cbm_k_clrch();
@@ -134,10 +146,10 @@ int main(void) {
   cbm_k_setlfs(3, DEVICE, 0);
   cbm_k_setnam("TEST");
   if (mega65_k_load(0, (void *)0x4000, &end_addr))
-    xemu_exit(EXIT_LOAD_SA0);
+    test_fail(EXIT_LOAD_SA0);
   // TEST file has 2-byte PRG header + 8 data bytes; LOAD strips header.
   if (end_addr != (void *)0x4008)
-    xemu_exit(EXIT_LOAD_SA0_END);
+    test_fail(EXIT_LOAD_SA0_END);
   verify((volatile uint8_t *)0x4000, test_data, sizeof(test_data),
          EXIT_LOAD_SA0_DATA);
 
@@ -148,9 +160,9 @@ int main(void) {
   cbm_k_setlfs(3, DEVICE, 1);
   cbm_k_setnam("TEST");
   if (mega65_k_load(0, (void *)0x4000, &end_addr))
-    xemu_exit(EXIT_LOAD_SA1);
+    test_fail(EXIT_LOAD_SA1);
   if (end_addr != (void *)0x7109)
-    xemu_exit(EXIT_LOAD_SA1_END);
+    test_fail(EXIT_LOAD_SA1_END);
   verify((volatile uint8_t *)0x7101, test_data, sizeof(test_data),
          EXIT_LOAD_SA1_DATA);
 
@@ -160,10 +172,10 @@ int main(void) {
   cbm_k_setlfs(3, DEVICE, 0);
   cbm_k_setnam("TEST");
   if (mega65_k_load(LOAD_RAW, (void *)0x5000, &end_addr))
-    xemu_exit(EXIT_LOAD_RAW);
+    test_fail(EXIT_LOAD_RAW);
   // Raw: all 10 bytes (2-byte header + 8 data) loaded as-is.
   if (end_addr != (void *)0x500A)
-    xemu_exit(EXIT_LOAD_RAW_END);
+    test_fail(EXIT_LOAD_RAW_END);
   verify((volatile uint8_t *)0x5000, seq_data, sizeof(seq_data),
          EXIT_LOAD_RAW_DATA);
 
@@ -174,9 +186,9 @@ int main(void) {
   cbm_k_setlfs(5, DEVICE, 5);
   cbm_k_setnam("@:WTEST,S,W");
   if (cbm_k_open())
-    xemu_exit(EXIT_WRITE_OPEN);
+    test_fail(EXIT_WRITE_OPEN);
   if (cbm_k_chkout(5))
-    xemu_exit(EXIT_WRITE_CHKOUT);
+    test_fail(EXIT_WRITE_CHKOUT);
   for (uint8_t i = 0; i < sizeof(write_data); i++)
     cbm_k_bsout(write_data[i]);
   cbm_k_clrch();
@@ -186,16 +198,16 @@ int main(void) {
   cbm_k_setlfs(6, DEVICE, 6);
   cbm_k_setnam("WTEST,S,R");
   if (cbm_k_open())
-    xemu_exit(EXIT_READBACK_OPEN);
+    test_fail(EXIT_READBACK_OPEN);
   if (cbm_k_chkin(6))
-    xemu_exit(EXIT_READBACK_CHKIN);
+    test_fail(EXIT_READBACK_CHKIN);
   for (uint8_t i = 0; i < sizeof(write_data); i++) {
     uint8_t ch = cbm_k_basin();
     uint8_t st = cbm_k_readst();
     if (i < sizeof(write_data) - 1 && (st & READST_ERR_MASK))
-      xemu_exit(EXIT_READBACK_READST);
+      test_fail(EXIT_READBACK_READST);
     if (ch != write_data[i])
-      xemu_exit(EXIT_READBACK_DATA + i);
+      test_fail(EXIT_READBACK_DATA + i);
   }
   cbm_k_clrch();
   cbm_k_close(6);
@@ -206,36 +218,36 @@ int main(void) {
   cbm_k_setlfs(7, DEVICE, 7);
   cbm_k_setnam("TEST");
   if (cbm_k_open())
-    xemu_exit(EXIT_FTABLE_OPEN);
+    test_fail(EXIT_FTABLE_OPEN);
   cbm_k_setlfs(8, DEVICE, 8);
   cbm_k_setnam("TEST");
   if (cbm_k_open())
-    xemu_exit(EXIT_FTABLE_OPEN);
+    test_fail(EXIT_FTABLE_OPEN);
 
   unsigned char fa, sa;
   if (mega65_k_lkupla(7, &fa, &sa))
-    xemu_exit(EXIT_LKUPLA_NOTFOUND);
+    test_fail(EXIT_LKUPLA_NOTFOUND);
   if (fa != DEVICE)
-    xemu_exit(EXIT_LKUPLA_DEVICE);
+    test_fail(EXIT_LKUPLA_DEVICE);
   // KERNAL stores SA | $60 in the file table (serial bus format).
   if (sa != (7 | SERIAL_SA_FLAG))
-    xemu_exit(EXIT_LKUPLA_SA);
+    test_fail(EXIT_LKUPLA_SA);
 
   // Round-trip: search by SA from lkupla, verify it finds the same LFN.
   unsigned char la;
   if (mega65_k_lkupsa(sa, &la, &fa))
-    xemu_exit(EXIT_LKUPSA_NOTFOUND);
+    test_fail(EXIT_LKUPSA_NOTFOUND);
   if (la != 7)
-    xemu_exit(EXIT_LKUPSA_LFN);
+    test_fail(EXIT_LKUPSA_LFN);
   if (fa != DEVICE)
-    xemu_exit(EXIT_LKUPSA_DEVICE);
+    test_fail(EXIT_LKUPSA_DEVICE);
 
   // close_all should close both files on device 8.
   mega65_k_close_all(DEVICE);
   if (!mega65_k_lkupla(7, &fa, &sa))
-    xemu_exit(EXIT_CLOSEALL);
+    test_fail(EXIT_CLOSEALL);
   if (!mega65_k_lkupla(8, &fa, &sa))
-    xemu_exit(EXIT_CLOSEALL);
+    test_fail(EXIT_CLOSEALL);
 
   // --- getlfs: verify SETLFS state ---
   // GETLFS returns the global state set by the most recent SETLFS call.
@@ -243,32 +255,32 @@ int main(void) {
   unsigned char gl_la, gl_fa, gl_sa;
   mega65_k_getlfs(&gl_la, &gl_fa, &gl_sa);
   if (gl_la != 9)
-    xemu_exit(EXIT_GETLFS_LA);
+    test_fail(EXIT_GETLFS_LA);
   if (gl_fa != DEVICE)
-    xemu_exit(EXIT_GETLFS_FA);
+    test_fail(EXIT_GETLFS_FA);
   if (gl_sa != 3)
-    xemu_exit(EXIT_GETLFS_SA);
+    test_fail(EXIT_GETLFS_SA);
 
   // --- getio: verify default I/O devices and CHKIN effect ---
   // After clrch, defaults are keyboard (0) and screen (3).
   unsigned char in_dev, out_dev;
   mega65_k_getio(&in_dev, &out_dev);
   if (in_dev != 0)
-    xemu_exit(EXIT_GETIO_DEFAULT_IN);
+    test_fail(EXIT_GETIO_DEFAULT_IN);
   if (out_dev != 3)
-    xemu_exit(EXIT_GETIO_DEFAULT_OUT);
+    test_fail(EXIT_GETIO_DEFAULT_OUT);
   // CHKIN redirects input to the file's device.
   cbm_k_setlfs(9, DEVICE, 0);
   cbm_k_setnam("TEST");
   if (cbm_k_open())
-    xemu_exit(EXIT_GETIO_OPEN);
+    test_fail(EXIT_GETIO_OPEN);
   if (cbm_k_chkin(9))
-    xemu_exit(EXIT_GETIO_CHKIN);
+    test_fail(EXIT_GETIO_CHKIN);
   mega65_k_getio(&in_dev, &out_dev);
   if (in_dev != DEVICE)
-    xemu_exit(EXIT_GETIO_IN);
+    test_fail(EXIT_GETIO_IN);
   if (out_dev != 3)
-    xemu_exit(EXIT_GETIO_OUT);
+    test_fail(EXIT_GETIO_OUT);
   cbm_k_clrch();
   cbm_k_close(9);
 
@@ -281,15 +293,15 @@ int main(void) {
   cbm_k_setlfs(10, DEVICE, 10);
   cbm_k_setnam("@:STEST,P,W");
   if (mega65_k_savefl((void *)0x6000, (void *)0x6004, false))
-    xemu_exit(EXIT_SAVEFL);
+    test_fail(EXIT_SAVEFL);
   // Load back with SA=0 (strip PRG header, load to our address).
   mega65_k_setbnk(0, 0);
   cbm_k_setlfs(10, DEVICE, 0);
   cbm_k_setnam("STEST");
   if (mega65_k_load(0, (void *)0x6100, &end_addr))
-    xemu_exit(EXIT_SAVEFL_LOADBACK);
+    test_fail(EXIT_SAVEFL_LOADBACK);
   if (end_addr != (void *)0x6104)
-    xemu_exit(EXIT_SAVEFL_END);
+    test_fail(EXIT_SAVEFL_END);
   verify((volatile uint8_t *)0x6100, save_data, sizeof(save_data),
          EXIT_SAVEFL_DATA);
 
@@ -298,16 +310,16 @@ int main(void) {
   cbm_k_setlfs(11, DEVICE, 11);
   cbm_k_setnam("@:RTEST,P,W");
   if (mega65_k_savefl((void *)0x6000, (void *)0x6004, true))
-    xemu_exit(EXIT_SAVEFL_RAW);
+    test_fail(EXIT_SAVEFL_RAW);
   // Raw load to verify exact bytes without PRG header stripping.
   mega65_k_setbnk(0, 0);
   cbm_k_setlfs(11, DEVICE, 0);
   cbm_k_setnam("RTEST");
   if (mega65_k_load(LOAD_RAW, (void *)0x6200, &end_addr))
-    xemu_exit(EXIT_SAVEFL_RAW_LOADBACK);
+    test_fail(EXIT_SAVEFL_RAW_LOADBACK);
   // Raw save omits PRG header, so file is exactly 4 bytes.
   if (end_addr != (void *)0x6204)
-    xemu_exit(EXIT_SAVEFL_RAW_END);
+    test_fail(EXIT_SAVEFL_RAW_END);
   verify((volatile uint8_t *)0x6200, save_data, sizeof(save_data),
          EXIT_SAVEFL_RAW_DATA);
 
@@ -319,7 +331,7 @@ int main(void) {
   cbm_k_setnam("TEST");
   void *cbm_end = cbm_k_load(0, (void *)0x4800);
   if (cbm_end != (void *)0x4808)
-    xemu_exit(EXIT_CBM_LOAD_END);
+    test_fail(EXIT_CBM_LOAD_END);
   verify((volatile uint8_t *)0x4800, test_data, sizeof(test_data),
          EXIT_CBM_LOAD_DATA);
 
@@ -332,17 +344,17 @@ int main(void) {
   cbm_k_setlfs(12, DEVICE, 12);
   cbm_k_setnam("@:CSTEST,P,W");
   if (cbm_k_save((void *)0x6300, (void *)0x6304))
-    xemu_exit(EXIT_CBM_SAVE);
+    test_fail(EXIT_CBM_SAVE);
   // Load back with SA=0 (strip PRG header, load to our address).
   mega65_k_setbnk(0, 0);
   cbm_k_setlfs(12, DEVICE, 0);
   cbm_k_setnam("CSTEST");
   if (mega65_k_load(0, (void *)0x6400, &end_addr))
-    xemu_exit(EXIT_CBM_SAVE_LOADBACK);
+    test_fail(EXIT_CBM_SAVE_LOADBACK);
   if (end_addr != (void *)0x6404)
-    xemu_exit(EXIT_CBM_SAVE_END);
+    test_fail(EXIT_CBM_SAVE_END);
   verify((volatile uint8_t *)0x6400, cbm_save_data, sizeof(cbm_save_data),
          EXIT_CBM_SAVE_DATA);
 
-  xemu_exit(EXIT_OK);
+  return 0; // → BASIC READY → xemu -prgexit exits 0
 }

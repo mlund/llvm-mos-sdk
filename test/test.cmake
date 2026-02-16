@@ -99,8 +99,13 @@ function(add_mega65_hdos_test name)
   set_tests_properties(test-${name} PROPERTIES TIMEOUT 30)
 endfunction()
 
-# MEGA65 disk test: builds a D81 with the test PRG as AUTOBOOT.C65.
-# MEGA65 KERNAL auto-executes AUTOBOOT.C65 on boot.
+# MEGA65 disk test: creates a D81 with test data, injects PRG via -prg,
+# and mounts D81 on device 8.  Uses -prg + -prgexit instead of -testing
+# because KERNAL disk I/O writes to $D6CF (the FPGA reconfiguration
+# register), which conflicts with xemu's -testing exit protocol.
+# On success the test returns from main() → BASIC READY → xemu exits 0.
+# On failure the test loops forever → CTest timeout → failure.
+# The test must link with save-basic.o for clean return to BASIC.
 function(add_mega65_disk_test name)
   set(source_dir ".")
   if(ARGC GREATER 1)
@@ -114,15 +119,16 @@ function(add_mega65_disk_test name)
     return()
   endif()
   add_executable(${name}.prg ${source_dir}/${name}.c)
+  target_link_libraries(${name}.prg PRIVATE -l:save-basic.o)
 
   add_custom_command(TARGET ${name}.prg POST_BUILD
     COMMAND ${C1541_COMMAND} -format "test,01" d81
       $<TARGET_FILE_DIR:${name}.prg>/${name}.d81
-      -write $<TARGET_FILE:${name}.prg> "autoboot.c65"
-    COMMENT "Creating D81 with autoboot for ${name}")
+    COMMENT "Creating D81 for ${name}")
 
   add_test(NAME test-${name} COMMAND
-    ${XMEGA65_COMMAND} -headless -sleepless -testing
+    ${XMEGA65_COMMAND} -headless -sleepless
+    -prg $<TARGET_FILE:${name}.prg> -prgexit
     -8 $<TARGET_FILE_DIR:${name}.prg>/${name}.d81)
   set_tests_properties(test-${name} PROPERTIES TIMEOUT 30)
 endfunction()
