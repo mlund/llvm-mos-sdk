@@ -96,14 +96,14 @@ static_assert(sizeof(struct __hypervisor) == 64);
 /// Registers for the MEGA65 math accelerator
 struct __cpu_math {
   union {
-    uint8_t divout_fract8;  //!< Fractional part of MULTINA / MULTINB (0xD768)
-    uint16_t divout_fract16;//!< Fractional part of MULTINA / MULTINB (0xD768)
-    uint32_t divout_fract32;//!< Fractional part of MULTINA / MULTINB (0xD768)
+    uint8_t divout_fract8;   //!< Fractional part of MULTINA / MULTINB (0xD768)
+    uint16_t divout_fract16; //!< Fractional part of MULTINA / MULTINB (0xD768)
+    uint32_t divout_fract32; //!< Fractional part of MULTINA / MULTINB (0xD768)
   };
   union {
-    uint8_t divout_whole8;  //!< Whole part of MULTINA / MULTINB (0xD76C)
-    uint16_t divout_whole16;//!< Whole part of MULTINA / MULTINB (0xD76C)
-    uint32_t divout_whole32;//!< Whole part of MULTINA / MULTINB (0xD76C)
+    uint8_t divout_whole8;   //!< Whole part of MULTINA / MULTINB (0xD76C)
+    uint16_t divout_whole16; //!< Whole part of MULTINA / MULTINB (0xD76C)
+    uint32_t divout_whole32; //!< Whole part of MULTINA / MULTINB (0xD76C)
   };
   union {
     uint8_t multina8;   //!< 8-bit Multiplier input A (0xD770)
@@ -263,8 +263,9 @@ void mega65_k_cursor_disable(void);
 /// @param output_dev  Pointer to receive output device (3=screen)
 void mega65_k_getio(unsigned char *input_dev, unsigned char *output_dev);
 
-/// Read the current file parameters (logical address, device, secondary address).
-/// Useful to determine the boot device before performing other disk I/O.
+/// Read the current file parameters (logical address, device, secondary
+/// address). Useful to determine the boot device before performing other disk
+/// I/O.
 ///
 /// @param la  Pointer to receive logical file number
 /// @param fa  Pointer to receive device number
@@ -278,7 +279,7 @@ void mega65_k_getlfs(unsigned char *la, unsigned char *fa, unsigned char *sa);
 /// @param sa  Pointer to receive secondary address (if found)
 /// @return 0 if found, 1 if not found
 unsigned char mega65_k_lkupla(unsigned char la, unsigned char *fa,
-                               unsigned char *sa);
+                              unsigned char *sa);
 
 /// Search for a secondary address in use.
 ///
@@ -287,7 +288,7 @@ unsigned char mega65_k_lkupla(unsigned char la, unsigned char *fa,
 /// @param fa  Pointer to receive device number (if found)
 /// @return 0 if found, 1 if not found
 unsigned char mega65_k_lkupsa(unsigned char sa, unsigned char *la,
-                               unsigned char *fa);
+                              unsigned char *fa);
 
 /// Load or verify a file. Supports MEGA65 raw mode (flag bit 6).
 /// flag: 0x00=load to address, 0x01=verify, 0x40=raw load, 0x41=raw verify.
@@ -300,7 +301,7 @@ unsigned char mega65_k_lkupsa(unsigned char sa, unsigned char *la,
 /// @param end_addr   Pointer to receive end address+1 on success
 /// @return 0 on success, or KERNAL error code (1-9)
 unsigned char mega65_k_load(unsigned char flag, void *load_addr,
-                             void **end_addr);
+                            void **end_addr);
 
 /// Get cursor position relative to the active window.
 ///
@@ -340,7 +341,7 @@ void mega65_k_setbnk(unsigned char mem_bank, unsigned char fn_bank);
 /// @param fn_mb   Filename megabyte (bits 24-27, 0x0-0xF)
 /// @param fn_hi   Filename address bits 16-23
 void mega65_k_setbnk_28(unsigned char mem_mb, unsigned char mem_hi,
-                         unsigned char fn_mb, unsigned char fn_hi);
+                        unsigned char fn_mb, unsigned char fn_hi);
 
 /// Save memory to a file with optional raw mode (MEGA65 SAVEFL, $FF3B).
 /// In raw mode, the two-byte PRG address header is omitted.
@@ -352,7 +353,7 @@ void mega65_k_setbnk_28(unsigned char mem_mb, unsigned char mem_hi,
 /// @param raw              true for raw mode (omit PRG header)
 /// @return 0 on success, or KERNAL error code (1-9)
 unsigned char mega65_k_savefl(const void *start_addr,
-                               const void *end_addr_plus1, bool raw);
+                              const void *end_addr_plus1, bool raw);
 
 /// Enable or disable KERNAL messages (LOADING, SAVING, I/O ERROR).
 /// These are disabled by default.
@@ -369,36 +370,265 @@ void mega65_k_setmsg(unsigned char mode);
 /// @param seconds  Seconds 0-59 in BCD
 /// @param tenths   Tenths of a second 0-9
 void mega65_k_settim(unsigned char hours, unsigned char minutes,
-                      unsigned char seconds, unsigned char tenths);
+                     unsigned char seconds, unsigned char tenths);
 
 /// Toggle between 40x25 and 80x25 text modes.
 void mega65_k_swapper(void);
 
 /*****************************************************************************/
 /*                   Hyppo hypervisor service wrappers                       */
+/*                                                                           */
+/*  All Hyppo services operate on the SD card FAT filesystem directly,       */
+/*  bypassing the KERNAL and D81 disk images. Safe for use with banking.     */
+/*                                                                           */
+/*  Trap convention: LDA #value : STA $D640 : CLV                           */
+/*  Success: C=1. Error: C=0, error code in A.                              */
 /*****************************************************************************/
+
+/// Hyppo hypervisor error codes.
+/// Functions return MEGA65_H_OK (0) on success, or an error code on failure.
+typedef enum
+#ifdef __clang__
+    : uint8_t
+#endif
+{ MEGA65_H_OK = 0x00,                     ///< Success
+  MEGA65_H_ERR_PARTITION = 0x01,          ///< Partition type not supported
+  MEGA65_H_ERR_BAD_SIGNATURE = 0x02,      ///< Missing/incorrect signature
+  MEGA65_H_ERR_SMALL_FAT = 0x03,          ///< FAT12/FAT16 not supported
+  MEGA65_H_ERR_TOO_MANY_RESERVED = 0x04,  ///< >65535 reserved sectors
+  MEGA65_H_ERR_NOT_TWO_FATS = 0x05,       ///< Partition lacks two FAT copies
+  MEGA65_H_ERR_TOO_FEW_CLUSTERS = 0x06,   ///< Too few clusters
+  MEGA65_H_ERR_READ_TIMEOUT = 0x07,       ///< SD card read timeout
+  MEGA65_H_ERR_PARTITION_ERROR = 0x08,    ///< Unspecified partition error
+  MEGA65_H_ERR_INVALID_ADDRESS = 0x10,    ///< Invalid address argument
+  MEGA65_H_ERR_ILLEGAL_VALUE = 0x11,      ///< Illegal value argument
+  MEGA65_H_ERR_READ_ERROR = 0x20,         ///< Unspecified read error
+  MEGA65_H_ERR_WRITE_ERROR = 0x21,        ///< Unspecified write error
+  MEGA65_H_ERR_NO_SUCH_DRIVE = 0x80,      ///< Drive number does not exist
+  MEGA65_H_ERR_NAME_TOO_LONG = 0x81,      ///< Filename >63 characters
+  MEGA65_H_ERR_NOT_IMPLEMENTED = 0x82,    ///< Service not implemented
+  MEGA65_H_ERR_FILE_TOO_LONG = 0x83,      ///< File >16MB
+  MEGA65_H_ERR_TOO_MANY_OPEN = 0x84,      ///< All file descriptors in use
+  MEGA65_H_ERR_INVALID_CLUSTER = 0x85,    ///< Invalid cluster number
+  MEGA65_H_ERR_IS_DIRECTORY = 0x86,       ///< Expected file, got directory
+  MEGA65_H_ERR_NOT_DIRECTORY = 0x87,      ///< Expected directory, got file
+  MEGA65_H_ERR_FILE_NOT_FOUND = 0x88,     ///< File not found
+  MEGA65_H_ERR_INVALID_FD = 0x89,         ///< Invalid file descriptor
+  MEGA65_H_ERR_IMAGE_WRONG_LENGTH = 0x8A, ///< Disk image wrong size
+  MEGA65_H_ERR_IMAGE_FRAGMENTED = 0x8B,   ///< Disk image not contiguous
+  MEGA65_H_ERR_NO_SPACE = 0x8C,           ///< No free space on SD card
+  MEGA65_H_ERR_FILE_EXISTS = 0x8D,        ///< File already exists
+  MEGA65_H_ERR_DIRECTORY_FULL = 0x8E,     ///< Directory full
+  MEGA65_H_ERR_DOUBLE_ATTACH = 0x8F,      ///< Image already attached
+  MEGA65_H_EOF = 0xFF,                    ///< End of file/directory
+} mega65_h_err;
+
+/// FAT directory entry returned by mega65_h_readdir().
+/// Total size: 87 bytes. Buffer must be 256-byte aligned.
+typedef struct {
+  char long_name[64];     ///< Long filename, null-terminated (max 63 chars)
+  uint8_t name_len;       ///< Length of long filename
+  char short_name[11];    ///< 8.3 filename (space-padded, no dot/null)
+  uint8_t _reserved[2];   ///< Reserved
+  uint32_t start_cluster; ///< Starting cluster number
+  uint32_t file_size;     ///< File size in bytes
+  uint8_t attributes;     ///< Attribute flags (MEGA65_H_ATTR_*)
+} mega65_h_dirent;
+
+/// File attribute flags for mega65_h_dirent.attributes.
+enum
+#ifdef __clang__
+    : uint8_t
+#endif
+{
+  MEGA65_H_ATTR_READONLY = 0x01, ///< Read-only file
+  MEGA65_H_ATTR_HIDDEN = 0x02,   ///< Hidden file
+  MEGA65_H_ATTR_SYSTEM = 0x04,   ///< System file
+  MEGA65_H_ATTR_VOLLABEL = 0x08, ///< Volume label
+  MEGA65_H_ATTR_SUBDIR = 0x10,   ///< Sub-directory
+  MEGA65_H_ATTR_ARCHIVE = 0x20,  ///< Archive flag
+};
+
+/// Hyppo/HDOS version information returned by mega65_h_getversion().
+typedef struct {
+  uint8_t hyppo_major; ///< Hyppo version major
+  uint8_t hyppo_minor; ///< Hyppo version minor
+  uint8_t hdos_major;  ///< HDOS version major
+  uint8_t hdos_minor;  ///< HDOS version minor
+} mega65_h_version;
+
+/// Flags for mega65_h_attach().
+enum
+#ifdef __clang__
+    : uint8_t
+#endif
+{
+  MEGA65_H_ATTACH_D0 = 0x00,  ///< Attach to drive 0
+  MEGA65_H_ATTACH_D1 = 0x01,  ///< Attach to drive 1
+  MEGA65_H_DETACH_D0 = 0x80,  ///< Detach drive 0
+  MEGA65_H_DETACH_D1 = 0x81,  ///< Detach drive 1
+  MEGA65_H_DETACH_ALL = 0xC2, ///< Detach both drives
+};
+
+// --- System services ---
+
+/// Get Hyppo and HDOS version numbers.
+///
+/// @param ver  Pointer to receive version information
+void mega65_h_getversion(mega65_h_version *ver);
+
+/// Get the error code from the last failed Hyppo service call.
+/// Only valid if the previous call returned a nonzero error.
+///
+/// @return Error code from the last failed service
+mega65_h_err mega65_h_geterrorcode(void);
+
+// --- Drive services ---
+
+/// Get the currently selected SD card drive number.
+///
+/// @return Current drive number
+uint8_t mega65_h_getcurrentdrive(void);
+
+/// Get the default SD card drive number (set at boot).
+///
+/// @return Default drive number
+uint8_t mega65_h_getdefaultdrive(void);
+
+/// Select the active SD card drive/partition.
+///
+/// @param drive  Drive number
+/// @return MEGA65_H_OK or error code
+mega65_h_err mega65_h_selectdrive(uint8_t drive);
+
+// --- Filename and file search ---
 
 /// Set the Hyppo filename for subsequent find/load operations.
 /// Filename is ASCII (not PETSCII), null-terminated, max 63 characters.
-/// Operates on the SD card FAT filesystem, not D81 disk images.
 ///
 /// @param filename  ASCII filename string
-/// @return 0 on success, Hyppo error code on failure
-uint8_t mega65_h_setname(const char *filename);
+/// @return MEGA65_H_OK or error code
+mega65_h_err mega65_h_setname(const char *filename);
+
+/// Find a file by name in the current directory.
+/// Precondition: mega65_h_setname() called with the target filename.
+/// On success, the internal FAT directory entry is set for use by
+/// mega65_h_openfile(), mega65_h_chdir(), or mega65_h_rmfile().
+///
+/// @return MEGA65_H_OK or error code (MEGA65_H_ERR_FILE_NOT_FOUND)
+mega65_h_err mega65_h_findfile(void);
+
+/// Begin searching for files matching the name set by mega65_h_setname().
+/// Returns a directory file descriptor for use with mega65_h_findnext().
+/// Caller must close with mega65_h_closedir() unless findnext exhausts
+/// the search (auto-closes on MEGA65_H_ERR_FILE_NOT_FOUND).
+///
+/// @param fd  Pointer to receive the directory file descriptor
+/// @return MEGA65_H_OK or error code
+mega65_h_err mega65_h_findfirst(uint8_t *fd);
+
+/// Find the next matching file after mega65_h_findfirst().
+/// Auto-closes the fd on MEGA65_H_ERR_FILE_NOT_FOUND.
+///
+/// @return MEGA65_H_OK or error code
+mega65_h_err mega65_h_findnext(void);
+
+// --- File I/O ---
+// readfile/writefile operate on the "current file" set by openfile.
+// Data is transferred via the Hyppo sector buffer at $FFD6E00-$FFD6FFF.
+// Use DMA or 32-bit addressing to access the sector buffer.
+
+/// Open a file for reading/writing.
+/// Precondition: file found via findfile/findfirst/findnext/readdir.
+/// Sets the file as the "current file" for readfile/writefile.
+///
+/// @param fd  Pointer to receive the file descriptor (for closefile)
+/// @return MEGA65_H_OK or error code
+mega65_h_err mega65_h_openfile(uint8_t *fd);
+
+/// Read the next sector from the current file into the sector buffer.
+/// Data is placed at $FFD6E00 (512 bytes). Access via DMA or 32-bit loads.
+/// Returns count=0 at end of file.
+///
+/// @param count  Pointer to receive bytes read (0 = EOF)
+/// @return MEGA65_H_OK or error code
+mega65_h_err mega65_h_readfile(uint16_t *count);
+
+/// Close a file descriptor.
+///
+/// @param fd  File descriptor from mega65_h_openfile()
+void mega65_h_closefile(uint8_t fd);
+
+/// Close all open file and directory descriptors.
+void mega65_h_closeall(void);
+
+/// Delete a file.
+/// Precondition: file found via findfile/findfirst/findnext/readdir.
+///
+/// @return MEGA65_H_OK or error code
+mega65_h_err mega65_h_rmfile(void);
+
+// --- Directory I/O ---
+
+/// Open the current working directory for reading.
+///
+/// @param fd  Pointer to receive the directory file descriptor
+/// @return MEGA65_H_OK or error code
+mega65_h_err mega65_h_opendir(uint8_t *fd);
+
+/// Read the next directory entry.
+/// dest must be 256-byte aligned (only the high byte is used as page number).
+/// Returns MEGA65_H_EOF when no more entries remain.
+///
+/// @param fd    Directory file descriptor from mega65_h_opendir()
+/// @param dest  Page-aligned buffer to receive the FAT directory entry
+/// @return MEGA65_H_OK, MEGA65_H_EOF, or error code
+mega65_h_err mega65_h_readdir(uint8_t fd, mega65_h_dirent *dest);
+
+/// Close a directory file descriptor.
+///
+/// @param fd  File descriptor from mega65_h_opendir()
+void mega65_h_closedir(uint8_t fd);
+
+/// Change to a subdirectory.
+/// Precondition: directory found via findfile/findfirst/findnext/readdir.
+/// Use ".." entry to go up one level.
+///
+/// @return MEGA65_H_OK or error code (MEGA65_H_ERR_NOT_DIRECTORY)
+mega65_h_err mega65_h_chdir(void);
+
+/// Change to the root directory of a drive.
+///
+/// @param drive  Drive number
+/// @return MEGA65_H_OK or error code
+mega65_h_err mega65_h_cdrootdir(uint8_t drive);
+
+// --- File loading (bypasses sector buffer) ---
 
 /// Load a file from the SD card into chip memory at a 28-bit address.
 /// Call mega65_h_setname() first. Loads the entire file at once.
 ///
 /// @param addr  28-bit destination in chip memory ($000000-$FFFFFF)
-/// @return 0 on success, Hyppo error code on failure
-uint8_t mega65_h_loadfile(uint32_t addr);
+/// @return MEGA65_H_OK or error code
+mega65_h_err mega65_h_loadfile(uint32_t addr);
 
 /// Load a file from the SD card into attic/hyper RAM.
 /// Call mega65_h_setname() first. Loads the entire file at once.
 ///
 /// @param addr  24-bit offset in attic RAM (base $08000000 added by hardware)
-/// @return 0 on success, Hyppo error code on failure
-uint8_t mega65_h_loadfile_attic(uint32_t addr);
+/// @return MEGA65_H_OK or error code
+mega65_h_err mega65_h_loadfile_attic(uint32_t addr);
+
+// --- Disk image services ---
+
+/// Attach or detach a D81 disk image to an F011 floppy drive.
+/// For attach: call mega65_h_setname() with the image filename first.
+/// flags: MEGA65_H_ATTACH_D0, MEGA65_H_ATTACH_D1, MEGA65_H_DETACH_D0,
+///        MEGA65_H_DETACH_D1, MEGA65_H_DETACH_ALL.
+///
+/// @param flags  Attach/detach flags
+/// @return MEGA65_H_OK or error code
+mega65_h_err mega65_h_attach(uint8_t flags);
 
 #ifdef __clang__
 #pragma clang diagnostic pop

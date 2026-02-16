@@ -32,3 +32,32 @@ if(TARGET hyppo.prg)
       "$<TARGET_FILE_DIR:hyppo.prg>/hyppo_hdos/TEST.BIN"
     COMMENT "Copying TEST.BIN to hyppo hdos directory")
 endif()
+
+add_mega65_test(hyppo-system)
+
+add_mega65_hdos_test(hyppo-dir)
+if(TARGET hyppo-dir.prg)
+  # Create two small text files for findfile/readdir tests
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/FILE1.TXT" "hello")
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/FILE2.TXT" "world")
+  add_custom_command(TARGET hyppo-dir.prg POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+      "${CMAKE_CURRENT_BINARY_DIR}/FILE1.TXT"
+      "$<TARGET_FILE_DIR:hyppo-dir.prg>/hyppo-dir_hdos/FILE1.TXT"
+    COMMAND ${CMAKE_COMMAND} -E copy
+      "${CMAKE_CURRENT_BINARY_DIR}/FILE2.TXT"
+      "$<TARGET_FILE_DIR:hyppo-dir.prg>/hyppo-dir_hdos/FILE2.TXT"
+    COMMENT "Copying test files to hyppo-dir hdos directory")
+endif()
+
+add_mega65_hdos_test(hyppo-fileio)
+if(TARGET hyppo-fileio.prg)
+  # Reuse same 8-byte test payload: DE AD BE EF CA FE BA BE
+  string(ASCII 222 173 190 239 202 254 186 190 _fileio_test_data)
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/FILEIO_TEST.BIN" "${_fileio_test_data}")
+  add_custom_command(TARGET hyppo-fileio.prg POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+      "${CMAKE_CURRENT_BINARY_DIR}/FILEIO_TEST.BIN"
+      "$<TARGET_FILE_DIR:hyppo-fileio.prg>/hyppo-fileio_hdos/TEST.BIN"
+    COMMENT "Copying TEST.BIN to hyppo-fileio hdos directory")
+endif()

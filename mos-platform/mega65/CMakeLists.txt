@@ -45,6 +45,13 @@ add_platform_library(mega65-c
   mega65_k_setmsg.c
   mega65_k_settim.c
   mega65_k_swapper.c
+  mega65_h_attach.c
+  mega65_h_dirio.c
+  mega65_h_drive.c
+  mega65_h_fileio.c
+  mega65_h_findfile.c
   mega65_h_loadfile.c
+  mega65_h_setname.c
+  mega65_h_system.c
 )
 target_include_directories(mega65-c BEFORE PUBLIC .)
