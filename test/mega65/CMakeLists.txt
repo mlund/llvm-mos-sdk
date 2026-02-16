@@ -81,6 +81,7 @@ function(add_mega65_disk_test name)
 endfunction()
 
 add_mega65_test(kernal)
+add_mega65_test(kernal-far)
 
 add_mega65_disk_test(disk)
 if(TARGET disk.prg)

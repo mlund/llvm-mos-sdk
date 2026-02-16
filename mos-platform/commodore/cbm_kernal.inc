@@ -93,6 +93,11 @@
   SWAPPER      = $FF65
   PFKEY        = $FF68
   SETBNK       = $FF6B
+  JSRFAR       = $FF6E
+  JMPFAR       = $FF71
+  LDA_FAR      = $FF74
+  STA_FAR      = $FF77
+  CMP_FAR      = $FF7A
 #endif
 
 #if defined(__C128__) || defined(__CX16__)

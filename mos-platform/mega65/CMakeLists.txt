@@ -30,6 +30,10 @@ add_platform_library(mega65-c
   filevars.s
   kernal.S
   mega65_k_addkey.c
+  mega65_k_jsrfar.S
+  mega65_k_lda_far.c
+  mega65_k_sta_far.c
+  mega65_k_cmp_far.c
   mega65_k_close_all.c
   mega65_k_cursor.c
   mega65_k_getio.c
@@ -54,4 +58,5 @@ add_platform_library(mega65-c
   mega65_h_setname.c
   mega65_h_system.c
 )
+target_compile_options(mega65-c PRIVATE -mcpu=mos45gs02)
 target_include_directories(mega65-c BEFORE PUBLIC .)

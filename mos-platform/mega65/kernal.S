@@ -85,3 +85,8 @@ weakdef PFKEY
 weakdef SAVEFL
 weakdef SWAPPER
 weakdef SETBNK
+weakdef JSRFAR
+weakdef JMPFAR
+weakdef LDA_FAR
+weakdef STA_FAR
+weakdef CMP_FAR

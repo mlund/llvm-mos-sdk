@@ -375,6 +375,69 @@ void mega65_k_settim(unsigned char hours, unsigned char minutes,
 /// Toggle between 40x25 and 80x25 text modes.
 void mega65_k_swapper(void);
 
+/// Call a subroutine in another MEGA65 bank via KERNAL JSRFAR ($FF6E).
+///
+/// @todo Not yet tested; hangs in xemu — needs further investigation.
+///
+/// This uses MEGA65 native 64K bank numbering, NOT the mega65-banked platform
+/// bank IDs. For platform-banked calls, use banked_call() instead.
+///
+/// JSRFAR maps $2000-$7FFF to the target bank, calls the address via RTI,
+/// then restores the caller's MAP. The called routine sees bank 0 at
+/// $0000-$1FFF, I/O at $D000-$DFFF, and KERNAL ROM at $E000-$FFFF.
+///
+/// MEGA65 bank -> physical base of $2000-$7FFF window:
+///   0: $02000 (chip RAM)    4: $42000 (fast RAM)
+///   1: $12000 (chip RAM)    5: $52000 (fast RAM)
+///   2-3: ROM (not useful)
+///
+/// @param bank    MEGA65 64K bank number (0-5)
+/// @param addr    Target subroutine address within the bank
+/// @param s_reg   Initial CPU status register (0x04 = IRQs disabled)
+/// @param a_reg   Initial A register for called routine
+/// @param x_reg   Initial X register for called routine
+/// @param y_reg   Initial Y register for called routine
+/// @param z_reg   Initial Z register for called routine
+/// @return Called routine's A register value on return
+unsigned char mega65_k_jsrfar(unsigned char bank, unsigned int addr,
+                              unsigned char s_reg, unsigned char a_reg,
+                              unsigned char x_reg, unsigned char y_reg,
+                              unsigned char z_reg);
+
+/// Read a byte from an address in any MEGA65 bank via KERNAL LDA_FAR ($FF74).
+/// Uses 32-bit flat addressing internally; does not change the memory map.
+/// Equivalent to lda (addr),y in the given bank.
+///
+/// @param bank      MEGA65 64K bank number (0-5)
+/// @param addr      Base address within the bank
+/// @param y_offset  Index added to addr
+/// @return Byte value at bank:addr+y_offset
+unsigned char mega65_k_lda_far(unsigned char bank, unsigned int addr,
+                               unsigned char y_offset);
+
+/// Store a byte to an address in any MEGA65 bank via KERNAL STA_FAR ($FF77).
+/// Uses 32-bit flat addressing internally; does not change the memory map.
+/// Equivalent to sta (addr),y in the given bank.
+///
+/// @param bank      MEGA65 64K bank number (0-5)
+/// @param addr      Base address within the bank
+/// @param y_offset  Index added to addr
+/// @param value     Byte to store
+void mega65_k_sta_far(unsigned char bank, unsigned int addr,
+                      unsigned char y_offset, unsigned char value);
+
+/// Compare a byte with an address in any MEGA65 bank via KERNAL CMP_FAR
+/// ($FF7A). Uses 32-bit flat addressing internally; does not change the memory map.
+/// Equivalent to cmp (addr),y in the given bank.
+///
+/// @param bank      MEGA65 64K bank number (0-5)
+/// @param addr      Base address within the bank
+/// @param y_offset  Index added to addr
+/// @param value     Byte to compare against
+/// @return 0 if equal, 1 if not equal
+unsigned char mega65_k_cmp_far(unsigned char bank, unsigned int addr,
+                               unsigned char y_offset, unsigned char value);
+
 /*****************************************************************************/
 /*                   Hyppo hypervisor service wrappers                       */
 /*                                                                           */
