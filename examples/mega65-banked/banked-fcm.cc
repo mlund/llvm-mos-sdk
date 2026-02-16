@@ -108,9 +108,11 @@ static void setup_palette() {
 }
 
 // Clear colour RAM so FCM attributes (flip/trim) don't interfere.
+// SEAM uses 2 bytes of colour RAM per character (byte 0: attributes like
+// flip/alpha/GOTOX/NCM; byte 1: foreground colour), so clear 2000 bytes.
 static void setup_colour_ram() {
   // Colour RAM is at $FF80000 in the 28-bit DMA address space.
-  const auto fill = make_dma_fill(0xFF80000, 0, NUM_CELLS);
+  const auto fill = make_dma_fill(0xFF80000, 0, NUM_CELLS * 2);
   trigger_dma(fill);
 }
 

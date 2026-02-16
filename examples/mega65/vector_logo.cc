@@ -227,17 +227,10 @@ static void setup_vic() {
       (VICIV.ctrlb | VIC3_FAST_MASK) & ~(VIC3_H640_MASK | VIC3_V400_MASK);
 
   // Point screen RAM to our array via extended pointers
-  auto scrn = reinterpret_cast<uintptr_t>(screen_ram);
-  VICIV.scrnptr_lsb = scrn & 0xFF;
-  VICIV.scrnptr_msb = (scrn >> 8) & 0xFF;
-  VICIV.scrnptr_bnk = 0x00;
-  VICIV.scrnptr_mb = 0x00;
+  VICIV.scrnptr = reinterpret_cast<uintptr_t>(screen_ram);
 
   // Point character/bitmap data to our aligned bitmap array
-  auto bm = reinterpret_cast<uintptr_t>(bitmap);
-  VICIV.charptr_lsb = bm & 0xFF;
-  VICIV.charptr_msb = (bm >> 8) & 0xFF;
-  VICIV.charptr_bnk = 0x00;
+  VICIV.charptr = reinterpret_cast<uintptr_t>(bitmap);
 
   // 40-column, 25-row screen geometry (320x200 in BMM)
   VICIV.linestep = CELL_COLS;
