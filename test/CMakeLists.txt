@@ -18,6 +18,11 @@ function(add_test_target target)
       -DEMUTEST_COMMAND=${EMUTEST_COMMAND}
       -DLIBRETRO_STELLA_CORE=${LIBRETRO_STELLA_CORE}
       -DLIBRETRO_MESEN_CORE=${LIBRETRO_MESEN_CORE}
+      -DXMEGA65_COMMAND=${XMEGA65_COMMAND}
+      -DC1541_COMMAND=${C1541_COMMAND}
+      -DMAKE_D81_SCRIPT=${CMAKE_SOURCE_DIR}/mos-platform/mega65-banked/make-d81.sh
+      -DLUA_COMMAND=${LUA_COMMAND}
+      -DSPLIT_BANKS_SCRIPT=${CMAKE_SOURCE_DIR}/mos-platform/mega65-banked/misc/split-banks.lua
       -DCMAKE_C_FLAGS=${config_flag}
       -DCMAKE_CXX_FLAGS=${config_flag}
       -DCMAKE_TOOLCHAIN_FILE=${CMAKE_SOURCE_DIR}/cmake/llvm-mos-toolchain.cmake
@@ -26,6 +31,18 @@ function(add_test_target target)
     TEST_AFTER_INSTALL On
     EXCLUDE_FROM_ALL YES
     DEPENDS mos-platform)
+
+  # Always clean the inner test build before rebuilding. This ensures
+  # platform source changes (e.g. .S files recompiled into .a/.o) are
+  # picked up, since ExternalProject boundaries prevent automatic
+  # cross-project dependency tracking.
+  ExternalProject_Add_Step(test-${target} platform-sync
+    COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --target clean
+    COMMENT "Cleaning test-${target} to pick up platform changes"
+    DEPENDEES configure
+    DEPENDERS build
+    ALWAYS 1)
+
   add_dependencies(test test-${target})
   set_property(TARGET test-${target} PROPERTY
     ADDITIONAL_CLEAN_FILES ${CMAKE_BINARY_DIR}/test/${target})
@@ -43,3 +60,5 @@ add_test_target(atari2600-4k)
 add_test_target(atari2600-3e)
 add_test_target(atari8-dos)
 add_test_target(atari8-cart-std)
+add_test_target(mega65)
+add_test_target(mega65-banked)
