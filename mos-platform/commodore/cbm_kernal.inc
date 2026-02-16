@@ -80,6 +80,21 @@
   SETBNK       = $FF68
 #endif
 
+#ifdef __MEGA65__
+  ; MEGA65 extended jump table
+  SAVEFL       = $FF3B
+  CURSOR       = $FF35
+  GETIO        = $FF41
+  GETLFS       = $FF44
+  ADDKEY       = $FF4A
+  CLOSE_ALL    = $FF50
+  LKUPLA       = $FF5F
+  LKUPSA       = $FF62
+  SWAPPER      = $FF65
+  PFKEY        = $FF68
+  SETBNK       = $FF6B
+#endif
+
 #if defined(__C128__) || defined(__CX16__)
   ; Extended jump table
   CLSALL       = $FF4A

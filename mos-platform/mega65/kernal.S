@@ -70,4 +70,18 @@ weakdef GETIN
 weakdef CLALL
 weakdef UDTIM
 weakdef SCREEN
+weakdef PLOT
 weakdef IOBASE
+
+; MEGA65 extended jump table
+weakdef ADDKEY
+weakdef CLOSE_ALL
+weakdef CURSOR
+weakdef GETIO
+weakdef GETLFS
+weakdef LKUPLA
+weakdef LKUPSA
+weakdef PFKEY
+weakdef SAVEFL
+weakdef SWAPPER
+weakdef SETBNK
