@@ -216,6 +216,94 @@ enum
 };
 
 /*****************************************************************************/
+/*                          Joystick / paddle types                          */
+/*****************************************************************************/
+
+/// Joystick CIA bit masks (active LOW: 0 = pressed).
+enum
+#ifdef __clang__
+    : uint8_t
+#endif
+{
+  MEGA65_JOY_UP_MASK = 0x01,
+  MEGA65_JOY_DOWN_MASK = 0x02,
+  MEGA65_JOY_LEFT_MASK = 0x04,
+  MEGA65_JOY_RIGHT_MASK = 0x08,
+  MEGA65_JOY_FIRE_MASK = 0x10,
+};
+
+/// Paddle threshold for C64GS three-button protocol.
+/// Paddle analog value below this means button pressed.
+#define MEGA65_JOY_PADDLE_BTN_THRESHOLD 0x10
+
+/// Joystick + paddle state for one port.
+/// Populate via mega65_joy_read(), mega65_joy_paddles(),
+/// or manually from CIA1/SID1 registers.
+///
+/// CIA bits are active LOW (0 = pressed):
+///   Bit 0: Up, Bit 1: Down, Bit 2: Left, Bit 3: Right, Bit 4: Fire
+///
+/// Paddle values are 0-255 analog readings from SID A/D converters.
+/// Three-button protocol: paddle < MEGA65_JOY_PADDLE_BTN_THRESHOLD = pressed.
+/// Five-button protocol: Up+Down = Button 4, Left+Right = Button 5.
+typedef struct {
+  unsigned char cia;      ///< Raw 5-bit CIA value (active LOW: 0=pressed)
+  unsigned char paddle_a; ///< Paddle A / POTX analog value (0-255)
+  unsigned char paddle_b; ///< Paddle B / POTY analog value (0-255)
+
+#ifdef __cplusplus
+  // Directions
+  bool up() const { return !(cia & MEGA65_JOY_UP_MASK); }
+  bool down() const { return !(cia & MEGA65_JOY_DOWN_MASK); }
+  bool left() const { return !(cia & MEGA65_JOY_LEFT_MASK); }
+  bool right() const { return !(cia & MEGA65_JOY_RIGHT_MASK); }
+  bool fire() const { return !(cia & MEGA65_JOY_FIRE_MASK); }
+  // Cardinal direction aliases
+  bool north() const { return !(cia & MEGA65_JOY_UP_MASK); }
+  bool south() const { return !(cia & MEGA65_JOY_DOWN_MASK); }
+  bool east() const { return !(cia & MEGA65_JOY_RIGHT_MASK); }
+  bool west() const { return !(cia & MEGA65_JOY_LEFT_MASK); }
+  // Diagonal combinations (both directions must be pressed)
+  bool north_east() const {
+    return !(cia & (MEGA65_JOY_UP_MASK | MEGA65_JOY_RIGHT_MASK));
+  }
+  bool north_west() const {
+    return !(cia & (MEGA65_JOY_UP_MASK | MEGA65_JOY_LEFT_MASK));
+  }
+  bool south_east() const {
+    return !(cia & (MEGA65_JOY_DOWN_MASK | MEGA65_JOY_RIGHT_MASK));
+  }
+  bool south_west() const {
+    return !(cia & (MEGA65_JOY_DOWN_MASK | MEGA65_JOY_LEFT_MASK));
+  }
+  // Five-button protocol (C64GS / 5plusbuttonsJoystick)
+  bool button1() const { return !(cia & MEGA65_JOY_FIRE_MASK); }
+  bool button2() const { return paddle_a < MEGA65_JOY_PADDLE_BTN_THRESHOLD; }
+  bool button3() const { return paddle_b < MEGA65_JOY_PADDLE_BTN_THRESHOLD; }
+  bool button4() const {
+    return !(cia & (MEGA65_JOY_UP_MASK | MEGA65_JOY_DOWN_MASK));
+  }
+  bool button5() const {
+    return !(cia & (MEGA65_JOY_LEFT_MASK | MEGA65_JOY_RIGHT_MASK));
+  }
+#endif
+} mega65_joy_state_t;
+
+/// Read a standard joystick (directions + fire, CIA only).
+/// Does not write paddle_a/paddle_b — caller should zero-initialize if needed.
+///
+/// @param port  Port number (1 or 2, matching physical labels)
+/// @param joy   Receives joystick state (cia field only)
+void mega65_joy_read(unsigned char port, mega65_joy_state_t *joy);
+
+/// Read joystick + paddles (CIA + SID analog).
+/// ~1.3 ms — briefly disables interrupts and down-clocks to 1 MHz.
+///
+/// @param port  Port number (1 or 2, matching physical labels)
+/// @param joy   Receives joystick + paddle state
+void mega65_joy_paddles(unsigned char port, mega65_joy_state_t *joy);
+
+/*****************************************************************************/
 /*                      MEGA65 KERNAL function wrappers                      */
 /*****************************************************************************/
 
@@ -427,8 +515,8 @@ void mega65_k_sta_far(unsigned char bank, unsigned int addr,
                       unsigned char y_offset, unsigned char value);
 
 /// Compare a byte with an address in any MEGA65 bank via KERNAL CMP_FAR
-/// ($FF7A). Uses 32-bit flat addressing internally; does not change the memory map.
-/// Equivalent to cmp (addr),y in the given bank.
+/// ($FF7A). Uses 32-bit flat addressing internally; does not change the memory
+/// map. Equivalent to cmp (addr),y in the given bank.
 ///
 /// @param bank      MEGA65 64K bank number (0-5)
 /// @param addr      Base address within the bank

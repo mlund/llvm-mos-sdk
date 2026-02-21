@@ -29,6 +29,7 @@ add_platform_library(mega65-c
   cbm_k_save.c
   filevars.s
   kernal.S
+  mega65_joy_read.cc
   mega65_k_addkey.c
   mega65_k_jsrfar.S
   mega65_k_lda_far.c
@@ -59,4 +60,6 @@ add_platform_library(mega65-c
   mega65_h_system.c
 )
 target_compile_options(mega65-c PRIVATE -mcpu=mos45gs02)
-target_include_directories(mega65-c BEFORE PUBLIC .)
+target_include_directories(mega65-c BEFORE PUBLIC .
+  ${CMAKE_CURRENT_SOURCE_DIR}/../c64
+  ${CMAKE_CURRENT_SOURCE_DIR}/../commodore)
