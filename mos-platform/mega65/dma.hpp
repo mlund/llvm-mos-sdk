@@ -46,9 +46,10 @@ typedef DMAJob<7, DMAList_F018B> CommonDMAJob;
  * @param count Number of values to fill
  * @param skip Optional skip (default: 1)
  */
-CommonDMAJob make_dma_fill(const uint32_t dst, const uint8_t value,
-                           const uint16_t count, const uint8_t skip = 1) {
-  CommonDMAJob dma;
+constexpr CommonDMAJob make_dma_fill(const uint32_t dst, const uint8_t value,
+                                     const uint16_t count,
+                                     const uint8_t skip = 1) {
+  CommonDMAJob dma{};
   dma.options[0] = ENABLE_F018B_OPT;
   dma.options[1] = SRC_ADDR_BITS_OPT;
   dma.options[2] = 0;
@@ -76,8 +77,8 @@ CommonDMAJob make_dma_fill(const uint32_t dst, const uint8_t value,
  * @param dst 28-bit destination address
  * @param count Number of values to copy
  */
-CommonDMAJob make_dma_copy(const uint32_t src, const uint32_t dst,
-                           const uint16_t count) {
+constexpr CommonDMAJob make_dma_copy(const uint32_t src, const uint32_t dst,
+                                     const uint16_t count) {
   auto dma = make_dma_fill(dst, 0, count);
   dma.options[2] = (uint8_t)(src >> 20);
   dma.dmalist.command = DMA_COPY_CMD;
