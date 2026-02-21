@@ -72,31 +72,34 @@ __set_bank_asm:
 ; SYNC: see _ram-banked.ld header for the full list of files encoding bank layout.
 ;
 ; Physical memory layout:
-;   $00000-$1FFFF  Chip RAM (128KB)
+;   $00000-$0FFFF  Chip RAM first 64KB (bank 0 + ram_fixed + ROM/IO)
+;   $10000-$1FFFF  Chip RAM second 64KB (banks 1-2; $1F800 = colour RAM window)
 ;   $20000-$3FFFF  ROM — NOT WRITABLE
-;   $40000-$5FFFF  Fast RAM (128KB)
+;   $40000-$5FFFF  Fast RAM (128KB, banks 3-7 with $6000 spacing)
 ;   $8000000+      Attic RAM (HyperRAM, 8MB; megabyte byte $80)
 ;
-; Bank → offset → physical base ($2000 + offset):
-;   0: $00000 → $02000  (Chip RAM)
-;   1: $08000 → $0A000  (Chip RAM)
-;   2: $10000 → $12000  (Chip RAM)
-;   3: $18000 → $1A000  (Chip RAM — NOTE: extends to $1FFFF, overlaps
-;                         colour RAM window at $1F800. See link.ld.)
-;   4: $3E000 → $40000  (Fast RAM — skip ROM at $20000)
-;   5: $46000 → $48000  (Fast RAM)
-;   6: $4E000 → $50000  (Fast RAM)
-;   7: $56000 → $58000  (Fast RAM)
+; All banks offset +$800 from 64KB page boundaries to avoid a KERNAL LOAD
+; bug that corrupts the first 1-12KB at addresses with load_addr_hi=$00.
 ;
-; Attic RAM banks (megabyte byte $80, 2 per 64KB page at +$0000 and +$6000):
-;   8:  $FE000 → $8000000  (Attic RAM)
-;   9:  $04000 → $8006000  (Attic RAM)
-;   10: $0E000 → $8010000  (Attic RAM)
-;   11: $14000 → $8016000  (Attic RAM)
-;   12: $1E000 → $8020000  (Attic RAM)
-;   13: $24000 → $8026000  (Attic RAM)
-;   14: $2E000 → $8030000  (Attic RAM)
-;   15: $34000 → $8036000  (Attic RAM)
+; Bank → offset → physical base ($2000 + offset):
+;   0: $00000 → $02000  (Chip RAM — default, no MAP needed)
+;   1: $0E800 → $10800  (Chip RAM)
+;   2: $14800 → $16800  (Chip RAM — ends at $1C7FF, below colour RAM at $1F800)
+;   3: $3E800 → $40800  (Fast RAM — skip ROM at $20000)
+;   4: $44800 → $46800  (Fast RAM)
+;   5: $4A800 → $4C800  (Fast RAM)
+;   6: $50800 → $52800  (Fast RAM)
+;   7: $56800 → $58800  (Fast RAM — ends at $5E7FF)
+;
+; Attic RAM banks (megabyte byte $80, 2 per 64KB page at +$0800 and +$6800):
+;   8:  $FE800 → $8000800  (Attic RAM)
+;   9:  $04800 → $8006800  (Attic RAM)
+;   10: $0E800 → $8010800  (Attic RAM)
+;   11: $14800 → $8016800  (Attic RAM)
+;   12: $1E800 → $8020800  (Attic RAM)
+;   13: $24800 → $8026800  (Attic RAM)
+;   14: $2E800 → $8030800  (Attic RAM)
+;   15: $34800 → $8036800  (Attic RAM)
 ;
 ; X register encoding: X[7:4] = $E (select $2000-$7FFF), X[3:0] = offset[19:16]
 ; A register = offset[15:8]
@@ -107,21 +110,21 @@ __set_bank_asm:
 .section .rodata.bank_map_table,"a",@progbits
 bank_map_table:
     .byte $00, $00          ; bank 0: unmap (default Chip RAM at $02000)
-    .byte $80, $e0          ; bank 1: offset $08000
-    .byte $00, $e1          ; bank 2: offset $10000
-    .byte $80, $e1          ; bank 3: offset $18000
-    .byte $e0, $e3          ; bank 4: offset $3E000
-    .byte $60, $e4          ; bank 5: offset $46000
-    .byte $e0, $e4          ; bank 6: offset $4E000
-    .byte $60, $e5          ; bank 7: offset $56000
-    .byte $e0, $ef          ; bank 8:  offset $FE000 (attic, mega=$80)
-    .byte $40, $e0          ; bank 9:  offset $04000 (attic, mega=$80)
-    .byte $e0, $e0          ; bank 10: offset $0E000 (attic, mega=$80)
-    .byte $40, $e1          ; bank 11: offset $14000 (attic, mega=$80)
-    .byte $e0, $e1          ; bank 12: offset $1E000 (attic, mega=$80)
-    .byte $40, $e2          ; bank 13: offset $24000 (attic, mega=$80)
-    .byte $e0, $e2          ; bank 14: offset $2E000 (attic, mega=$80)
-    .byte $40, $e3          ; bank 15: offset $34000 (attic, mega=$80)
+    .byte $e8, $e0          ; bank 1: offset $0E800 → physical $10800
+    .byte $48, $e1          ; bank 2: offset $14800 → physical $16800
+    .byte $e8, $e3          ; bank 3: offset $3E800 → physical $40800
+    .byte $48, $e4          ; bank 4: offset $44800 → physical $46800
+    .byte $a8, $e4          ; bank 5: offset $4A800 → physical $4C800
+    .byte $08, $e5          ; bank 6: offset $50800 → physical $52800
+    .byte $68, $e5          ; bank 7: offset $56800 → physical $58800
+    .byte $e8, $ef          ; bank 8:  offset $FE800 (attic, mega=$80)
+    .byte $48, $e0          ; bank 9:  offset $04800 (attic, mega=$80)
+    .byte $e8, $e0          ; bank 10: offset $0E800 (attic, mega=$80)
+    .byte $48, $e1          ; bank 11: offset $14800 (attic, mega=$80)
+    .byte $e8, $e1          ; bank 12: offset $1E800 (attic, mega=$80)
+    .byte $48, $e2          ; bank 13: offset $24800 (attic, mega=$80)
+    .byte $e8, $e2          ; bank 14: offset $2E800 (attic, mega=$80)
+    .byte $48, $e3          ; bank 15: offset $34800 (attic, mega=$80)
 
 ; MAPLO megabyte byte lookup table (1 byte per bank).
 ; Chip/fast RAM banks use $00, attic RAM banks use $80.

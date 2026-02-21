@@ -11,8 +11,7 @@
 //
 // Border color changes track execution progress:
 //   red(2) -> bank 1, green(5) -> bank 2, yellow(7) -> bank 4.
-// Bank 4 uses fast RAM ($40000), avoiding the colour RAM window at
-// $1F800-$1FFFF that overlaps chip RAM bank 3 ($1A000-$1FFFF).
+// Banks 1-2 use chip RAM ($10000, $16000), banks 3-7 use fast RAM ($40000+).
 
 #include <cstdio>
 #include <mapper.h>
@@ -38,11 +37,20 @@ void hello_bank_4() {
 }
 
 int main() {
+  BORDERCOLOR = 0;  // black = main start
   printf("Hello from main!\n");
 
+  BORDERCOLOR = 1;  // white = before bank 1
   banked_call(1, hello_bank_1);
+  BORDERCOLOR = 3;  // cyan = after bank 1
+
+  BORDERCOLOR = 4;  // purple = before bank 2
   banked_call(2, hello_bank_2);
+  BORDERCOLOR = 6;  // blue = after bank 2
+
+  BORDERCOLOR = 8;  // orange = before bank 4
   banked_call(4, hello_bank_4);
+  BORDERCOLOR = 10; // pink = after bank 4 (all done)
 
   for (;;) ;
 }

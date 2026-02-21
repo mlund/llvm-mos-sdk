@@ -31,14 +31,18 @@ __attribute__((used, retain, section(".bank_7")))
 static const uint8_t bank7_sig[] = {0xB7, 0x07};
 
 int main(void) {
-  // Verify each bank was loaded from D81 by checking the known signature.
-  for (uint8_t bank = 1; bank <= 7; bank++) {
-    set_bank(bank);
-    volatile uint8_t *data = (volatile uint8_t *)0x2000;
-    if (data[0] != (0xB0 + bank) || data[1] != bank)
-      xemu_exit(bank);
-  }
+  volatile uint8_t *window = (volatile uint8_t *)0x2000;
 
+  // Verify each bank's signature at the start of the banked window.
+  for (uint8_t bank = 1; bank <= 7; ++bank) {
+    set_bank(bank);
+    uint8_t expected_hi = 0xB0 | bank;
+    uint8_t expected_lo = bank;
+    if (window[0] != expected_hi || window[1] != expected_lo) {
+      set_bank(0);
+      xemu_exit(bank);  // exit code = failing bank number
+    }
+  }
   set_bank(0);
-  xemu_exit(0);
+  xemu_exit(0);  // all banks verified OK
 }

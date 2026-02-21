@@ -165,18 +165,21 @@ name_buf:
     .byte $42, $41, $4E, $4B, $31
 
 ; 28-bit SETBNK Y values — address bits [23:16].
-;   Banks 1-3: $00,$01,$01 (Chip RAM)   Banks 4-7: $04,$04,$05,$05 (Fast RAM)
-;   Banks 8-15: 2 per 64KB page at $800.xx00 and $800.xx00+$6000
+;   Banks 1-2: $01,$01 (Chip RAM, second 64KB page)
+;   Banks 3-7: $04,$04,$04,$05,$05 (Fast RAM)
+;   Banks 8-15: 2 per 64KB page at $800.xx00+$0800 and $800.xx00+$6800
 setbnk_y:
-    .byte $00, $01, $01, $04, $04, $05, $05         ; banks 1-7
+    .byte $01, $01, $04, $04, $04, $05, $05         ; banks 1-7
     .byte $00, $00, $01, $01, $02, $02, $03, $03    ; banks 8-15
 
 ; Load address high bytes — offset within each 64KB page.
 ; Lo byte is always $00 since all bank origins are page-aligned.
-;   Bank 1: $A000  Bank 2: $2000  Bank 3: $A000 (NOTE: $1A000+$6000=$20000,
-;     overlaps colour RAM window at $1F800. See link.ld for workaround.)
-;   Bank 4: $0000  Bank 5: $8000  Bank 6: $0000  Bank 7: $8000
-;   Banks 8-15: alternating $0000/$6000 (2 banks per 64KB page)
+; All addresses offset +$800 from page boundaries to avoid KERNAL LOAD bug
+; that corrupts data when load_addr_hi=$00 (Y=0 in KLOAD call).
+;   Bank 1: $0800 ($10800)  Bank 2: $6800 ($16800)
+;   Bank 3: $0800 ($40800)  Bank 4: $6800 ($46800)  Bank 5: $C800 ($4C800)
+;   Bank 6: $2800 ($52800)  Bank 7: $8800 ($58800)
+;   Banks 8-15: alternating $0800/$6800 (2 banks per 64KB page)
 load_addr_hi:
-    .byte $A0, $20, $A0, $00, $80, $00, $80         ; banks 1-7
-    .byte $00, $60, $00, $60, $00, $60, $00, $60    ; banks 8-15
+    .byte $08, $68, $08, $68, $C8, $28, $88         ; banks 1-7
+    .byte $08, $68, $08, $68, $08, $68, $08, $68    ; banks 8-15

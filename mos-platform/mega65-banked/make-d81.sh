@@ -1,10 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 # Split a mega65-banked combined PRG into main + bank files and create a D81.
 #
 # The combined output format (from link.ld OUTPUT_FORMAT) is:
 #   Bytes 0-1:         PRG load address ($01 $20 = $2001)
 #   Bytes 2-24576:     ram region ($2001-$7FFF, bank 0 + BASIC header)
-#   Bytes 24577-45056: ram_fixed region ($8000-$CFFF, fixed code/data, 20KB)
+#   Bytes 24577-40960: ram_fixed region ($8000-$BFFF, fixed code/data)
 #   Then 15 x 24576:   bank_1 through bank_15
 #
 # Bank files get a 2-byte PRG header ($00 $20 = $2000). KERNAL LOAD with
@@ -23,7 +23,7 @@ DIR="$2"
 BASE="$3"
 C1541="$4"
 
-MAIN_SIZE=45057
+MAIN_SIZE=40961
 BANK_SLOT=24576   # each bank slot in the combined PRG (from FULL() padding)
 
 dd if="$PRG" of="$DIR/${BASE}-main.prg" bs=$MAIN_SIZE count=1 2>/dev/null

@@ -10,9 +10,12 @@
 // Each bank is loaded via __do_kernal_load (in load-banks-kernal.S), which
 // checks the linker-provided bank size, skips empty banks, and calls KERNAL
 // LOAD. Before loading, BASIC ROM is unmapped ($01=$3E, LORAM=0) so
-// ram_fixed ($8000-$BFFF) is available as RAM. After loading, ROMC is cleared
-// to extend ram_fixed to 20KB ($8000-$CFFF). KERNAL CHROUT/printf still work
-// (the 40-column screen editor lives entirely in $E000-$FFFF).
+// ram_fixed ($8000-$BFFF) is available as RAM. C65 Interface ROM (ROMC)
+// remains mapped at $C000-$CFFF for KERNAL disk routines.
+//
+// KERNAL bug: LOAD corrupts the first ~1-12KB at the destination address
+// when load_addr_hi=$00 (Y=0 in the KLOAD call). All bank physical
+// addresses use a +$800 offset to ensure non-zero high bytes.
 
 // VIC-IV registers used below. We avoid #include <mega65.h> because the
 // full header chain requires include paths not available to CRT objects.
@@ -67,11 +70,10 @@ __attribute__((weak)) void __load_banks(void) {
   VIC_KEY = 0x53;
   VIC_KEY = 0x47;
   VIC_KEY = 0x53;
-  // Clear ROMC (bit 5) to make $C000-$CFFF available as RAM instead of
-  // C65 Interface ROM. This extends usable ram_fixed to 20KB ($8000-$CFFF).
-  // KERNAL CHROUT/printf still work (40-column editor is in $E000-$FFFF).
-  // Bit 6 preserves C65 character set. Bit 2 = FAST.
-  VIC_CTRLA = 0x44;
+  // Restore $D030 to boot default ($64). ROMC (bit 5) stays set so the
+  // C65 Interface ROM remains at $C000-$CFFF. Bit 6 preserves C65
+  // character set. Bit 2 = FAST.
+  VIC_CTRLA = 0x64;
 
   // Re-enable interrupts for KERNAL screen I/O. The MEGA65 KERNAL's CHROUT
   // (used by printf/putchar) requires interrupts enabled. The CRT init and

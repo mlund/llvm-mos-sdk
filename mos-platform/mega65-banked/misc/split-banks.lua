@@ -21,10 +21,12 @@
 --   ...
 --   FULL(bank_15)    24576 bytes — bank 15
 --
--- Bank physical addresses (ROM at $20000-$3FFFF is skipped):
---   Chip RAM:  Bank 1: $0A000  Bank 2: $12000  Bank 3: $1A000
---   Fast RAM:  Bank 4: $40000  Bank 5: $48000  Bank 6: $50000  Bank 7: $58000
---   Attic RAM: Bank 8: $8000000 ... Bank 15: $8036000
+-- Bank physical addresses (ROM at $20000-$3FFFF skipped; +$800 offset
+-- from 64KB page boundaries avoids KERNAL LOAD corruption bug):
+--   Chip RAM:  Bank 1: $10800  Bank 2: $16800
+--   Fast RAM:  Bank 3: $40800  Bank 4: $46800  Bank 5: $4C800
+--               Bank 6: $52800  Bank 7: $58800
+--   Attic RAM: Bank 8: $8000800 ... Bank 15: $8036800
 --
 -- Output files:
 --   <basename>.prg          — main PRG (load addr $2001, bank 0 + fixed)
@@ -45,21 +47,21 @@ local HEADER_SIZE = 2      -- SHORT(load_addr)
 -- Physical load addresses for each bank (for BLOAD P() parameter).
 -- Skips ROM at $20000-$3FFFF.
 local BANK_LOAD_ADDR = {
-    [1]  = 0x0A000,    -- Chip RAM
-    [2]  = 0x12000,    -- Chip RAM
-    [3]  = 0x1A000,    -- Chip RAM
-    [4]  = 0x40000,    -- Fast RAM
-    [5]  = 0x48000,    -- Fast RAM
-    [6]  = 0x50000,    -- Fast RAM
-    [7]  = 0x58000,    -- Fast RAM
-    [8]  = 0x8000000,  -- Attic RAM (HyperRAM)
-    [9]  = 0x8006000,  -- Attic RAM
-    [10] = 0x8010000,  -- Attic RAM
-    [11] = 0x8016000,  -- Attic RAM
-    [12] = 0x8020000,  -- Attic RAM
-    [13] = 0x8026000,  -- Attic RAM
-    [14] = 0x8030000,  -- Attic RAM
-    [15] = 0x8036000,  -- Attic RAM
+    [1]  = 0x10800,    -- Chip RAM
+    [2]  = 0x16800,    -- Chip RAM
+    [3]  = 0x40800,    -- Fast RAM
+    [4]  = 0x46800,    -- Fast RAM
+    [5]  = 0x4C800,    -- Fast RAM
+    [6]  = 0x52800,    -- Fast RAM
+    [7]  = 0x58800,    -- Fast RAM
+    [8]  = 0x8000800,  -- Attic RAM (HyperRAM)
+    [9]  = 0x8006800,  -- Attic RAM
+    [10] = 0x8010800,  -- Attic RAM
+    [11] = 0x8016800,  -- Attic RAM
+    [12] = 0x8020800,  -- Attic RAM
+    [13] = 0x8026800,  -- Attic RAM
+    [14] = 0x8030800,  -- Attic RAM
+    [15] = 0x8036800,  -- Attic RAM
 }
 
 local function is_empty(data)
