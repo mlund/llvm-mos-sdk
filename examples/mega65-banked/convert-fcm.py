@@ -16,14 +16,35 @@ Pipeline:
      representatives to avoid palette-index averaging artifacts.
   4. Palette entry 0 is set to the darkest colour for use as border/background.
   5. Output binary files use VIC-IV nybble-reversed palette format and CHR16
-     absolute addressing (tile N at physical $40000 = screen value $1000 + N).
+     absolute addressing (tile base = BANK_PHYS_BASE_4 / 64, read from mapper.h).
 
 Usage: python3 convert-fcm.py <input.png> [output_dir]
 """
 
+import os
+import re
 import sys
 import numpy as np
 from PIL import Image
+
+# Parse BANK_PHYS_BASE_N from mapper.h so tile addresses stay in sync
+# with the platform's bank layout (including the +$800 KERNAL LOAD offset).
+MAPPER_H = os.path.join(os.path.dirname(__file__),
+                        "../../mos-platform/mega65-banked/mapper.h")
+
+def read_bank_phys_base(bank):
+    """Read BANK_PHYS_BASE_N from mapper.h."""
+    pattern = rf"#define\s+BANK_PHYS_BASE_{bank}\s+(0x[0-9A-Fa-f]+)"
+    with open(MAPPER_H) as f:
+        for line in f:
+            m = re.match(pattern, line)
+            if m:
+                return int(m.group(1), 16)
+    raise ValueError(f"BANK_PHYS_BASE_{bank} not found in {MAPPER_H}")
+
+TILE_BANK = 4
+TILE_PHYS_BASE = read_bank_phys_base(TILE_BANK)
+TILE_BASE = TILE_PHYS_BASE // 64  # FCM absolute addressing: screen value = phys / 64
 
 MAX_TILES = 380       # Must fit in bank 4 (380 * 64 = 24320 < 24576)
 SCREEN_W, SCREEN_H = 320, 200
@@ -118,7 +139,6 @@ def main():
         print(f"Usage: {sys.argv[0]} <input.png> [output_dir]")
         sys.exit(1)
 
-    import os
     input_path = sys.argv[1]
     output_dir = sys.argv[2] if len(sys.argv) > 2 else os.path.dirname(input_path) or "."
 
@@ -196,9 +216,9 @@ def main():
     print(f"  Screen map: 2000 bytes")
     print(f"  Palette: {len(palette)} bytes")
 
-    # Build CHR16 screen map: FCM uses absolute addressing (physical_addr/64).
-    # Bank 4 tile data is at physical $40000, so tile base = $40000/64 = $1000.
-    TILE_BASE = 0x1000
+    # Build CHR16 screen map: FCM absolute addressing (screen value = phys / 64).
+    # TILE_BASE is derived from BANK_PHYS_BASE_4 in mapper.h (currently
+    # $46800 / 64 = $11A0).
     screen_map = bytearray(2000)
     for i in range(ROWS * COLS):
         char_num = TILE_BASE + int(assignments[i])
