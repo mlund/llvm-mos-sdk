@@ -9,7 +9,7 @@
 -- The combined output format (from link.ld OUTPUT_FORMAT) is:
 --   SHORT(0x2001)               2 bytes  — PRG load address
 --   FULL(ram)        $2001-$7FFF 24575 bytes — BASIC header + bank 0
---   FULL(ram_fixed)  $8000-$BFFF 16384 bytes — fixed code/data
+--   FULL(ram_fixed)  $8000-$CFFF 20480 bytes — fixed code/data (ROMC cleared)
 --   FULL(bank_1)     24576 bytes — bank 1
 --   FULL(bank_2)     24576 bytes — bank 2
 --   FULL(bank_3)     24576 bytes — bank 3
@@ -41,7 +41,7 @@
 local BANK_MAX = 15
 local BANK_SIZE = 0x6000   -- 24KB per bank
 local RAM_SIZE = 0x5FFF    -- $2001-$7FFF = 24575 bytes
-local FIXED_SIZE = 0x4000  -- $8000-$BFFF = 16384 bytes
+local FIXED_SIZE = 0x5000  -- $8000-$CFFF = 20480 bytes (ROMC cleared)
 local HEADER_SIZE = 2      -- SHORT(load_addr)
 
 -- Physical load addresses for each bank (for BLOAD P() parameter).

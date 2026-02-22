@@ -92,14 +92,19 @@ constexpr CommonDMAJob make_dma_copy(const uint32_t src, const uint32_t dst,
  */
 template <size_t N, typename T>
 inline void trigger_dma(const DMAJob<N, T> &dma_job) {
+  // Save interrupt state and disable IRQs to prevent the KERNAL IRQ
+  // handler from changing the DMA revision between enable_f018b and
+  // trigger_enhanced writes. The flags are pulled into a C variable
+  // immediately to avoid leaving a php byte on the hardware stack
+  // across compiler-generated code.
+  uint8_t saved_p;
+  asm volatile("php\npla\nsei" : "=a"(saved_p) :: "p");
   DMA.enable_f018b = std::is_same<T, DMAList_F018B>::value;
   DMA.addr_bank = 0;
   DMA.addr_msb = ((uint16_t)&dma_job) >> 8;
   DMA.trigger_enhanced = ((uint16_t)&dma_job) & 0xff;
-  // Avoid the above from being optimized out. Ideally 
-  // we would want to somehow access `dma_job`, but an
-  // empty statement seems to be sufficient.
-  asm volatile("");
+  if (!(saved_p & 0x04))
+    asm volatile("cli" ::: "p");
 }
 
 } // namespace mega65::dma

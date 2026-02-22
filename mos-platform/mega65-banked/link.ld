@@ -4,13 +4,16 @@
  *   $0000-$01FF  ZP + stack (unmapped)
  *   $0200-$1FFF  KERNAL variables (unmapped)
  *   $2000-$7FFF  BANKED window (24KB, switched via MAPLO)
- *   $8000-$BFFF  FIXED code/data (16KB, always bank 0)
- *   $C000-$CFFF  C65 Interface ROM (ROMC)
+ *   $8000-$CFFF  FIXED code/data (20KB, always bank 0)
  *   $D000-$DFFF  I/O registers
  *   $E000-$FFFF  KERNAL ROM
  *
+ * The CRT init clears ROMC ($D030 bit 5) after loading banks, making
+ * $C000-$CFFF available as RAM instead of C65 Interface ROM.
+ * KERNAL CHROUT/printf still work (40-column editor is in $E000-$FFFF).
+ *
  * Bank 0 occupies the $2000-$7FFF window at startup (no MAP needed).
- * All non-annotated code and data goes into ram_fixed ($8000-$BFFF).
+ * All non-annotated code and data goes into ram_fixed ($8000-$CFFF).
  * Functions placed in .bank_N sections are called via banked_call().
  *
  * Physical memory (ROM at $20000-$3FFFF must be skipped; all banks offset
@@ -21,7 +24,7 @@
  *   Attic RAM:  Bank 8: $8000800 ... Bank 15: $8036800 (HyperRAM, ~10x slower)
  *
  * Chip RAM banks start in the second 64KB page ($10000+) to avoid
- * overlapping ram_fixed ($8000-$BFFF). Bank 2 ends at $1C7FF, safely
+ * overlapping ram_fixed ($8000-$CFFF). Bank 2 ends at $1C7FF, safely
  * below the colour RAM window at $1F800-$1FFFF. Fast RAM banks use
  * $6000 spacing (= 24KB bank size) to maximize utilization.
  */
@@ -36,7 +39,7 @@ INCLUDE imag-regs.ld
 MEMORY {
     zp       : ORIGIN = __rc31 + 1, LENGTH = __basic_zp_end - (__rc31 + 1)
     ram (rw) : ORIGIN = 0x2001, LENGTH = 0x5fff
-    ram_fixed (rw) : ORIGIN = 0x8000, LENGTH = 0x4000
+    ram_fixed (rw) : ORIGIN = 0x8000, LENGTH = 0x5000
 }
 
 INCLUDE _ram-banked.ld
@@ -61,8 +64,9 @@ SECTIONS {
     INCLUDE c.ld
 }
 
-/* Set initial soft stack address to start of Interface ROM. (It grows down.) */
-__stack = 0xc000;
+/* Set initial soft stack address to start of I/O region. (It grows down.)
+ * ROMC is cleared during CRT init, making $C000-$CFFF RAM. */
+__stack = 0xd000;
 
 OUTPUT_FORMAT {
     SHORT(0x2001)

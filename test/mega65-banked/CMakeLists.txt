@@ -22,7 +22,7 @@ function(add_mega65_banked_test name)
     return()
   endif()
   add_executable(${name}.prg ${source_dir}/${name}.c)
-  set(main_prg_size 40961)
+  set(main_prg_size 45057)
   add_custom_command(TARGET ${name}.prg POST_BUILD
     COMMAND dd if=$<TARGET_FILE:${name}.prg>
       of=$<TARGET_FILE_DIR:${name}.prg>/${name}-main.prg
@@ -128,4 +128,6 @@ endfunction()
 add_mega65_banked_test(bank-call)
 add_mega65_banked_disk_test(kernal-load-banks)
 add_mega65_banked_disk_test(attic-load-banks)
+add_mega65_banked_disk_test(banked-dma)
+add_mega65_banked_disk_test(banked-dma-loop)
 add_mega65_banked_bload_test(hyppo-load-banks)
