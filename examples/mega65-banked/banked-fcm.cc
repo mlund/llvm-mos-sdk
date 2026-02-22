@@ -14,9 +14,9 @@
 //   - VIC-IV scrnptr points directly to screen map in fast RAM
 //   - DMA copies palette from fast RAM to VIC-IV palette registers
 //
-// FCM uses absolute addressing: screen value = physical_address / 64
-// (with charptr = 0). convert-fcm.py reads BANK_PHYS_BASE_4 from
-// mapper.h to compute tile base values for the screen map.
+// FCM addressing: char_address = screen_value * 64 (charptr is ignored).
+// Screen values are absolute character numbers: BANK_PHYS_BASE_4 / 64 +
+// tile_index. The converter reads the physical address from mapper.h.
 //
 // Binary data files are generated offline by convert-fcm.py and included
 // via C23 #embed. The CRT bank loader places them in fast RAM at startup.
@@ -78,8 +78,9 @@ static void setup_vic() {
   // Point screen RAM directly at the screen map in bank 4.
   VICIV.scrnptr = SCREEN_MAP_ADDR;
 
-  // Character data base at 0 — tile index N maps to address N*64.
-  VICIV.charptr = 0;
+  // FCM ignores charptr — char_address = screen_value * 64 always.
+  // The screen map encodes absolute character numbers (BANK_PHYS_BASE_4 / 64
+  // + tile_index) so the converter must know the physical tile address.
 
   // 80 bytes per screen row (40 chars x 2 bytes in CHR16).
   VICIV.linestep = CELL_COLS * CHR16_BYTES_PER_CHAR;
