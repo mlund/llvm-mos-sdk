@@ -58,7 +58,10 @@ The LLVM-MOS compiler toolchain and platform libraries.
 - Broad C99 and C++11 freestanding standards compatibility
 - The high and low-level optimizations expected of a young-ish LLVM backend
   - Fairly good register allocation over A, X, Y, and a field of 16 2-byte zero-page (imaginary) registers
-  - The imaginary registers can be placed anywhere and need not be contiguous.
+  - Imaginary byte registers can be placed anywhere; 16-bit registers only
+    require each byte pair to be contiguous.
+  - The SDK guarantees four-byte contiguity for the compiler's allocatable
+    32-bit imaginary registers, except on CP/M-65, which does not support them.
   - The calling convention passes through registers whenever possible.
   - Loop optimizations to select 6502 addressing modes
   - Whole program "static stack" optimization

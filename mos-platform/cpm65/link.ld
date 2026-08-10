@@ -74,6 +74,9 @@ SECTIONS {
 	} :symtab
 
 	PROVIDE (cpm_ram = __heap_start);
+	/* Register pairs may be discarded independently on CP/M-65. */
+	PROVIDE (__mos_imag32_contiguous = ASSERT (0,
+		"CP/M-65 does not support 32-bit imaginary registers."));
 
 }
 
@@ -85,4 +88,3 @@ SECTIONS {
 OUTPUT_FORMAT {
     TRIM(ram)
 }
-

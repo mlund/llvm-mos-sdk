@@ -218,4 +218,10 @@ __rc29	      	= 0x8d;
 __rc30	      	= 0x8e;
 __rc31	      	= 0x8f;
 
+/* Keep the contract dormant until compiler output references it. */
+PROVIDE(__mos_imag32_contiguous = ASSERT(
+  __rc6 == __rc4 + 2 && __rc14 == __rc12 + 2 &&
+  __rc22 == __rc20 + 2 && __rc26 == __rc24 + 2,
+  "Imag32 requires contiguous allocatable register quads."));
+
 INCLUDE geos.ld

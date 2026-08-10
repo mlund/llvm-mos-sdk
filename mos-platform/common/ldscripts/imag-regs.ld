@@ -1,7 +1,7 @@
 /* GENERATED FILE -- DO NOT MANUALLY EDIT. */
 /* Note: The odd regs must immediately follow the even regs
  * for even/odd pairs to work as pointers, but the even regs
- * can be assigned arbitrarily in linker scripts.*/
+ * are otherwise arbitrary unless the Imag32 contract is used. */
 __rc1 = __rc0 + 1;
 PROVIDE(__rc2 = __rc1 + 1);
 __rc3 = __rc2 + 1;
@@ -33,3 +33,8 @@ PROVIDE(__rc28 = __rc27 + 1);
 __rc29 = __rc28 + 1;
 PROVIDE(__rc30 = __rc29 + 1);
 __rc31 = __rc30 + 1;
+/* Keep the contract dormant until compiler output references it. */
+PROVIDE(__mos_imag32_contiguous = ASSERT(
+  __rc6 == __rc4 + 2 && __rc14 == __rc12 + 2 &&
+  __rc22 == __rc20 + 2 && __rc26 == __rc24 + 2,
+  "Imag32 requires contiguous allocatable register quads."));
