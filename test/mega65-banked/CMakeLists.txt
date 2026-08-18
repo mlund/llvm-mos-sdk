@@ -207,3 +207,7 @@ add_mega65_banked_dump_test(bank-nested C000=00 C001=01 C002=02 C003=01 C004=00 
 # Code executes from attic RAM banks 8-15, each reporting its own bank id.
 add_mega65_banked_dump_test(bank-attic-call
   C000=08 C001=09 C002=0A C003=0B C004=0C C005=0D C006=0E C007=0F C008=A5)
+
+# Interrupts are actually delivered, both while a bank is mapped and after
+# repeated trampoline use.
+add_mega65_banked_dump_test(bank-irq-delivery C000=01 C001=01 C002=A5)

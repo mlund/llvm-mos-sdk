@@ -16,5 +16,6 @@ endfunction()
 
 add_banked_example(hello-banks hello-banks.cc)
 add_banked_example(banked-colors banked-colors.cc)
+add_banked_example(banked-irq banked-irq.cc)
 add_banked_example(banked-plasma banked-plasma.cc)
 add_banked_example(banked-fcm banked-fcm.cc)
