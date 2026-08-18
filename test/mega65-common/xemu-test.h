@@ -4,6 +4,7 @@
 #ifndef XEMU_TEST_H
 #define XEMU_TEST_H
 
+#include <mega65.h>
 #include <stdint.h>
 
 #define XEMU_CONTROL (*(volatile uint8_t *)0xd6cf)
@@ -20,12 +21,10 @@ static void xemu_exit(uint8_t code) {
                "map\n\t"
                "eom\n\t"
                "sei" ::: "a", "x", "y", "p");
-  // Unlock VIC-IV I/O mode.  One pair suffices whatever came before: each
-  // write stores its byte as the new key, so the first sets up the second.
-  // Values restated rather than taken from <mega65.h>, which this header
-  // cannot include.
-  *(volatile uint8_t *)0xD02F = 0x47; // VIC4_KEY_VICIV_A
-  *(volatile uint8_t *)0xD02F = 0x53; // VIC4_KEY_VICIV_B
+  // One pair suffices whatever came before: each write stores its byte as the
+  // new key, so the first sets up the second.
+  VICIV.key = VIC4_KEY_VICIV_A;
+  VICIV.key = VIC4_KEY_VICIV_B;
   XEMU_CONTROL = code;
   XEMU_CONTROL = XEMU_QUIT;
   // Wait for the emulator to go. An empty loop would be undefined behaviour
