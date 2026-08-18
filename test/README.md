@@ -2,18 +2,19 @@
 
 ## Tools the tests look for
 
-Each suite registers its tests only if the tool that runs them is found, so a
-missing tool means those tests quietly do not exist rather than fail.
+A missing tool shows up in one of two ways, so read the configure output
+before concluding a suite passed.
 
-| Tool | Used by | Where CMake looks |
-|---|---|---|
-| `emutest` + a Libretro core | NES, Atari 2600 | `PATH`, `EMUTEST_DIR`, `LIBRETRO_CORES_DIR` |
-| `xmega65` (Xemu) | MEGA65 | `PATH`, `XMEGA65_DIR`, `~/bin`, the macOS app bundle |
-| `c1541` (VICE) | MEGA65 disk images | `PATH`, `VICE_DIR`, `~/bin`, Homebrew prefixes |
-| `python3` | MEGA65 memory-dump checks | `PATH`, `PYTHON_DIR` |
+| Tool | Used by | If missing | Searched |
+|---|---|---|---|
+| `emutest` + a Libretro core | NES, Atari 2600 | tests **fail** with `EMUTEST_COMMAND-NOTFOUND` | `EMUTEST_DIR`, `LIBRETRO_CORES_DIR`, `PATH` |
+| `xmega65` (Xemu) | MEGA65 | tests are **not registered** | `XMEGA65_DIR`, `PATH`, `~/bin`, the macOS app bundle |
+| `c1541` (VICE) | MEGA65 disk images | tests are **not registered** | `VICE_DIR`, `PATH`, `~/bin`, Homebrew prefixes |
+| `python3` | MEGA65 memory-dump checks | tests are **not registered** | `PYTHON_DIR`, `PATH` |
 
-The configure output lists what was found; check it before concluding a suite
-passed.
+`add_emutest_test` registers unconditionally; the MEGA65 helpers return early
+when their tool is absent. The environment variable in each row is an
+override and is searched first.
 
 ## Adding new Emutest/Libretro tests
 

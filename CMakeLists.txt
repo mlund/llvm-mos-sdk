@@ -64,19 +64,23 @@ if(NOT CMAKE_CROSSCOMPILING)
     PATHS /lib64/libretro ENV LIBRETRO_CORES_DIR)
   message(STATUS "Libretro MESEN core: ${LIBRETRO_MESEN_CORE}")
 
-  # Xemu installs as an app bundle on macOS and is not on PATH; a source build
-  # names the binary .native. Without the hints the MEGA65 tests register
-  # nothing and the suite passes by omission.
+  # Without this the MEGA65 tests register nothing and the suite passes by
+  # omission: Xemu is an app bundle on macOS and never on PATH. Bundles are
+  # searched first by default, which would beat XMEGA65_DIR and leave the
+  # override apparently doing nothing.
+  set(_saved_find_appbundle ${CMAKE_FIND_APPBUNDLE})
+  set(CMAKE_FIND_APPBUNDLE LAST)
   find_program(XMEGA65_COMMAND
     NAMES xmega65 xmega65.native xmega65.exe xemu-xmega65 xemu-xmega65.exe
-    HINTS $ENV{HOME}/bin /Applications/xmega65.app/Contents/MacOS
-    PATHS ENV XMEGA65_DIR)
+    HINTS ENV XMEGA65_DIR
+    PATHS "$ENV{HOME}/bin" /Applications/xmega65.app/Contents/MacOS)
   message(STATUS "MEGA65 emulator (xmega65): ${XMEGA65_COMMAND}")
 
   find_program(C1541_COMMAND NAMES c1541
-    HINTS $ENV{HOME}/bin /opt/homebrew/bin /usr/local/bin
-    PATHS ENV VICE_DIR)
+    HINTS ENV VICE_DIR
+    PATHS "$ENV{HOME}/bin" /opt/homebrew/bin /usr/local/bin)
   message(STATUS "VICE c1541 disk tool: ${C1541_COMMAND}")
+  set(CMAKE_FIND_APPBUNDLE ${_saved_find_appbundle})
 
   find_program(PYTHON3_COMMAND NAMES python3 python
     PATHS ENV PYTHON_DIR)
