@@ -8,6 +8,7 @@ install(FILES
   _ram-banked.ld
 TYPE LIB)
 install(FILES mapper.h TYPE INCLUDE)
+install(FILES README.md DESTINATION mos-platform/mega65-banked)
 install(PROGRAMS make-d81.sh TYPE BIN)
 
 add_platform_library(mega65-banked-crt0)
