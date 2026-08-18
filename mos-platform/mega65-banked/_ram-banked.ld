@@ -1,4 +1,5 @@
-/* Bank section layout for mega65-banked.
+/* Bank section layout for mega65-banked. Maintained by hand; the physical
+ * addresses it must agree with are checked by test-bank-tables.
  *
  * On MOS, symbol addresses (VMA) are the lower 16 bits of the LMA.
  * All bank LMAs use lower-16 = $2000 so symbols resolve to $2000-$7FFF,

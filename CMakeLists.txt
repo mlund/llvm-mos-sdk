@@ -78,10 +78,6 @@ if(NOT CMAKE_CROSSCOMPILING)
     PATHS ENV VICE_DIR)
   message(STATUS "VICE c1541 disk tool: ${C1541_COMMAND}")
 
-  find_program(LUA_COMMAND NAMES lua lua5.4 lua5.3
-    PATHS ENV LUA_DIR)
-  message(STATUS "Lua interpreter: ${LUA_COMMAND}")
-
   find_program(PYTHON3_COMMAND NAMES python3 python
     PATHS ENV PYTHON_DIR)
   message(STATUS "Python 3 interpreter: ${PYTHON3_COMMAND}")

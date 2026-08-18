@@ -82,38 +82,27 @@ function(add_mega65_banked_bload_test name)
     message(STATUS "c1541 not found, skipping bload test: test-${name}")
     return()
   endif()
-  if(NOT LUA_COMMAND)
-    message(STATUS "lua not found, skipping bload test: test-${name}")
-    return()
-  endif()
 
   add_executable(${name}.prg ${source_dir}/${name}.c)
 
-  # Split combined PRG using split-banks.lua.
   add_custom_command(TARGET ${name}.prg POST_BUILD
-    COMMAND ${LUA_COMMAND} ${SPLIT_BANKS_SCRIPT}
+    COMMAND sh ${MAKE_D81_SCRIPT}
       $<TARGET_FILE:${name}.prg>
-      $<TARGET_FILE_DIR:${name}.prg>/${name}
-    COMMENT "Splitting PRG with split-banks.lua for ${name}")
+      $<TARGET_FILE_DIR:${name}.prg>
+      ${name}
+      ${C1541_COMMAND}
+    COMMENT "Splitting PRG and creating D81 for ${name}")
 
-  # Create HDOS directory and strip 2-byte PRG headers from bank files.
+  # Hyppo loads raw images, so strip the PRG header make-d81.sh prepends.
   add_custom_command(TARGET ${name}.prg POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory
       $<TARGET_FILE_DIR:${name}.prg>/${name}_hdos
-    COMMAND dd if=$<TARGET_FILE_DIR:${name}.prg>/${name}.bank1.prg
+    COMMAND dd if=$<TARGET_FILE_DIR:${name}.prg>/${name}-BANK1
       of=$<TARGET_FILE_DIR:${name}.prg>/${name}_hdos/BANK1.BIN bs=1 skip=2
-    COMMAND dd if=$<TARGET_FILE_DIR:${name}.prg>/${name}.bank2.prg
+    COMMAND dd if=$<TARGET_FILE_DIR:${name}.prg>/${name}-BANK2
       of=$<TARGET_FILE_DIR:${name}.prg>/${name}_hdos/BANK2.BIN bs=1 skip=2
     COMMENT "Creating HDOS directory with raw bank files for ${name}")
 
-  # Create D81 with the main PRG as AUTOBOOT.C65.
-  add_custom_command(TARGET ${name}.prg POST_BUILD
-    COMMAND ${C1541_COMMAND} -format "test,01" d81
-      $<TARGET_FILE_DIR:${name}.prg>/${name}.d81
-      -write $<TARGET_FILE_DIR:${name}.prg>/${name}.prg "autoboot.c65"
-    COMMENT "Creating D81 with autoboot for ${name}")
-
-  # Boot from D81, with HDOS virtual SD for bank files.
   add_test(NAME test-${name} COMMAND
     ${XMEGA65_COMMAND} -headless -sleepless -testing
     -8 $<TARGET_FILE_DIR:${name}.prg>/${name}.d81

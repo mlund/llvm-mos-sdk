@@ -10,7 +10,6 @@ missing tool means those tests quietly do not exist rather than fail.
 | `emutest` + a Libretro core | NES, Atari 2600 | `PATH`, `EMUTEST_DIR`, `LIBRETRO_CORES_DIR` |
 | `xmega65` (Xemu) | MEGA65 | `PATH`, `XMEGA65_DIR`, `~/bin`, the macOS app bundle |
 | `c1541` (VICE) | MEGA65 disk images | `PATH`, `VICE_DIR`, `~/bin`, Homebrew prefixes |
-| `lua` | MEGA65 bank splitting | `PATH`, `LUA_DIR` |
 | `python3` | MEGA65 memory-dump checks | `PATH`, `PYTHON_DIR` |
 
 The configure output lists what was found; check it before concluding a suite
