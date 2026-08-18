@@ -64,11 +64,17 @@ if(NOT CMAKE_CROSSCOMPILING)
     PATHS /lib64/libretro ENV LIBRETRO_CORES_DIR)
   message(STATUS "Libretro MESEN core: ${LIBRETRO_MESEN_CORE}")
 
-  find_program(XMEGA65_COMMAND NAMES xmega65
+  # Xemu installs as an app bundle on macOS and is not on PATH; a source build
+  # names the binary .native. Without the hints the MEGA65 tests register
+  # nothing and the suite passes by omission.
+  find_program(XMEGA65_COMMAND
+    NAMES xmega65 xmega65.native xmega65.exe xemu-xmega65 xemu-xmega65.exe
+    HINTS $ENV{HOME}/bin /Applications/xmega65.app/Contents/MacOS
     PATHS ENV XMEGA65_DIR)
   message(STATUS "MEGA65 emulator (xmega65): ${XMEGA65_COMMAND}")
 
   find_program(C1541_COMMAND NAMES c1541
+    HINTS $ENV{HOME}/bin /opt/homebrew/bin /usr/local/bin
     PATHS ENV VICE_DIR)
   message(STATUS "VICE c1541 disk tool: ${C1541_COMMAND}")
 
