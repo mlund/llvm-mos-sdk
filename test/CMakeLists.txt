@@ -1,6 +1,6 @@
 # Targets whose platform sources change often enough that the inner build
 # cannot be trusted to notice.
-set(TEST_TARGETS_NEEDING_PLATFORM_SYNC mega65)
+set(TEST_TARGETS_NEEDING_PLATFORM_SYNC mega65 mega65-banked)
 
 function(add_test_target target)
   get_filename_component(llvm_mos ${LLVM_MOS_C_COMPILER} DIRECTORY)
@@ -66,4 +66,10 @@ if(XMEGA65_COMMAND)
     -DXMEGA65_COMMAND=${XMEGA65_COMMAND}
     -DPYTHON3_COMMAND=${PYTHON3_COMMAND}
     -DD81_SCRIPT=${CMAKE_SOURCE_DIR}/mos-platform/mega65/d81.py)
+  add_test_target(mega65-banked
+    -DXMEGA65_COMMAND=${XMEGA65_COMMAND}
+    -DPYTHON3_COMMAND=${PYTHON3_COMMAND}
+    -DPRG_TO_D81_SCRIPT=${CMAKE_SOURCE_DIR}/mos-platform/mega65-banked/prg-to-d81.py
+    -DDUMPCHECK_SCRIPT=${CMAKE_CURRENT_SOURCE_DIR}/mega65-common/dumpcheck.py
+    -DSIZECHECK_SCRIPT=${CMAKE_CURRENT_SOURCE_DIR}/mega65-common/sizecheck.py)
 endif()

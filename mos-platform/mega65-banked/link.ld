@@ -1,0 +1,120 @@
+/* MEGA65 banked PRG file linker script.
+ *
+ * Memory layout:
+ *   $0000-$01FF  ZP + stack (unmapped)
+ *   $0200-$1FFF  KERNAL variables (unmapped)
+ *   $2000-$7FFF  BANKED window (24KB, switched via MAPLO)
+ *   $8000-$CFFF  FIXED code/data (20KB, always bank 0)
+ *   $D000-$DFFF  I/O registers
+ *   $E000-$FFFF  KERNAL ROM
+ *
+ * The CRT init clears ROMC ($D030 bit 5) after loading banks, making
+ * $C000-$CFFF available as RAM instead of C65 Interface ROM.
+ * KERNAL CHROUT/printf still work (40-column editor is in $E000-$FFFF).
+ *
+ * Bank 0 occupies the $2000-$7FFF window at startup (no MAP needed).
+ * All non-annotated code and data goes into ram_fixed ($8000-$CFFF).
+ * Functions placed in .bank_N sections are called via banked_call().
+ *
+ * Physical memory (ROM at $20000-$3FFFF must be skipped; banks 3-15 sit
+ * +$800 into a 64KB page so KERNAL LOAD never sees a zero high byte):
+ *   Chip RAM:   Bank 0: $02000  Bank 1: $12000  Bank 2: $18000
+ *   Fast RAM:   Bank 3: $40800  Bank 4: $46800  Bank 5: $4C800
+ *               Bank 6: $52800  Bank 7: $58800
+ *   Attic RAM:  Bank 8: $8000800 ... Bank 15: $8036800 (HyperRAM, ~10x slower)
+ *
+ * Chip RAM banks start at $12000, clear of both ram_fixed and the C65 DOS
+ * work area ($10000-$11FFF), which CBDOS claims whenever it runs. Bank 2
+ * ends at $1DFFF, below the colour RAM window at $1F800-$1FFFF. Fast RAM
+ * banks use $6000 spacing (= 24KB bank size) to maximize utilization.
+ */
+
+__basic_zp_start = 0x0002;
+__basic_zp_end = 0x0090;
+/* Size of BASIC ZP region for save-basic library. This script does what
+ * commodore.ld does for the other Commodore targets, but cannot include it:
+ * that file aliases the C regions to ram and declares its own SECTIONS, both
+ * of which the banked layout replaces. */
+__basic_zp_size = __basic_zp_end - __basic_zp_start;
+
+/* Imaginary registers in the BASIC zero-page area. */
+__rc0 = __basic_zp_start;
+INCLUDE imag-regs.ld
+
+/* mega65_k_jsrfar.S does not merely tolerate the imaginary registers
+ * overlapping the KERNAL's JSR_FAR parameter block at $02-$09 -- it relies on
+ * it, so that llvm-mos's calling convention drops JSRFAR's arguments exactly
+ * where the ROM expects them. Move __rc0 and it writes to the wrong addresses
+ * with no diagnostic. */
+ASSERT(__rc0 == 0x02,
+       "mega65-banked: mega65_k_jsrfar.S requires __rc0 at $02")
+
+/* The zp region and -mlto-zp (inherited as 110 from mos-mega65.cfg) describe
+ * the same bytes to the linker and to the compiler; nothing else makes them
+ * agree. */
+ASSERT(__basic_zp_end - (__rc31 + 1) == 110,
+       "mega65-banked: zp region size must match -mlto-zp=110")
+
+/* Where mega65_h_setname() stages the filename Hyppo reads; see the parent
+ * mega65 link.ld for why the stack page is free for it. */
+PROVIDE(__mega65_h_name_buf = 0x0100);
+
+MEMORY {
+    zp       : ORIGIN = __rc31 + 1, LENGTH = __basic_zp_end - (__rc31 + 1)
+    ram (rw) : ORIGIN = 0x2001, LENGTH = 0x5fff
+    ram_fixed (rw) : ORIGIN = 0x8000, LENGTH = 0x5000
+}
+
+INCLUDE _ram-banked.ld
+
+INPUT(basic-header.o)
+/* No unmap-basic.o: it unmaps the ROMs at .init.010 and puts them back at
+ * .fini.990, both of which fight load-banks.c, which needs BASIC ROM gone
+ * only while it loads and clears ROMC itself once the banks are in. */
+INPUT(load-banks.o)
+INPUT(load-banks-kernal.o)
+
+/* All code and data defaults to the fixed bank. */
+REGION_ALIAS("c_readonly", ram_fixed)
+REGION_ALIAS("c_writeable", ram_fixed)
+
+SECTIONS {
+    .basic_header : { *(.basic_header) } >ram
+
+    /* KERNAL loader in ram_fixed, before .text so it lands at $8000-$9FFF.
+     * Must NOT be in ram ($2000-$7FFF) — the C65 ROM's autoboot/CLR wipes
+     * everything after the BASIC stub ($200E-$7FFF) before SYS runs. */
+    .kernal_load : { *(.text.kernal_load) } >ram_fixed
+
+    INCLUDE c.ld
+}
+
+/* Bytes of ram_fixed that actually carry content. Everything after .data is
+ * .bss/.noinit, which the CRT zeroes or leaves alone, so shipping the rest
+ * would be padding the loader reads off the disk and then overwrites. */
+__ram_fixed_size = LOADADDR(.data) + SIZEOF(.data) - ORIGIN(ram_fixed);
+
+/* Set initial soft stack address to start of I/O region. (It grows down.)
+ * ROMC is cleared during CRT init, making $C000-$CFFF RAM. */
+__stack = 0xd000;
+
+OUTPUT_FORMAT {
+    SHORT(0x2001)
+    FULL(ram)
+    FULL(ram_fixed, 0, __ram_fixed_size)
+    FULL(bank_1)
+    FULL(bank_2)
+    FULL(bank_3)
+    FULL(bank_4)
+    FULL(bank_5)
+    FULL(bank_6)
+    FULL(bank_7)
+    FULL(bank_8)
+    FULL(bank_9)
+    FULL(bank_10)
+    FULL(bank_11)
+    FULL(bank_12)
+    FULL(bank_13)
+    FULL(bank_14)
+    FULL(bank_15)
+}

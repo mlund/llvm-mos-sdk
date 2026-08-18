@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 
-project(examples LANGUAGES C CXX)
+project(examples LANGUAGES C CXX ASM)
 
 # Install examples to root example dir, not bin/
 set(CMAKE_INSTALL_BINDIR .)
@@ -57,6 +57,9 @@ if(PLATFORM MATCHES ^atari2600-)
 endif()
 if(PLATFORM STREQUAL mega65)
   add_subdirectory(mega65)
+endif()
+if(PLATFORM STREQUAL mega65-banked)
+  add_subdirectory(mega65-banked)
 endif()
 if(PLATFORM STREQUAL neo6502)
   add_subdirectory(neo6502)
