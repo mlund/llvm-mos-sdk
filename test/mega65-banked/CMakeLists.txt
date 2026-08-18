@@ -4,11 +4,9 @@ project(test-mega65-banked LANGUAGES C)
 
 include(../test.cmake)
 
-# MEGA65 banked test: extracts the main PRG portion, creates a D81 with it
-# as AUTOBOOT.C65, and boots from D81 (no -prg injection).
-# The mega65-banked linker emits all bank sections (bank 0 + fixed + banks 1-7),
-# producing a ~217KB binary. The test injects bank code at runtime, so the
-# empty bank sections are not needed -- only the main portion is put on disk.
+# Boots from the D81 rather than -prg injection, so the CRT's own bank
+# loading runs. Only the main portion goes on disk; these tests put their
+# bank content there at runtime.
 function(add_mega65_banked_test name)
   set(source_dir ".")
   if(ARGC GREATER 1)
