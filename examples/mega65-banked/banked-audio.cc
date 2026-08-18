@@ -34,16 +34,19 @@ constexpr uint16_t SAMPLE_SIZE = 44031;
 
 int main() {
   DMA.auden = DMA_AUDEN;
-  DMA.ch0rvol = 0;
+  // Channels 0 and 1 take their left volume from ch0.volume and their right
+  // from ch0rvol (channels 2 and 3 are the other way round). Both are 8-bit,
+  // so 0xff is full scale -- a quarter of that is close to inaudible.
+  DMA.ch0rvol = 0xff;
   DMA.ch0.enable = 0;
 
   DMA.ch0.baddr = (uint24_t)SAMPLE_ADDR;
   DMA.ch0.curaddr = (uint24_t)SAMPLE_ADDR;
   // Top address is 16-bit, so the sample must not cross a 64 KB page:
-  // $10800 + 44031 = $1B5FF stays inside one.
+  // $12000 + 44031 = $1CBFF stays inside one.
   DMA.ch0.taddr = (uint16_t)(SAMPLE_ADDR + SAMPLE_SIZE);
   DMA.ch0.freq = 0x001a88;
-  DMA.ch0.volume = 0x3f;
+  DMA.ch0.volume = 0xff;
   DMA.ch0.enable = DMA_CHENABLE ^ DMA_CHSBITS_8 ^ DMA_CHLOOP;
 
   for (;;)
