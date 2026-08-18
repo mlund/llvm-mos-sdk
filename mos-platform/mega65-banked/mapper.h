@@ -116,8 +116,8 @@ extern "C" {
  *
  * Maps the bank into $2000-$7FFF via the MAP instruction, calls the function,
  * then restores the previous bank. The caller and this trampoline must reside
- * in the fixed region ($8000-$CFFF; $C000-$CFFF became RAM when the CRT
- * cleared ROMC).
+ * in the fixed region ($8000-$CFFF; the CRT clears ROMC, so $C000-$CFFF is
+ * RAM).
  *
  * Nesting is safe: the previous bank is pushed on the hardware stack, so a
  * banked function may return to fixed code that makes a further banked_call.

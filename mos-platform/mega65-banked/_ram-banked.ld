@@ -23,8 +23,8 @@
  * recomputes each bank's physical base from every form. It needs no emulator,
  * so run it after any edit here.
  *
- * make-d81.sh no longer hardcodes a split offset: it reads __ram_fixed_size
- * and __bank_N_size out of the ELF.
+ * make-d81.sh reads __ram_fixed_size and __bank_N_size out of the ELF, so
+ * the split follows this file without being restated there.
  */
 
 __bank_1_lma  = 0x012000;

@@ -13,7 +13,7 @@ the BAM (40/1 tracks 1-40, 40/2 tracks 41-80) and the directory (40/3..40/39),
 and is allocated whole at format time, leaving 3160 blocks free.
 
 On-disk structures follow Peter Schepers, "D81 (Disk Image) Format", shipped
-with VICE. (The Wikipedia 1581 article covers the drive, not the image layout.)
+with VICE.
 """
 
 import argparse
@@ -27,6 +27,7 @@ SECTORS_PER_TRACK = 40
 SECTOR_SIZE = 256
 IMAGE_SIZE = TRACKS * SECTORS_PER_TRACK * SECTOR_SIZE
 
+# Track 40 is the directory track: reserved whole, so it never holds data.
 DIR_TRACK = 40
 HEADER_SECTOR = 0
 BAM_SECTOR_LO = 1
@@ -34,10 +35,11 @@ BAM_SECTOR_HI = 2
 FIRST_DIR_SECTOR = 3
 LAST_DIR_SECTOR = 39
 
+# Two of every sector go to the next-block link, leaving 254 for data.
 DATA_PER_SECTOR = 254
 ENTRIES_PER_SECTOR = 8
 ENTRY_SIZE = 32
-PAD = 0xA0
+PAD = 0xA0  # CBM pads names with $A0, not spaces
 
 FILE_TYPES = {"DEL": 0, "SEQ": 1, "PRG": 2, "USR": 3, "REL": 4}
 EXT_TO_TYPE = {".prg": "PRG", ".seq": "SEQ", ".usr": "USR", ".del": "DEL"}
@@ -108,6 +110,8 @@ class D81:
         return total
 
     def format(self, name: str, disk_id: str = "00") -> None:
+        # Zeroing marks every directory entry unused, since a file type of 0
+        # is what _alloc_dir_entry treats as free.
         self.data[:] = bytes(IMAGE_SIZE)
         did = petscii_field(disk_id, 2)
 
@@ -178,7 +182,7 @@ class D81:
                 off = i * ENTRY_SIZE
                 if d[off + 2] == 0x00:  # unused file-type byte
                     return cur, off
-            if d[0] == DIR_TRACK:
+            if d[0] == DIR_TRACK:  # a further sector already exists
                 cur = d[1]
                 continue
             nxt = max(seen) + 1

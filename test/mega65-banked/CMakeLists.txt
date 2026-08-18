@@ -66,10 +66,8 @@ function(add_mega65_banked_disk_test name)
   set_tests_properties(test-${name} PROPERTIES TIMEOUT 30)
 endfunction()
 
-# MEGA65 banked SD-load test: splits combined PRG with split-banks.lua,
-# strips PRG headers from bank files, puts them on the HDOS virtual SD card,
-# and autoboots the main PRG from D81. The C test loads banks via Hyppo
-# mega65_h_loadfile (no KERNAL calls, no BASIC loader).
+# Loads banks through Hyppo rather than the KERNAL, so the bank files go on
+# the HDOS virtual SD card with their PRG headers stripped.
 function(add_mega65_banked_bload_test name)
   set(source_dir ".")
   if(ARGC GREATER 1)
