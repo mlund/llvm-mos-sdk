@@ -14,6 +14,8 @@ __attribute__((section(".zp.bss"))) volatile char _BANK_SHADOW;
 
 __attribute__((leaf)) char get_bank(void) { return _BANK_SHADOW; }
 
+__attribute__((leaf)) void resync_bank(void) { __set_bank_asm(_BANK_SHADOW); }
+
 __attribute__((leaf)) void set_bank(char bank_id) {
   _BANK_SHADOW = bank_id;
   __set_bank_asm(bank_id);

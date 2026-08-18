@@ -102,6 +102,28 @@ VICIV.key = VIC4_KEY_VICIV_A;
 VICIV.key = VIC4_KEY_VICIV_B;
 ```
 
+**KERNAL disk I/O needs ROMC mapped, and it is not.** The KERNAL reaches its
+disk routines through the C65 interface ROM at `$C000-$CFFF`. The CRT clears
+ROMC once the banks are loaded, to make those 4 KB part of the fixed region,
+so a `cbm_k_load()` from your own code hangs. Map it for the call:
+
+```c
+VICIV.ctrla |= VIC3_ROMC_MASK;
+cbm_k_setlfs(0, 8, 0);
+cbm_k_setnam("DATA");
+cbm_k_load(0, (void *)0x6000);
+VICIV.ctrla &= (unsigned char)~VIC3_ROMC_MASK;
+```
+
+While ROMC is mapped, reads from `$C000-$CFFF` give ROM rather than what you
+put there; writes still reach the RAM underneath. Keep anything the call needs
+below `$C000`.
+
+The soft stack grows down from `$D000` through the same range, but LTO
+allocates frames statically wherever it can prove functions are not
+simultaneously active, so ordinary code uses none of it and recursion uses
+about a byte per level.
+
 **KERNAL disk I/O leaves a different bank mapped.** It installs its own
 mapping and restores the KERNAL's, not yours. Hypervisor calls are unaffected:
 the map is saved and restored in hardware.

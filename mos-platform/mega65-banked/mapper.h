@@ -101,6 +101,10 @@
  * Hyppo traps are unaffected: entering hypervisor mode saves and restores the
  * map, megabyte bytes and CPU port in hardware. KERNAL disk I/O is not -- it
  * installs its own map and restores the KERNAL's, not yours.
+ *
+ * KERNAL disk calls also need the C65 interface ROM at $C000-$CFFF, which the
+ * CRT unmaps to extend the fixed region. Set VIC3_ROMC_MASK in VICIV.ctrla for
+ * the duration of such a call or it will not return. See the README.
  */
 
 #ifdef __cplusplus
@@ -141,6 +145,15 @@ __attribute__((leaf, callback(2))) void banked_call(char bank_id,
  * @return The current bank ID (0-15).
  */
 __attribute__((leaf)) char get_bank(void);
+
+/**
+ * @brief Put the hardware map back in step with get_bank().
+ *
+ * A KERNAL disk call installs its own mapping and restores the KERNAL's, not
+ * yours, so the window comes back holding a different bank while get_bank()
+ * still reports the old one. Call this afterwards.
+ */
+__attribute__((leaf)) void resync_bank(void);
 
 /**
  * @brief Switch to the given bank.
