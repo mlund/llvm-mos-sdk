@@ -95,8 +95,12 @@ static int16_t *const buffer = (int16_t *)0x2100;
 header at `$2001-$200D` survives. The fixed region is untouched.
 
 **Re-unlock VIC-IV after disk I/O.** Any KERNAL disk operation resets
-`VICIV.key` to VIC-II mode, hiding the VIC-IV registers. Write `0x47` then
-`0x53` to it to get them back.
+`VICIV.key` to VIC-II mode, hiding the VIC-IV registers:
+
+```c
+VICIV.key = VIC4_KEY_VICIV_A;
+VICIV.key = VIC4_KEY_VICIV_B;
+```
 
 **KERNAL disk I/O leaves a different bank mapped.** It installs its own
 mapping and restores the KERNAL's, not yours. Hypervisor calls are unaffected:

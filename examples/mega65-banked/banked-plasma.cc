@@ -155,8 +155,8 @@ void render_plasma() {
 int main() {
   // Unlock VIC-IV I/O personality. KERNAL disk I/O (bank loading) resets
   // the KEY register to VIC-II mode; re-unlock so charptr is accessible.
-  VICIV.key = 0x47;
-  VICIV.key = 0x53;
+  VICIV.key = VIC4_KEY_VICIV_A;
+  VICIV.key = VIC4_KEY_VICIV_B;
 
   // 3.5 MHz for smooth animation.
   VICIV.ctrlb |= VIC3_FAST_MASK;

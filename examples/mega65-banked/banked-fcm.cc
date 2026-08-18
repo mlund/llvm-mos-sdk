@@ -64,8 +64,8 @@ static void setup_vic() {
   asm volatile("sei" ::: "p");
 
   // Unlock VIC-IV registers (knock sequence).
-  VICIV.key = 0x47;
-  VICIV.key = 0x53;
+  VICIV.key = VIC4_KEY_VICIV_A;
+  VICIV.key = VIC4_KEY_VICIV_B;
 
   // Disable hot registers to prevent VIC-II writes from resetting state.
   VICIV.sdbdrwd_msb &= ~VIC4_HOTREG_MASK;
