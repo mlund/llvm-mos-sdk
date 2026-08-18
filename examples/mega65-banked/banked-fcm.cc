@@ -26,6 +26,9 @@
 #include <mapper.h>
 #include <mega65.h>
 
+// Only banks 1-5 are used; the rest are left out of the image.
+MAPPER_BANK_COUNT(5);
+
 using namespace mega65::dma;
 
 // Bank 4 ($40000): 380 FCM tiles (8x8 pixels, 1 byte/pixel) = 24,320 bytes.

@@ -14,8 +14,16 @@
  *   - mapper.s:           bank_map_table (MAP register A/X pairs)
  *   - load-banks-kernal.S: setbnk_a/setbnk_y + load_addr_hi (KERNAL LOAD params)
  *   - _ram-banked.ld:     LMA values (this file)
- *   - make-d81.sh:        MAIN_SIZE split offset
  *   - link.ld:            MEMORY regions (ram, ram_fixed) and OUTPUT_FORMAT
+ *   - mapper.h:           BANK_PHYS_BASE_n
+ *
+ * The first three are checked against each other by
+ * test/mega65-banked/check-bank-tables.py (ctest: test-bank-tables), which
+ * recomputes each bank's physical base from every form. It needs no emulator,
+ * so run it after any edit here.
+ *
+ * make-d81.sh no longer hardcodes a split offset: it reads __ram_fixed_size
+ * and __bank_N_size out of the ELF.
  */
 
 __bank_1_lma  = 0x012000;
@@ -34,22 +42,26 @@ __bank_13_lma = 0x0D2000;
 __bank_14_lma = 0x0E2000;
 __bank_15_lma = 0x0F2000;
 
+/* Banks past __ram_bank_count collapse to zero length, so nothing is reserved
+ * for them and OUTPUT_FORMAT emits nothing. Declare it with MAPPER_BANK_COUNT()
+ * from <mapper.h>; without one, all 15 are reserved as before.
+ */
 MEMORY {
-  bank_1  : ORIGIN = __bank_1_lma,  LENGTH = 0x6000
-  bank_2  : ORIGIN = __bank_2_lma,  LENGTH = 0x6000
-  bank_3  : ORIGIN = __bank_3_lma,  LENGTH = 0x6000
-  bank_4  : ORIGIN = __bank_4_lma,  LENGTH = 0x6000
-  bank_5  : ORIGIN = __bank_5_lma,  LENGTH = 0x6000
-  bank_6  : ORIGIN = __bank_6_lma,  LENGTH = 0x6000
-  bank_7  : ORIGIN = __bank_7_lma,  LENGTH = 0x6000
-  bank_8  : ORIGIN = __bank_8_lma,  LENGTH = 0x6000
-  bank_9  : ORIGIN = __bank_9_lma,  LENGTH = 0x6000
-  bank_10 : ORIGIN = __bank_10_lma, LENGTH = 0x6000
-  bank_11 : ORIGIN = __bank_11_lma, LENGTH = 0x6000
-  bank_12 : ORIGIN = __bank_12_lma, LENGTH = 0x6000
-  bank_13 : ORIGIN = __bank_13_lma, LENGTH = 0x6000
-  bank_14 : ORIGIN = __bank_14_lma, LENGTH = 0x6000
-  bank_15 : ORIGIN = __bank_15_lma, LENGTH = 0x6000
+  bank_1  : ORIGIN = __bank_1_lma,  LENGTH = (DEFINED(__ram_bank_count) ? __ram_bank_count : 15) >= 1 ? 0x6000 : 0
+  bank_2  : ORIGIN = __bank_2_lma,  LENGTH = (DEFINED(__ram_bank_count) ? __ram_bank_count : 15) >= 2 ? 0x6000 : 0
+  bank_3  : ORIGIN = __bank_3_lma,  LENGTH = (DEFINED(__ram_bank_count) ? __ram_bank_count : 15) >= 3 ? 0x6000 : 0
+  bank_4  : ORIGIN = __bank_4_lma,  LENGTH = (DEFINED(__ram_bank_count) ? __ram_bank_count : 15) >= 4 ? 0x6000 : 0
+  bank_5  : ORIGIN = __bank_5_lma,  LENGTH = (DEFINED(__ram_bank_count) ? __ram_bank_count : 15) >= 5 ? 0x6000 : 0
+  bank_6  : ORIGIN = __bank_6_lma,  LENGTH = (DEFINED(__ram_bank_count) ? __ram_bank_count : 15) >= 6 ? 0x6000 : 0
+  bank_7  : ORIGIN = __bank_7_lma,  LENGTH = (DEFINED(__ram_bank_count) ? __ram_bank_count : 15) >= 7 ? 0x6000 : 0
+  bank_8  : ORIGIN = __bank_8_lma,  LENGTH = (DEFINED(__ram_bank_count) ? __ram_bank_count : 15) >= 8 ? 0x6000 : 0
+  bank_9  : ORIGIN = __bank_9_lma,  LENGTH = (DEFINED(__ram_bank_count) ? __ram_bank_count : 15) >= 9 ? 0x6000 : 0
+  bank_10 : ORIGIN = __bank_10_lma, LENGTH = (DEFINED(__ram_bank_count) ? __ram_bank_count : 15) >= 10 ? 0x6000 : 0
+  bank_11 : ORIGIN = __bank_11_lma, LENGTH = (DEFINED(__ram_bank_count) ? __ram_bank_count : 15) >= 11 ? 0x6000 : 0
+  bank_12 : ORIGIN = __bank_12_lma, LENGTH = (DEFINED(__ram_bank_count) ? __ram_bank_count : 15) >= 12 ? 0x6000 : 0
+  bank_13 : ORIGIN = __bank_13_lma, LENGTH = (DEFINED(__ram_bank_count) ? __ram_bank_count : 15) >= 13 ? 0x6000 : 0
+  bank_14 : ORIGIN = __bank_14_lma, LENGTH = (DEFINED(__ram_bank_count) ? __ram_bank_count : 15) >= 14 ? 0x6000 : 0
+  bank_15 : ORIGIN = __bank_15_lma, LENGTH = (DEFINED(__ram_bank_count) ? __ram_bank_count : 15) >= 15 ? 0x6000 : 0
 }
 
 SECTIONS {

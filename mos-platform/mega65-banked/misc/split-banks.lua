@@ -41,7 +41,16 @@
 local BANK_MAX = 15
 local BANK_SIZE = 0x6000   -- 24KB per bank
 local RAM_SIZE = 0x5FFF    -- $2001-$7FFF = 24575 bytes
-local FIXED_SIZE = 0x5000  -- $8000-$CFFF = 20480 bytes (ROMC cleared)
+-- ram_fixed is emitted as FULL(ram_fixed, 0, __ram_fixed_size), so how much of
+-- it reaches the file depends on the program and has to be read back from the
+-- ELF rather than assumed. Same symbol make-d81.sh uses.
+local function read_ram_fixed_size(prg)
+    local pipe = io.popen(string.format("nm -B %q.elf 2>/dev/null", prg))
+    if not pipe then return nil end
+    local out = pipe:read("*a")
+    pipe:close()
+    return tonumber(out:match("(%x+) A __ram_fixed_size"), 16)
+end
 local HEADER_SIZE = 2      -- SHORT(load_addr)
 
 -- Physical load addresses for each bank (for BLOAD P() parameter).
@@ -96,6 +105,13 @@ end
 local f = assert(io.open(input_file, "rb"))
 local data = f:read("*a")
 f:close()
+
+local FIXED_SIZE = read_ram_fixed_size(input_file)
+if not FIXED_SIZE then
+    io.stderr:write("split-banks.lua: __ram_fixed_size not found in " ..
+                    input_file .. ".elf\n")
+    os.exit(1)
+end
 
 local main_size = HEADER_SIZE + RAM_SIZE + FIXED_SIZE
 

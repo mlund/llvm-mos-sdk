@@ -36,6 +36,20 @@ __basic_zp_end = 0x0090;
 __rc0 = __basic_zp_start;
 INCLUDE imag-regs.ld
 
+/* mega65_k_jsrfar.S does not merely tolerate the imaginary registers
+ * overlapping the KERNAL's JSR_FAR parameter block at $02-$09 -- it relies on
+ * it, so that llvm-mos's calling convention drops JSRFAR's arguments exactly
+ * where the ROM expects them. Move __rc0 and it writes to the wrong addresses
+ * with no diagnostic. */
+ASSERT(__rc0 == 0x02,
+       "mega65-banked: mega65_k_jsrfar.S requires __rc0 at $02")
+
+/* The zp region and -mlto-zp (inherited as 110 from mos-mega65.cfg) describe
+ * the same bytes to the linker and to the compiler; nothing else makes them
+ * agree. */
+ASSERT(__basic_zp_end - (__rc31 + 1) == 110,
+       "mega65-banked: zp region size must match -mlto-zp=110")
+
 MEMORY {
     zp       : ORIGIN = __rc31 + 1, LENGTH = __basic_zp_end - (__rc31 + 1)
     ram (rw) : ORIGIN = 0x2001, LENGTH = 0x5fff
@@ -64,6 +78,11 @@ SECTIONS {
     INCLUDE c.ld
 }
 
+/* Bytes of ram_fixed that actually carry content. Everything after .data is
+ * .bss/.noinit, which the CRT zeroes or leaves alone, so shipping the rest
+ * would be padding the loader reads off the disk and then overwrites. */
+__ram_fixed_size = LOADADDR(.data) + SIZEOF(.data) - ORIGIN(ram_fixed);
+
 /* Set initial soft stack address to start of I/O region. (It grows down.)
  * ROMC is cleared during CRT init, making $C000-$CFFF RAM. */
 __stack = 0xd000;
@@ -71,7 +90,7 @@ __stack = 0xd000;
 OUTPUT_FORMAT {
     SHORT(0x2001)
     FULL(ram)
-    FULL(ram_fixed)
+    FULL(ram_fixed, 0, __ram_fixed_size)
     FULL(bank_1)
     FULL(bank_2)
     FULL(bank_3)

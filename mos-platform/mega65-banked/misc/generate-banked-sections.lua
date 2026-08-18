@@ -44,7 +44,11 @@ print()
 -- MEMORY regions for banks 1-N.
 printf("MEMORY {")
 for i = 1, BANK_MAX do
-  printf("  bank_%d : ORIGIN = __bank_%d_lma, LENGTH = 0x%04x", i, i, BANK_SIZE)
+  -- Banks past __ram_bank_count get zero length, so nothing is reserved for
+  -- them and OUTPUT_FORMAT emits nothing. Defaults to all of them when the
+  -- program does not declare a count with MAPPER_BANK_COUNT().
+  printf("  bank_%d : ORIGIN = __bank_%d_lma, LENGTH = (DEFINED(__ram_bank_count) ? __ram_bank_count : %d) >= %d ? 0x%04x : 0",
+         i, i, BANK_MAX, i, BANK_SIZE)
 end
 printf("}\n")
 

@@ -23,22 +23,39 @@ DIR="$2"
 BASE="$3"
 C1541="$4"
 
-MAIN_SIZE=45057
+RAM_SIZE=24575    # $2001-$7FFF, the bank 0 window
 BANK_SLOT=24576   # each bank slot in the combined PRG (from FULL() padding)
 
-dd if="$PRG" of="$DIR/${BASE}-main.prg" bs=$MAIN_SIZE count=1 2>/dev/null
-
-# Extract actual bank sizes from linker symbols in the ELF file.
+# Layout of the combined PRG, from OUTPUT_FORMAT in link.ld:
+#   2 bytes load address, RAM_SIZE bytes of the window, __ram_fixed_size bytes
+#   of ram_fixed, then one BANK_SLOT per declared bank.
+# ram_fixed is emitted as FULL(ram_fixed, 0, __ram_fixed_size), so its length
+# varies with the program and has to be read back rather than assumed.
 # nm output: "00000002 A __bank_1_size" — we parse the hex value.
 ELF="${PRG}.elf"
+
+read_size() {
+  nm -B "$ELF" | sed -n "s/^\([0-9a-fA-F]*\) A $1\$/\1/p"
+}
+
+RAM_FIXED_HEX=$(read_size __ram_fixed_size)
+if [ -z "$RAM_FIXED_HEX" ]; then
+  echo "make-d81.sh: __ram_fixed_size not found in $ELF" >&2
+  exit 1
+fi
+MAIN_SIZE=$((2 + RAM_SIZE + 16#$RAM_FIXED_HEX))
+
+dd if="$PRG" of="$DIR/${BASE}-main.prg" bs=$MAIN_SIZE count=1 2>/dev/null
 for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
-  size=$(nm -B "$ELF" | sed -n "s/^\([0-9a-fA-F]*\) A __bank_${i}_size$/\1/p")
+  size=$(read_size "__bank_${i}_size")
   eval "BANK_${i}_SIZE=$((16#${size:-0}))"
 done
 
 # Remove stale bank files from previous builds to prevent leftover files
 # (from a different MAIN_SIZE or bank layout) from corrupting the D81.
-rm -f "$DIR"/BANK[0-9A-F]
+# Named per-program: several targets share one build directory, so an
+# unqualified BANK* would delete another program's slices mid-build.
+rm -f "$DIR/${BASE}"-BANK[0-9A-F]
 
 # Extract each non-empty bank and prepend a PRG header.
 # Banks 1-9 use decimal names, 10-15 use hex (a-f) to match PETSCII filenames.
@@ -55,7 +72,7 @@ for suffix in $SUFFIXES; do
     # Local filenames use uppercase for readability; D81 names use lowercase
     # so c1541 stores them as standard PETSCII uppercase ($41-$5A).
     UC_SUFFIX=$(echo "$suffix" | tr 'a-f' 'A-F')
-    BANKFILE="$DIR/BANK$UC_SUFFIX"
+    BANKFILE="$DIR/${BASE}-BANK$UC_SUFFIX"
     { printf '\000\040'; tail -c +"$start" "$PRG" | head -c "$bank_size"; } \
       > "$BANKFILE"
     WRITE_ARGS="$WRITE_ARGS -write $BANKFILE bank$suffix"

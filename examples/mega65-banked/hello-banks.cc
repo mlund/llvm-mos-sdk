@@ -16,6 +16,9 @@
 #include <cstdio>
 #include <mapper.h>
 
+// Only banks 1-4 are used; the rest are left out of the image.
+MAPPER_BANK_COUNT(4);
+
 #define BORDERCOLOR (*(volatile unsigned char *)0xD020)
 
 __attribute__((noinline, section(".bank_1")))

@@ -9,6 +9,9 @@
 #include <mapper.h>
 #include <mega65.h>
 
+// Only banks 1-2 are used; the rest are left out of the image.
+MAPPER_BANK_COUNT(2);
+
 __attribute__((noinline, section(".bank_1")))
 void set_red_border() {
   VICIV.bordercol = COLOR_RED;

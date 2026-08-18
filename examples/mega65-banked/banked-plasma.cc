@@ -23,6 +23,9 @@
 #include <mapper.h>
 #include <mega65.h>
 
+// Only banks 1-3 are used; the rest are left out of the image.
+MAPPER_BANK_COUNT(3);
+
 // ---------------------------------------------------------------------------
 // Shared state — lives in fixed region, accessible from all banks.
 // ---------------------------------------------------------------------------
@@ -39,7 +42,7 @@ static std::array<uint8_t, 25> ybuf;
 // const data in a bank keeps the 20KB fixed region free for code.
 // ---------------------------------------------------------------------------
 
-__attribute__((section(".bank_1.rodata")))
+RODATA_BANK(1)
 static const uint8_t sine_table[256] = {
     0x80, 0x7d, 0x7a, 0x77, 0x74, 0x70, 0x6d, 0x6a, 0x67, 0x64, 0x61, 0x5e,
     0x5b, 0x58, 0x55, 0x52, 0x4f, 0x4d, 0x4a, 0x47, 0x44, 0x41, 0x3f, 0x3c,
@@ -66,7 +69,7 @@ static const uint8_t sine_table[256] = {
 
 // Compute per-axis sine sums into the shared xbuf/ybuf arrays.
 // Must run while bank 1 is mapped so sine_table is accessible.
-__attribute__((noinline, section(".bank_1")))
+CODE_BANK(1)
 void compute_plasma_sums() {
   uint8_t i = c1a, j = c1b;
   for (auto &y : ybuf) {
@@ -106,7 +109,7 @@ static uint8_t rng_rand8() {
   return static_cast<uint8_t>(rng_state);
 }
 
-__attribute__((noinline, section(".bank_2")))
+CODE_BANK(2)
 void generate_charset() {
   auto charset = reinterpret_cast<volatile uint8_t *>(0xC000);
   for (uint16_t ch = 0; ch < 256; ch++) {
@@ -130,7 +133,7 @@ void generate_charset() {
 // bank. main() calls bank 1 first to fill the buffers, then bank 3 to render.
 // ---------------------------------------------------------------------------
 
-__attribute__((noinline, section(".bank_3")))
+CODE_BANK(3)
 void render_plasma() {
   auto screen = reinterpret_cast<volatile uint8_t *>(&DEFAULT_SCREEN);
   for (const auto y : ybuf) {
