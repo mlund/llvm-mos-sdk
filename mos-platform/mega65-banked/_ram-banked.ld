@@ -13,10 +13,11 @@
  * SYNC NOTE: The bank physical address mapping is defined across several
  * files that must stay consistent when the layout changes:
  *   - mapper.s:           bank_map_table (MAP register A/X pairs)
- *   - load-banks-kernal.S: setbnk_a/setbnk_y + load_addr_hi (KERNAL LOAD params)
- *   - _ram-banked.ld:     LMA values (this file)
- *   - link.ld:            MEMORY regions (ram, ram_fixed) and OUTPUT_FORMAT
+ *   - load-banks-kernal.S: setbnk_y + load_addr_hi (KERNAL LOAD params)
  *   - mapper.h:           BANK_PHYS_BASE_n
+ *   - _ram-banked.ld:     LMA values (this file), which are slots, not
+ *                         physical addresses, and so are not cross-checked
+ *   - link.ld:            MEMORY regions (ram, ram_fixed) and OUTPUT_FORMAT
  *
  * The first three are checked against each other by
  * test/mega65-banked/check-bank-tables.py (ctest: test-bank-tables), which

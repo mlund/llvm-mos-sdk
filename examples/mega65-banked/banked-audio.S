@@ -4,7 +4,7 @@
 ; information.
 
 ; The sample is larger than one 24 KB bank, so it is split across banks 1 and
-; 2, whose physical addresses are adjacent ($10800 and $16800). Assembled
+; 2, whose physical addresses are adjacent ($12000 and $18000). Assembled
 ; rather than written as two C arrays because #embed is a directive and cannot
 ; come from a macro, so C would put the split and its offset in the caller's
 ; face; here one symbol covers the whole sample.

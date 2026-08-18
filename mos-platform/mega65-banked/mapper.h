@@ -125,7 +125,7 @@ extern "C" {
  * the outer bank's own code is not in the window.
  *
  * @param bank_id Bank number (0-15). Physical mapping skips ROM at $20000:
- *                 Chip RAM:  0=$02000, 1=$10800, 2=$16800
+ *                 Chip RAM:  0=$02000, 1=$12000, 2=$18000
  *                 Fast RAM:  3=$40800, 4=$46800, 5=$4C800, 6=$52800, 7=$58800
  *                 Attic RAM: 8=$8000800 ... 15=$8036800
  * @param method  Function pointer (address within $2000-$7FFF).
