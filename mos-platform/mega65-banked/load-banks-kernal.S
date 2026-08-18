@@ -17,6 +17,7 @@ SETLFS = $FFBA
 SETNAM = $FFBD
 KLOAD  = $FFD5
 CLRCHN = $FFCC
+BORDER = $D020
 
 ; __do_kernal_load — load one bank file from D81 via KERNAL.
 ;
@@ -88,6 +89,7 @@ __do_kernal_load:
     lda #0                      ; load flag
     tax                         ; X = addr lo (always $00)
     jsr KLOAD
+    bcs .Lfail                  ; C set: A holds the KERNAL error code
 
     ; Reset I/O channels to default (screen/keyboard). Without this,
     ; CHROUT remains directed to the disk device, breaking printf().
@@ -105,6 +107,26 @@ __do_kernal_load:
     ldz #0
 .Lskip:
     rts
+
+.Lfail:
+    jmp __bank_load_failed
+
+; __bank_load_failed — a bank the program declared could not be loaded.
+;
+; Input: A = KERNAL error code (4 = file not found, 5 = device not present).
+;
+; Halts with a red border. Returning is worse than stopping: the bank reads
+; back as zeros, so the program runs on with its code or data silently
+; missing, which is indistinguishable from working. The border is the only
+; output certain to be visible this early, before the screen is set up.
+;
+; Define __bank_load_failed strongly to handle the failure instead.
+.weak __bank_load_failed
+__bank_load_failed:
+    lda #2                      ; red
+    sta BORDER
+.Lhang:
+    jmp .Lhang
 
 ; __clear_map — reset MAP to bank 0 boot state.
 ;
