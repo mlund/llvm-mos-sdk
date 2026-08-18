@@ -130,7 +130,9 @@ __clear_map:
     ldz #$83            ; MAPHI: select $E000-$FFFF, offset $30000
     map
     eom
-    sei                 ; EOM clears I flag; re-disable
+    ; No SEI here: MAP/EOM inhibit interrupts through a dedicated signal, not
+    ; the I flag (gs4510.vhdl, c65_map_instruction / opcode $EA), so the
+    ; caller's interrupt state comes back unchanged. See mapper.s.
     ldz #0              ; restore Z for C code
     rts
 

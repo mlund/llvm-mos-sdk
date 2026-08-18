@@ -65,9 +65,9 @@ __attribute__((weak)) void __load_banks(void) {
   // locking out VIC-III/IV registers.
   // Unlock VIC-IV so main() has full access to all I/O registers.
   // The KEY sequence ($47,$53) at $D02F promotes VIC-II → VIC-IV directly.
-  // Written twice to handle any prior KEY state.
-  VIC_KEY = 0x47;
-  VIC_KEY = 0x53;
+  // One pair is enough whatever came before: each write to $D02F stores the
+  // byte as the new key regardless (viciv.vhdl), so the $47 sets up the $53
+  // no matter what the register last saw.
   VIC_KEY = 0x47;
   VIC_KEY = 0x53;
   // Clear ROMC ($D030 bit 5) to expose RAM at $C000-$CFFF instead of
@@ -77,7 +77,8 @@ __attribute__((weak)) void __load_banks(void) {
   VIC_CTRLA = 0x44;
 
   // Re-enable interrupts for KERNAL screen I/O. The MEGA65 KERNAL's CHROUT
-  // (used by printf/putchar) requires interrupts enabled. The CRT init and
-  // mapper leave SEI active; restore CLI so KERNAL calls work in main().
+  // (used by printf/putchar) requires interrupts enabled. The bank loading
+  // above runs with them off (see __do_kernal_load), so turn them back on
+  // before main(). Bank switching itself leaves the I flag alone.
   asm volatile("cli" ::: "p");
 }

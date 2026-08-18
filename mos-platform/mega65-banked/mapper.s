@@ -33,13 +33,22 @@
 ; with wrong megabyte bytes, mapping $2000-$7FFF to the wrong
 ; physical address.
 ;
-; Note: MAP disables interrupts until EOM, and EOM clears the I flag.
-; We re-assert SEI after EOM to prevent KERNAL IRQs from corrupting
-; compiler state.
+; Note: MAP inhibits all interrupts, NMI included, until EOM -- through a
+; dedicated signal and not the I flag. gs4510.vhdl's c65_map_instruction sets
+; map_interrupt_inhibit, EOM (opcode $EA) clears it, and neither touches
+; flag_i. The caller's interrupt state therefore survives the sequence
+; untouched, so nothing has to be restored afterwards.
+;
+; (The MEGA65 Book calls MAP "similar to SEI" and EOM "similar to CLI". That
+; is wrong for IRQ: an SEI before the MAP still holds after the EOM. Following
+; the Book here and re-asserting SEI would leave interrupts off for good.)
 ; --------------------------------------------------------------------------
 .section .text.__set_bank_asm,"ax",@progbits
 .globl __set_bank_asm
 __set_bank_asm:
+    and #$0f                ; ids past 15 would index off the end of both
+                            ; tables and hand junk to MAP; MAPLO covers
+                            ; $0000-$7FFF, so that reaches zero page too
     tax                     ; X = bank_id (for mega table lookup)
     asl                     ; table index = bank_id * 2
     pha                     ; save index for second MAP
@@ -63,7 +72,6 @@ __set_bank_asm:
     ldz #$83                ; MAPHI select $E000-$FFFF, offset high $3 → $30000
     map
     eom
-    sei                     ; EOM clears I flag; re-disable to prevent KERNAL IRQs
     ldz #0                  ; restore Z for C code (MAP left it at $83)
     rts
 
@@ -117,6 +125,9 @@ bank_map_table:
     .byte $a8, $e4          ; bank 5: offset $4A800 → physical $4C800
     .byte $08, $e5          ; bank 6: offset $50800 → physical $52800
     .byte $68, $e5          ; bank 7: offset $56800 → physical $58800
+    ; Bank 8 is the only entry that relies on the offset addition wrapping:
+    ; $2000 + $FE800 = $100800, truncated to 20 bits gives $00800. The
+    ; megabyte byte is applied after that, so the carry does not reach it.
     .byte $e8, $ef          ; bank 8:  offset $FE800 (attic, mega=$80)
     .byte $48, $e0          ; bank 9:  offset $04800 (attic, mega=$80)
     .byte $e8, $e0          ; bank 10: offset $0E800 (attic, mega=$80)
