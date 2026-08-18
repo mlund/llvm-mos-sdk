@@ -46,9 +46,10 @@ typedef DMAJob<7, DMAList_F018B> CommonDMAJob;
  * @param count Number of values to fill
  * @param skip Optional skip (default: 1)
  */
-CommonDMAJob make_dma_fill(const uint32_t dst, const uint8_t value,
-                           const uint16_t count, const uint8_t skip = 1) {
-  CommonDMAJob dma;
+constexpr CommonDMAJob make_dma_fill(const uint32_t dst, const uint8_t value,
+                                     const uint16_t count,
+                                     const uint8_t skip = 1) {
+  CommonDMAJob dma{};
   dma.options[0] = ENABLE_F018B_OPT;
   dma.options[1] = SRC_ADDR_BITS_OPT;
   dma.options[2] = 0;
@@ -76,8 +77,8 @@ CommonDMAJob make_dma_fill(const uint32_t dst, const uint8_t value,
  * @param dst 28-bit destination address
  * @param count Number of values to copy
  */
-CommonDMAJob make_dma_copy(const uint32_t src, const uint32_t dst,
-                           const uint16_t count) {
+constexpr CommonDMAJob make_dma_copy(const uint32_t src, const uint32_t dst,
+                                     const uint16_t count) {
   auto dma = make_dma_fill(dst, 0, count);
   dma.options[2] = (uint8_t)(src >> 20);
   dma.dmalist.command = DMA_COPY_CMD;
@@ -91,14 +92,19 @@ CommonDMAJob make_dma_copy(const uint32_t src, const uint32_t dst,
  */
 template <size_t N, typename T>
 inline void trigger_dma(const DMAJob<N, T> &dma_job) {
+  // Save interrupt state and disable IRQs to prevent the KERNAL IRQ
+  // handler from changing the DMA revision between enable_f018b and
+  // trigger_enhanced writes. The flags are pulled into a C variable
+  // immediately to avoid leaving a php byte on the hardware stack
+  // across compiler-generated code.
+  uint8_t saved_p;
+  asm volatile("php\npla\nsei" : "=a"(saved_p) :: "p");
   DMA.enable_f018b = std::is_same<T, DMAList_F018B>::value;
   DMA.addr_bank = 0;
   DMA.addr_msb = ((uint16_t)&dma_job) >> 8;
   DMA.trigger_enhanced = ((uint16_t)&dma_job) & 0xff;
-  // Avoid the above from being optimized out. Ideally 
-  // we would want to somehow access `dma_job`, but an
-  // empty statement seems to be sufficient.
-  asm volatile("");
+  if (!(saved_p & 0x04))
+    asm volatile("cli" ::: "p");
 }
 
 } // namespace mega65::dma
