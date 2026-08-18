@@ -14,7 +14,8 @@ extern "C" {
 
 /// 45E100 Fast Ethernet controller
 ///
-/// Enabled by writing 0x53 and then 0x47 to VIC-IV register 0xD02F
+/// Map the controller's buffers over 0xD000-0xDFFF by writing
+/// VIC4_KEY_ETH_A then VIC4_KEY_ETH_B to VICIV.key.
 struct __45E100 {
   uint8_t ctrl1; //!< Control register 1 (offset 0x00)
   uint8_t ctrl2; //!< Control register 2 (offset 0x01)
