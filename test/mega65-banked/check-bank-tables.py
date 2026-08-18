@@ -36,6 +36,11 @@ PLATFORM = Path(__file__).resolve().parents[2] / "mos-platform" / "mega65-banked
 # carry is discarded.
 WINDOW = 0x2000
 
+# One bank, and the range CBDOS claims while it runs.
+BANK_BYTES = 0x6000
+DOS_WORK_AREA = 0x10000
+DOS_WORK_AREA_END = 0x12000
+
 
 def bytes_after(text: str, label: str) -> list[int]:
     """The .byte values following `label:`, up to the next label or directive."""
@@ -104,6 +109,15 @@ def main() -> int:
             problems.append(
                 f"bank {bank}: load-banks-kernal.S loads to ${loaded:07X}, "
                 f"mapper.h declares ${declared[bank]:07X}")
+
+    # The C65 DOS work area is mapped over $10000-$11FFF whenever CBDOS runs
+    # (mega65-rom/system.src, Get_DOS), so a bank overlapping it loses those
+    # bytes to any KERNAL disk call.
+    for bank, base in declared.items():
+        if bank and base < DOS_WORK_AREA_END and base + BANK_BYTES > DOS_WORK_AREA:
+            problems.append(
+                f"bank {bank} at ${base:07X} overlaps the C65 DOS work area "
+                f"${DOS_WORK_AREA:05X}-${DOS_WORK_AREA_END - 1:05X}")
 
     if problems:
         for problem in problems:

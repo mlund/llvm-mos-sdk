@@ -25,9 +25,13 @@ is no overflow detection.
 | Bank | Address | Memory |
 |---|---|---|
 | 0 | `$02000` | Chip RAM. The default window; needs no loading |
-| 1-2 | `$10800`, `$16800` | Chip RAM |
+| 1-2 | `$12000`, `$18000` | Chip RAM |
 | 3-7 | `$40800` … `$58800` | Fast RAM |
 | 8-15 | `$8000800` … `$8036800` | Attic RAM |
+
+Banks 1-2 start at `$12000` rather than at the top of chip RAM: `$10000-$11FFF` is the
+C65 DOS work area, mapped whenever the KERNAL touches a disk, so a bank placed there
+loses those bytes on the next disk call.
 
 Attic RAM is about ten times slower, is invisible to VIC-IV and SID, and is
 absent on Nexys A7 boards. Use it for tables and logic, not graphics or audio.

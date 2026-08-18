@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 
-project(examples LANGUAGES C CXX)
+project(examples LANGUAGES C CXX ASM)
 
 # Install examples to root example dir, not bin/
 set(CMAKE_INSTALL_BINDIR .)

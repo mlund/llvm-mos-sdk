@@ -185,10 +185,10 @@ setbnk_y:
 ; Lo byte is always $00 since all bank origins are page-aligned.
 ; All addresses offset +$800 from page boundaries to avoid KERNAL LOAD bug
 ; that corrupts data when load_addr_hi=$00 (Y=0 in KLOAD call).
-;   Bank 1: $0800 ($10800)  Bank 2: $6800 ($16800)
+;   Bank 1: $2000 ($12000)  Bank 2: $8000 ($18000)
 ;   Bank 3: $0800 ($40800)  Bank 4: $6800 ($46800)  Bank 5: $C800 ($4C800)
 ;   Bank 6: $2800 ($52800)  Bank 7: $8800 ($58800)
 ;   Banks 8-15: alternating $0800/$6800 (2 banks per 64KB page)
 load_addr_hi:
-    .byte $08, $68, $08, $68, $C8, $28, $88         ; banks 1-7
+    .byte $20, $80, $08, $68, $C8, $28, $88         ; banks 1-7
     .byte $08, $68, $08, $68, $08, $68, $08, $68    ; banks 8-15

@@ -81,7 +81,8 @@ __set_bank_asm:
 ;
 ; Physical memory layout:
 ;   $00000-$0FFFF  Chip RAM first 64KB (bank 0 + ram_fixed + ROM/IO)
-;   $10000-$1FFFF  Chip RAM second 64KB (banks 1-2; $1F800 = colour RAM window)
+;   $10000-$11FFF  Chip RAM — C65 DOS work area, mapped whenever CBDOS runs
+;   $12000-$1FFFF  Chip RAM (banks 1-2; $1F800 = colour RAM window)
 ;   $20000-$3FFFF  ROM — NOT WRITABLE
 ;   $40000-$5FFFF  Fast RAM (128KB, banks 3-7 with $6000 spacing)
 ;   $8000000+      Attic RAM (HyperRAM, 8MB; megabyte byte $80)
@@ -91,8 +92,8 @@ __set_bank_asm:
 ;
 ; Bank → offset → physical base ($2000 + offset):
 ;   0: $00000 → $02000  (Chip RAM — default, no MAP needed)
-;   1: $0E800 → $10800  (Chip RAM)
-;   2: $14800 → $16800  (Chip RAM — ends at $1C7FF, below colour RAM at $1F800)
+;   1: $10000 → $12000  (Chip RAM — clear of the C65 DOS work area below)
+;   2: $16000 → $18000  (Chip RAM — ends at $1DFFF, below colour RAM at $1F800)
 ;   3: $3E800 → $40800  (Fast RAM — skip ROM at $20000)
 ;   4: $44800 → $46800  (Fast RAM)
 ;   5: $4A800 → $4C800  (Fast RAM)
@@ -118,8 +119,8 @@ __set_bank_asm:
 .section .rodata.bank_map_table,"a",@progbits
 bank_map_table:
     .byte $00, $00          ; bank 0: unmap (default Chip RAM at $02000)
-    .byte $e8, $e0          ; bank 1: offset $0E800 → physical $10800
-    .byte $48, $e1          ; bank 2: offset $14800 → physical $16800
+    .byte $00, $e1          ; bank 1: offset $10000 → physical $12000
+    .byte $60, $e1          ; bank 2: offset $16000 → physical $18000
     .byte $e8, $e3          ; bank 3: offset $3E800 → physical $40800
     .byte $48, $e4          ; bank 4: offset $44800 → physical $46800
     .byte $a8, $e4          ; bank 5: offset $4A800 → physical $4C800

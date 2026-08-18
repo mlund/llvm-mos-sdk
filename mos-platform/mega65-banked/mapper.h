@@ -28,8 +28,8 @@
  * bank layout.
  */
 #define BANK_PHYS_BASE_0  0x02000ul
-#define BANK_PHYS_BASE_1  0x10800ul
-#define BANK_PHYS_BASE_2  0x16800ul
+#define BANK_PHYS_BASE_1  0x12000ul
+#define BANK_PHYS_BASE_2  0x18000ul
 #define BANK_PHYS_BASE_3  0x40800ul
 #define BANK_PHYS_BASE_4  0x46800ul
 #define BANK_PHYS_BASE_5  0x4C800ul

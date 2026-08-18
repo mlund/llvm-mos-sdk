@@ -35,11 +35,11 @@ void modify_bank2(void) {
 int main(void) {
     // Load bank data from SD card to physical addresses.
     mega65_h_setname("BANK1.BIN");
-    if (mega65_h_loadfile(0x10800UL))
+    if (mega65_h_loadfile(BANK_PHYS_BASE_1))
         xemu_exit(1);
 
     mega65_h_setname("BANK2.BIN");
-    if (mega65_h_loadfile(0x16800UL))
+    if (mega65_h_loadfile(BANK_PHYS_BASE_2))
         xemu_exit(2);
 
     // Call bank 1 function and verify.
