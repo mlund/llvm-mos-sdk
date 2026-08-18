@@ -76,6 +76,10 @@ if(NOT CMAKE_CROSSCOMPILING)
     PATHS ENV LUA_DIR)
   message(STATUS "Lua interpreter: ${LUA_COMMAND}")
 
+  find_program(PYTHON3_COMMAND NAMES python3 python
+    PATHS ENV PYTHON_DIR)
+  message(STATUS "Python 3 interpreter: ${PYTHON3_COMMAND}")
+
   # Install toolchain and config file for users of find_package(llvm-mos-sdk).
   # CMake's find_package logic will discover
   # `$PATH/../lib/cmake/llvm-mos-sdk/llvm-mos-sdk-config.cmake` which in turn
