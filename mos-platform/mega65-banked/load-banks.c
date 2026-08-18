@@ -17,13 +17,33 @@
 // when load_addr_hi=$00 (Y=0 in the KLOAD call). All bank physical
 // addresses use a +$800 offset to ensure non-zero high bytes.
 
-// VIC-IV registers used below. We avoid #include <mega65.h> because the
-// full header chain requires include paths not available to CRT objects.
+// Registers used below. We avoid #include <mega65.h> because the full header
+// chain requires include paths not available to CRT objects, so the names are
+// restated here. They mirror VICIV.key, VICIV.ctrla and the VIC3_*/VIC4_*
+// masks in <mega65.h>; keep them in step.
 #define VIC_KEY   (*(volatile unsigned char *)0xD02F)
 #define VIC_CTRLA (*(volatile unsigned char *)0xD030)
 
+// The pair that makes the VIC-IV registers visible at $D000-$DFFF. Any other
+// value written to the key returns to VIC-II.
+#define VIC_KEY_VICIV_A 0x47
+#define VIC_KEY_VICIV_B 0x53
+
+// Bits of VIC_CTRLA. The four ROM bits overlay C65 ROM on the matching 8 KB
+// of RAM; leaving them clear is what keeps ram_fixed addressable.
+#define VIC3_PAL   0x04 // colours 0-15 from palette RAM rather than ROM
+#define VIC3_ROM8  0x08 // C65 ROM over $8000
+#define VIC3_ROMA  0x10 // C65 ROM over $A000
+#define VIC3_ROMC  0x20 // C65 ROM over $C000
+#define VIC3_CROM9 0x40 // C65 character set
+#define VIC3_ROME  0x80 // C65 ROM over $E000
+
 // C64-style CPU I/O port at address $01.
 #define CPU_PORT  (*(volatile unsigned char *)0x01)
+#define CPU_PORT_LORAM    0x01 // BASIC ROM over $A000-$BFFF
+#define CPU_PORT_HIRAM    0x02 // KERNAL ROM over $E000-$FFFF
+#define CPU_PORT_CHAREN   0x04 // I/O at $D000 rather than the character ROM
+#define CPU_PORT_CASSETTE 0x38 // cassette lines, left driven high
 
 // Defined in load-banks-kernal.S. Uses 28-bit SETBNK for all banks
 // (chip, fast, and attic RAM). The empty-bank size check lives there
@@ -42,7 +62,7 @@ __attribute__((weak)) void __load_banks(void) {
   // (LORAM=1), which maps C64 BASIC ROM there. We only need KERNAL
   // ($E000-$FFFF), not BASIC. $3E clears LORAM while keeping HIRAM and
   // CHAREN (KERNAL + I/O).
-  CPU_PORT = 0x3E;
+  CPU_PORT = CPU_PORT_CASSETTE | CPU_PORT_CHAREN | CPU_PORT_HIRAM;
 
   // When booted via AUTOBOOT.C65, the KERNAL has just finished loading the
   // main PRG and may have left I/O channels in a dirty state.  Reset them
@@ -68,13 +88,13 @@ __attribute__((weak)) void __load_banks(void) {
   // One pair is enough whatever came before: each write to $D02F stores the
   // byte as the new key regardless (viciv.vhdl), so the $47 sets up the $53
   // no matter what the register last saw.
-  VIC_KEY = 0x47;
-  VIC_KEY = 0x53;
-  // Clear ROMC ($D030 bit 5) to expose RAM at $C000-$CFFF instead of
-  // C65 Interface ROM. This extends usable ram_fixed to 20KB ($8000-$CFFF).
-  // KERNAL CHROUT/printf work without it (40-column editor is in $E000-$FFFF).
-  // Keep FAST (bit 2) and bit 6 (C65 character set).
-  VIC_CTRLA = 0x44;
+  VIC_KEY = VIC_KEY_VICIV_A;
+  VIC_KEY = VIC_KEY_VICIV_B;
+  // Clear ROMC so $C000-$CFFF is RAM rather than the C65 Interface ROM,
+  // which is what makes ram_fixed 20 KB. Writing all four ROM bits clear at
+  // once also keeps ROM8/ROMA/ROME off. KERNAL CHROUT/printf still work: the
+  // 40-column editor lives at $E000-$FFFF, which this does not touch.
+  VIC_CTRLA = VIC3_CROM9 | VIC3_PAL;
 
   // Re-enable interrupts for KERNAL screen I/O. The MEGA65 KERNAL's CHROUT
   // (used by printf/putchar) requires interrupts enabled. The bank loading
