@@ -93,6 +93,13 @@ __do_kernal_load:
     ; CHROUT remains directed to the disk device, breaking printf().
     jsr CLRCHN
 
+    ; Point LOAD back at bank 0. A program that never calls SETBNK itself
+    ; works on the non-banked target and would otherwise load into whichever
+    ; bank was filled last.
+    lda #$00                    ; bit 7 clear: legacy form, A = memory bank
+    ldx #$00                    ; filename bank
+    jsr SETBNK
+
     ; Restore interrupt disable state and Z register for C code.
     sei
     ldz #0

@@ -111,13 +111,18 @@ so a `cbm_k_load()` from your own code hangs. Map it for the call:
 VICIV.ctrla |= VIC3_ROMC_MASK;
 cbm_k_setlfs(0, 8, 0);
 cbm_k_setnam("DATA");
-cbm_k_load(0, (void *)0x6000);
+cbm_k_load(0, (void *)0xB000);   // in the fixed region, not the window
 VICIV.ctrla &= (unsigned char)~VIC3_ROMC_MASK;
 ```
 
 While ROMC is mapped, reads from `$C000-$CFFF` give ROM rather than what you
 put there; writes still reach the RAM underneath. Keep anything the call needs
 below `$C000`.
+
+A 16-bit destination inside `$2000-$7FFF` lands in whichever bank is mapped, so
+prefer the fixed region unless that is what you meant. The CRT leaves LOAD
+aimed at bank 0; call `mega65_k_setbnk()` first to reach anywhere else in the
+28-bit space.
 
 The soft stack grows down from `$D000` through the same range, but LTO
 allocates frames statically wherever it can prove functions are not

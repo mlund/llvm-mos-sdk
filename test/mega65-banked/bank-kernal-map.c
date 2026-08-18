@@ -23,6 +23,10 @@ MAPPER_BANK_COUNT(1);
 #define PROBE ((volatile uint8_t *)0xBF00)
 
 #define WINDOW (*(volatile uint8_t *)0x2000)
+
+// In ram_fixed, clear of the code, so its physical address is unambiguous --
+// an address inside the window would depend on which bank is mapped.
+#define LOAD_AT 0xB000
 #define MARK 0x5A
 #define BANK 1
 
@@ -37,7 +41,7 @@ int main(void) {
   VICIV.ctrla |= VIC3_ROMC_MASK;
   cbm_k_setlfs(0, 8, 0);
   cbm_k_setnam("BANK1");
-  cbm_k_load(0, (void *)0x6000);
+  cbm_k_load(0, (void *)LOAD_AT);
   VICIV.ctrla &= (unsigned char)~VIC3_ROMC_MASK;
 
   PROBE[0] = 0x33;                        // the call returned
@@ -46,7 +50,12 @@ int main(void) {
 
   resync_bank();
   PROBE[3] = WINDOW;                      // and is put back
-  PROBE[4] = 0xA5;
+
+  // The loader aims the KERNAL at a bank per load; unless it aims it back at
+  // bank 0, this lands at $01B000 rather than $00B000.
+  PROBE[4] = *(volatile uint8_t *)LOAD_AT;
+
+  PROBE[5] = 0xA5;
 
   xemu_exit(0);
 }

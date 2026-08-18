@@ -213,4 +213,4 @@ add_mega65_banked_dump_test(bank-attic-call
 add_mega65_banked_dump_test(bank-irq-delivery C000=01 C001=01 C002=A5)
 
 # A KERNAL disk call returns with the caller's bank still in the window.
-add_mega65_banked_dump_test(bank-kernal-map BF00=33 BF01=01 BF02=01 BF03=5A BF04=A5)
+add_mega65_banked_dump_test(bank-kernal-map BF00=33 BF01=01 BF02=01 BF03=5A BF04=B1 BF05=A5)
