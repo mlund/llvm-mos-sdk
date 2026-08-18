@@ -20,16 +20,17 @@ static void xemu_exit(uint8_t code) {
                "map\n\t"
                "eom\n\t"
                "sei" ::: "a", "x", "y", "p");
-  // Unlock VIC-IV I/O mode.  The KEY sequence ($47,$53) at $D02F promotes
-  // VIC-II → VIC-IV directly.  Written twice to handle any prior KEY state.
-  *(volatile uint8_t *)0xD02F = 0x47;
-  *(volatile uint8_t *)0xD02F = 0x53;
+  // Unlock VIC-IV I/O mode.  One pair is enough whatever came before: each
+  // write to the key register stores the byte as the new key regardless, so
+  // the $47 sets up the $53 no matter what the register last saw.
   *(volatile uint8_t *)0xD02F = 0x47;
   *(volatile uint8_t *)0xD02F = 0x53;
   XEMU_CONTROL = code;
   XEMU_CONTROL = XEMU_QUIT;
-  while (1) {
-  }
+  // Wait for the emulator to go. An empty loop would be undefined behaviour
+  // and may be deleted, letting control run off the end of this function.
+  for (;;)
+    asm volatile("");
 }
 
 // Assert condition; on failure exits with source line number as exit code.
