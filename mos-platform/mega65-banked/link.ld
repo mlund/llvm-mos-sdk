@@ -31,6 +31,11 @@
 
 __basic_zp_start = 0x0002;
 __basic_zp_end = 0x0090;
+/* Size of BASIC ZP region for save-basic library. This script does what
+ * commodore.ld does for the other Commodore targets, but cannot include it:
+ * that file aliases the C regions to ram and declares its own SECTIONS, both
+ * of which the banked layout replaces. */
+__basic_zp_size = __basic_zp_end - __basic_zp_start;
 
 /* Imaginary registers in the BASIC zero-page area. */
 __rc0 = __basic_zp_start;
