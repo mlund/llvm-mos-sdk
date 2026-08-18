@@ -23,3 +23,15 @@ install_example(mandelbrot_fcm.prg)
 add_executable(vector_logo.prg vector_logo.cc)
 install_example(vector_logo.prg)
 
+add_executable(fire_fcm.prg fire_fcm.cc)
+install_example(fire_fcm.prg)
+
+add_executable(logo_fire.prg logo_fire.cc)
+install_example(logo_fire.prg)
+
+add_executable(joytest.prg joytest.cc)
+install_example(joytest.prg)
+
+add_executable(rrb_tile.prg rrb_tile.cc)
+install_example(rrb_tile.prg)
+

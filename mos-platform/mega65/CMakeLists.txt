@@ -25,6 +25,10 @@ add_platform_object_file(mega65-unmap-basic unmap-basic.o unmap-basic.S)
 
 add_platform_library(mega65-c
   filevars.s
+  mega65_joy_read.cc
   kernal.S
 )
-target_include_directories(mega65-c BEFORE PUBLIC .)
+target_compile_options(mega65-c PRIVATE -mcpu=mos45gs02)
+target_include_directories(mega65-c BEFORE PUBLIC .
+  ${CMAKE_CURRENT_SOURCE_DIR}/../c64
+  ${CMAKE_CURRENT_SOURCE_DIR}/../commodore)

@@ -24,7 +24,7 @@
 //
 // Memory layout:
 //   Screen RAM:  $0800-$0FA7  (2000 bytes, 16-bit tile indices)
-//   Color RAM:   $D800-$DBE7  (1000 bytes, FCM attributes per tile)
+//   Color RAM:   $D800-$DFCF  (2000 bytes, 2 per tile in SEAM mode)
 //   Tile buffer: (BSS)        (2560 bytes, rendered one row at a time)
 //   Tile data:   $40000+      (64000 bytes, 1000 tiles x 64 bytes each)
 
@@ -71,7 +71,31 @@ static inline fix16 fp_mul(fix16 a, fix16 b) {
   }
 }
 
+// Skip points inside the main cardioid or period-2 bulb — these always
+// reach MAX_ITER. Detecting them with ~4 multiplies avoids 32 wasted
+// iterations (~96 multiplies) for every pixel in the large black region.
+static bool inside_cardioid_or_bulb(fix16 cr, fix16 ci) {
+  constexpr fix16 FP_QUARTER = FP_ONE / 4;
+  constexpr fix16 FP_SIXTEENTH = FP_ONE / 16;
+
+  // Main cardioid: q*(q + cr - 1/4) < ci²/4
+  const fix16 cr_shifted = cr - FP_QUARTER;
+  const fix16 ci2 = fp_mul(ci, ci);
+  const fix16 q = fp_mul(cr_shifted, cr_shifted) + ci2;
+  if (fp_mul(q, static_cast<fix16>(q + cr_shifted)) < (ci2 >> 2))
+    return true;
+
+  // Period-2 bulb: (cr + 1)² + ci² < 1/16
+  const fix16 cr1 = static_cast<fix16>(cr + FP_ONE);
+  if (fp_mul(cr1, cr1) + ci2 < FP_SIXTEENTH)
+    return true;
+
+  return false;
+}
+
 static uint8_t mandelbrot(fix16 cr, fix16 ci) {
+  if (inside_cardioid_or_bulb(cr, ci))
+    return MAX_ITER;
   constexpr fix16 FP_FOUR = 4 * FP_ONE;
   fix16 zr = 0, zi = 0;
   for (uint8_t i = 0; i < MAX_ITER; ++i) {
@@ -167,26 +191,27 @@ static void setup_vic() {
       (VICIV.ctrlc & ~VIC4_FCLRLO_MASK) | VIC4_CHR16_MASK | VIC4_FCLRHI_MASK;
 
   // Reuse KERNAL's default screen area — avoids relocating 2KB of RAM.
-  VICIV.scrnptr_lsb = 0x00;
-  VICIV.scrnptr_msb = 0x08;
-  VICIV.scrnptr_bnk = 0x00;
-  VICIV.scrnptr_mb = 0x00;
+  VICIV.scrnptr = 0x0800;
 
   // Character data base at 0 — tile index N maps to address N*64
-  VICIV.charptr_lsb = 0x00;
-  VICIV.charptr_msb = 0x00;
-  VICIV.charptr_bnk = 0x00;
+  VICIV.charptr = 0x0000;
 
   // 80 bytes per screen row (2 bytes per char in CHR16 mode)
   VICIV.linestep = CELL_COLS * CHR16_BYTES_PER_CHAR;
   VICIV.chrcount = CELL_COLS;
   VICIV.disp_rows = CELL_ROWS;
 
+  // VIC-IV ctrl1/ctrl2 bit masks (VIC-II compatible, no SDK definitions yet)
+  constexpr uint8_t VIC4_RST8_MASK = 0x80; // Raster MSB
+  constexpr uint8_t VIC4_ECM_MASK = 0x40;  // Extended color mode
+  constexpr uint8_t VIC4_DEN_MASK = 0x10;  // Display enable
+  constexpr uint8_t VIC4_RSEL_MASK = 0x08; // 25-row select
+  constexpr uint8_t VIC4_CSEL_MASK = 0x08; // 40-column select (ctrl2)
+
   // FCM is a text-mode extension — BMM must be off.
-  // Preserve raster MSB (0xC0), set DEN | RSEL | YSCROLL=3 (0x1B)
-  VICIV.ctrl1 = (VICIV.ctrl1 & 0xC0) | 0x1B;
-  // Preserve unused high bits (0xE0), set CSEL (0x08)
-  VICIV.ctrl2 = (VICIV.ctrl2 & 0xE0) | 0x08;
+  VICIV.ctrl1 = (VICIV.ctrl1 & (VIC4_RST8_MASK | VIC4_ECM_MASK)) |
+                VIC4_DEN_MASK | VIC4_RSEL_MASK | 3; // YSCROLL=3
+  VICIV.ctrl2 = (VICIV.ctrl2 & 0xE0) | VIC4_CSEL_MASK;
 
   VICIV.bordercol = 0;
   VICIV.screencol = 0;
@@ -197,7 +222,7 @@ static void setup_vic() {
 
 static void setup_screen() {
   constexpr uint16_t NUM_CELLS = CELL_COLS * CELL_ROWS;
-  constexpr uint16_t TILE_BASE = 0x1000;
+  constexpr uint16_t TILE_BASE = GFX_ADDR / TILE_BYTES;
   constexpr uint16_t COLOR_RAM_ADDR = 0xD800;
   auto *const SCREEN16 = reinterpret_cast<volatile uint16_t *>(&DEFAULT_SCREEN);
   auto *const COLOR_RAM = reinterpret_cast<volatile uint8_t *>(COLOR_RAM_ADDR);
@@ -208,8 +233,10 @@ static void setup_screen() {
   for (uint16_t i = 0; i < NUM_CELLS; ++i)
     SCREEN16[i] = TILE_BASE + i;
 
-  // Neutral color RAM prevents unwanted FCM attributes (flips, alpha).
-  for (uint16_t i = 0; i < NUM_CELLS; ++i)
+  // SEAM uses 2 bytes of colour RAM per character (byte 0: attributes like
+  // flip/alpha/GOTOX/NCM; byte 1: foreground colour). Zero both to prevent
+  // unwanted FCM attributes.
+  for (uint16_t i = 0; i < NUM_CELLS * 2; ++i)
     COLOR_RAM[i] = 0;
 
   // Zero the graphics area so partially-rendered rows display as black.
@@ -232,25 +259,26 @@ static void render_fractal() {
   constexpr fix16 RE_STEP = (RE_MAX - RE_MIN) / SCREEN_COLS;
   constexpr fix16 IM_STEP = (IM_MAX - IM_MIN) / SCREEN_ROWS;
 
-  for (uint8_t cy = 0; cy < CELL_ROWS; ++cy) {
-    for (uint8_t cx = 0; cx < CELL_COLS; ++cx) {
-      const uint16_t tile_off = static_cast<uint16_t>(cx) * TILE_BYTES;
+  fix16 ci = IM_MIN;
 
-      for (uint8_t py = 0; py < TILE_PIXELS; ++py) {
-        const uint16_t y = static_cast<uint16_t>(cy) * TILE_PIXELS + py;
+  for (uint8_t cy = 0; cy < CELL_ROWS; ++cy) {
+    // Scanline-order: iterate py before cx so ci advances once per row.
+    for (uint8_t py = 0; py < TILE_PIXELS; ++py) {
+      fix16 cr = RE_MIN;
+
+      for (uint8_t cx = 0; cx < CELL_COLS; ++cx) {
+        const uint16_t tile_off =
+            static_cast<uint16_t>(cx) * TILE_BYTES + py * TILE_PIXELS;
 
         for (uint8_t px = 0; px < TILE_PIXELS; ++px) {
-          const uint16_t x = static_cast<uint16_t>(cx) * TILE_PIXELS + px;
-
-          const fix16 cr = RE_MIN + static_cast<fix16>(x) * RE_STEP;
-          const fix16 ci = IM_MIN + static_cast<fix16>(y) * IM_STEP;
-
           const uint8_t iter = mandelbrot(cr, ci);
 
-          tile_row_buf[tile_off + py * TILE_PIXELS + px] =
+          tile_row_buf[tile_off + px] =
               (iter >= MAX_ITER) ? 0 : static_cast<uint8_t>(iter + 1);
+          cr += RE_STEP;
         }
       }
+      ci += IM_STEP;
     }
 
     const auto dma = make_dma_copy(

@@ -219,6 +219,10 @@ int main() {
   VICIV.key = VICIV_KEY1;
   VICIV.key = VICIV_KEY2;
 
+  // Disable hot registers so writing $D031 (ctrlb) doesn't trigger a
+  // cascade that recalculates charptr and other VIC-IV registers.
+  VICIV.sdbdrwd_msb &= ~VIC4_HOTREG_MASK;
+
   // Use palette RAM for colors 0-15 (16+ always use palette RAM)
   VICIV.ctrla |= VIC3_PAL_MASK;
 
