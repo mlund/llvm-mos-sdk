@@ -15,6 +15,13 @@
 # Banks with size 0 are skipped entirely.
 #
 # Usage: make-d81.sh <combined.prg> <output-dir> <basename> <c1541>
+#                    [--name <disk-name>] [--no-autoboot]
+#
+# --name         disk name, and the program's filename when autoboot is off.
+#                CBM DOS truncates both to 16 characters.
+# --no-autoboot  name the program after the disk rather than autoboot.c65, so
+#                it is started with RUN"<name>" instead of on reset. Useful
+#                where the C65 autoboot is not wanted or not trusted.
 
 set -e
 
@@ -22,6 +29,35 @@ PRG="$1"
 DIR="$2"
 BASE="$3"
 C1541="$4"
+
+if [ $# -lt 4 ]; then
+  echo "make-d81.sh: expected at least 4 arguments" >&2
+  exit 1
+fi
+shift 4
+
+DISK_NAME="$BASE"
+AUTOBOOT=1
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --name)
+      if [ $# -lt 2 ]; then
+        echo "make-d81.sh: --name needs a value" >&2
+        exit 1
+      fi
+      DISK_NAME="$2"
+      shift 2
+      ;;
+    --no-autoboot)
+      AUTOBOOT=0
+      shift
+      ;;
+    *)
+      echo "make-d81.sh: unknown option $1" >&2
+      exit 1
+      ;;
+  esac
+done
 
 RAM_SIZE=24575    # $2001-$7FFF, the bank 0 window
 BANK_SLOT=24576   # each bank slot in the combined PRG (from FULL() padding)
@@ -79,5 +115,13 @@ for suffix in $SUFFIXES; do
   fi
 done
 
-MAIN_WRITE="-write $DIR/${BASE}-main.prg autoboot.c65"
-eval "\"$C1541\" -format \"test,01\" d81 \"$DIR/${BASE}.d81\" $MAIN_WRITE $WRITE_ARGS"
+DISK_NAME=$(printf '%.16s' "$DISK_NAME")
+if [ "$AUTOBOOT" -eq 1 ]; then
+  PRG_NAME=autoboot.c65
+else
+  # Lowercase for the same reason as the bank files: c1541 maps it to standard
+  # PETSCII uppercase, which is what the directory match expects.
+  PRG_NAME=$(printf '%s' "$DISK_NAME" | tr 'A-Z' 'a-z')
+fi
+MAIN_WRITE="-write $DIR/${BASE}-main.prg $PRG_NAME"
+eval "\"$C1541\" -format \"$DISK_NAME,01\" d81 \"$DIR/${BASE}.d81\" $MAIN_WRITE $WRITE_ARGS"
