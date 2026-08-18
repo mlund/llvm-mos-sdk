@@ -14,7 +14,7 @@
 # Only the actual used portion of each bank is written, saving D81 disk space.
 # Banks with size 0 are skipped entirely.
 #
-# Usage: make-d81.sh <combined.prg> <output-dir> <basename> <c1541>
+# Usage: make-d81.sh <combined.prg> <output-dir> <basename> <python3>
 #                    [--name <disk-name>] [--no-autoboot]
 #
 # --name         disk name, and the program's filename when autoboot is off.
@@ -28,7 +28,10 @@ set -e
 PRG="$1"
 DIR="$2"
 BASE="$3"
-C1541="$4"
+PYTHON3="$4"
+
+# d81.py ships beside this script, including once installed.
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
 if [ $# -lt 4 ]; then
   echo "make-d81.sh: expected at least 4 arguments" >&2
@@ -94,9 +97,8 @@ done
 rm -f "$DIR/${BASE}"-BANK[0-9A-F]
 
 # Extract each non-empty bank and prepend a PRG header.
-# Banks 1-9 use decimal names, 10-15 use hex (a-f) to match PETSCII filenames.
-# c1541 converts lowercase ASCII to PETSCII $41-$5A (standard uppercase).
-# Uppercase ASCII 'A'-'F' would map to PETSCII $C1-$C6 (shifted), which is wrong.
+# Banks 1-9 use decimal names, 10-15 use hex (a-f), matching the digit that
+# __do_kernal_load builds into its filename.
 WRITE_ARGS=""
 SUFFIXES="1 2 3 4 5 6 7 8 9 a b c d e f"
 idx=0
@@ -105,13 +107,12 @@ for suffix in $SUFFIXES; do
   eval "bank_size=\$BANK_${idx}_SIZE"
   if [ "$bank_size" -gt 0 ]; then
     start=$((MAIN_SIZE + (idx - 1) * BANK_SLOT + 1))
-    # Local filenames use uppercase for readability; D81 names use lowercase
-    # so c1541 stores them as standard PETSCII uppercase ($41-$5A).
+    # Local filenames use uppercase for readability.
     UC_SUFFIX=$(echo "$suffix" | tr 'a-f' 'A-F')
     BANKFILE="$DIR/${BASE}-BANK$UC_SUFFIX"
     { printf '\000\040'; tail -c +"$start" "$PRG" | head -c "$bank_size"; } \
       > "$BANKFILE"
-    WRITE_ARGS="$WRITE_ARGS -write $BANKFILE bank$suffix"
+    WRITE_ARGS="$WRITE_ARGS \"$BANKFILE=bank$suffix\""
   fi
 done
 
@@ -119,9 +120,8 @@ DISK_NAME=$(printf '%.16s' "$DISK_NAME")
 if [ "$AUTOBOOT" -eq 1 ]; then
   PRG_NAME=autoboot.c65
 else
-  # Lowercase for the same reason as the bank files: c1541 maps it to standard
-  # PETSCII uppercase, which is what the directory match expects.
   PRG_NAME=$(printf '%s' "$DISK_NAME" | tr 'A-Z' 'a-z')
 fi
-MAIN_WRITE="-write $DIR/${BASE}-main.prg $PRG_NAME"
-eval "\"$C1541\" -format \"$DISK_NAME,01\" d81 \"$DIR/${BASE}.d81\" $MAIN_WRITE $WRITE_ARGS"
+MAIN_WRITE="\"$DIR/${BASE}-main.prg=$PRG_NAME\""
+eval "\"$PYTHON3\" \"$SCRIPT_DIR/d81.py\" \"$DIR/${BASE}.d81\"" \
+     "-n \"$DISK_NAME\" -i 01 $MAIN_WRITE $WRITE_ARGS"

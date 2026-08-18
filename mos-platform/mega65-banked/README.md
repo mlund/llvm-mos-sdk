@@ -166,7 +166,7 @@ See `examples/mega65-banked/banked-irq.cc`.
 
 ```sh
 mos-mega65-banked-clang -Os -o game.prg game.c
-sh make-d81.sh game.prg . game "$(command -v c1541)"
+sh make-d81.sh game.prg . game "$(command -v python3)"
 ```
 
 This writes `game-main.prg`, one file per non-empty bank, and `game.d81` with

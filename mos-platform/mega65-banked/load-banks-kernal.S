@@ -190,8 +190,8 @@ bank_size_hi:
 
 ; SYNC: see _ram-banked.ld header for the full list of files encoding bank layout.
 
-; PETSCII filename for directory matching. c1541 stores ASCII lowercase
-; as PETSCII $41-$5A (standard uppercase), not $C1-$DA (shifted).
+; PETSCII filename for directory matching. d81.py writes names as
+; $41-$5A (standard uppercase), not $C1-$DA (shifted).
 name_buf:
     .byte $42, $41, $4E, $4B, $31
 

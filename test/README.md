@@ -9,8 +9,8 @@ before concluding a suite passed.
 |---|---|---|---|
 | `emutest` + a Libretro core | NES, Atari 2600 | tests **fail** with `EMUTEST_COMMAND-NOTFOUND` | `EMUTEST_DIR`, `LIBRETRO_CORES_DIR`, `PATH` |
 | `xmega65` (Xemu) | MEGA65 | tests are **not registered** | `XMEGA65_DIR`, `PATH`, `~/bin`, the macOS app bundle |
-| `c1541` (VICE) | MEGA65 disk images | tests are **not registered** | `VICE_DIR`, `PATH`, `~/bin`, Homebrew prefixes |
-| `python3` | MEGA65 memory-dump checks | tests are **not registered** | `PYTHON_DIR`, `PATH` |
+| `c1541` (VICE) | `mega65` disk images | tests are **not registered** | `VICE_DIR`, `PATH`, `~/bin`, Homebrew prefixes |
+| `python3` | MEGA65 dump checks, and `mega65-banked` disk images | tests are **not registered** | `PYTHON_DIR`, `PATH` |
 
 `add_emutest_test` registers unconditionally; the MEGA65 helpers return early
 when their tool is absent. The environment variable in each row is an

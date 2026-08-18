@@ -17,8 +17,8 @@ function(add_mega65_banked_test name)
   if(NOT XMEGA65_COMMAND)
     return()
   endif()
-  if(NOT C1541_COMMAND)
-    message(STATUS "c1541 not found, skipping banked test: test-${name}")
+  if(NOT PYTHON3_COMMAND)
+    message(STATUS "python3 not found, skipping banked test: test-${name}")
     return()
   endif()
   add_executable(${name}.prg ${source_dir}/${name}.c)
@@ -27,7 +27,7 @@ function(add_mega65_banked_test name)
       $<TARGET_FILE:${name}.prg>
       $<TARGET_FILE_DIR:${name}.prg>
       ${name}
-      ${C1541_COMMAND}
+      ${PYTHON3_COMMAND}
     COMMENT "Splitting PRG and creating D81 for ${name}")
   add_test(NAME test-${name} COMMAND
     ${XMEGA65_COMMAND} -headless -sleepless -testing
@@ -46,8 +46,8 @@ function(add_mega65_banked_disk_test name)
   if(NOT XMEGA65_COMMAND)
     return()
   endif()
-  if(NOT C1541_COMMAND)
-    message(STATUS "c1541 not found, skipping disk test: test-${name}")
+  if(NOT PYTHON3_COMMAND)
+    message(STATUS "python3 not found, skipping disk test: test-${name}")
     return()
   endif()
   add_executable(${name}.prg ${source_dir}/${name}.c)
@@ -57,7 +57,7 @@ function(add_mega65_banked_disk_test name)
       $<TARGET_FILE:${name}.prg>
       $<TARGET_FILE_DIR:${name}.prg>
       ${name}
-      ${C1541_COMMAND}
+      ${PYTHON3_COMMAND}
     COMMENT "Splitting PRG and creating D81 for ${name}")
 
   add_test(NAME test-${name} COMMAND
@@ -78,8 +78,8 @@ function(add_mega65_banked_bload_test name)
   if(NOT XMEGA65_COMMAND)
     return()
   endif()
-  if(NOT C1541_COMMAND)
-    message(STATUS "c1541 not found, skipping bload test: test-${name}")
+  if(NOT PYTHON3_COMMAND)
+    message(STATUS "python3 not found, skipping bload test: test-${name}")
     return()
   endif()
 
@@ -90,7 +90,7 @@ function(add_mega65_banked_bload_test name)
       $<TARGET_FILE:${name}.prg>
       $<TARGET_FILE_DIR:${name}.prg>
       ${name}
-      ${C1541_COMMAND}
+      ${PYTHON3_COMMAND}
     COMMENT "Splitting PRG and creating D81 for ${name}")
 
   # Hyppo loads raw images, so strip the PRG header make-d81.sh prepends.
@@ -119,8 +119,8 @@ function(add_mega65_banked_dump_test name)
   if(NOT XMEGA65_COMMAND)
     return()
   endif()
-  if(NOT C1541_COMMAND)
-    message(STATUS "c1541 not found, skipping dump test: test-${name}")
+  if(NOT PYTHON3_COMMAND)
+    message(STATUS "python3 not found, skipping dump test: test-${name}")
     return()
   endif()
   if(NOT PYTHON3_COMMAND)
@@ -133,7 +133,7 @@ function(add_mega65_banked_dump_test name)
       $<TARGET_FILE:${name}.prg>
       $<TARGET_FILE_DIR:${name}.prg>
       ${name}
-      ${C1541_COMMAND}
+      ${PYTHON3_COMMAND}
     COMMENT "Splitting PRG and creating D81 for ${name}")
   add_test(NAME test-${name} COMMAND
     ${PYTHON3_COMMAND} ${DUMPCHECK_SCRIPT}

@@ -155,11 +155,11 @@ function(_add_platform_examples target)
   ExternalProject_Get_Property(mos-platform INSTALL_DIR)
   set(config_flag "--config ${INSTALL_DIR}/bin/mos-${PLATFORM}.cfg")
 
-  # D81 disk image tools — only passed when VICE c1541 is available.
+  # D81 images are built by make-d81.sh, which needs only python3.
   set(d81_args "")
-  if(C1541_COMMAND)
+  if(PYTHON3_COMMAND)
     set(d81_args
-      -DC1541_COMMAND=${C1541_COMMAND}
+      -DPYTHON3_COMMAND=${PYTHON3_COMMAND}
       -DMAKE_D81_SCRIPT=${CMAKE_SOURCE_DIR}/mos-platform/mega65-banked/make-d81.sh)
   endif()
 

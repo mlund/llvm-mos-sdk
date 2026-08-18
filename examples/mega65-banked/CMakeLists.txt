@@ -1,13 +1,13 @@
 function(add_banked_example name source)
   add_executable(${name}.prg ${source} ${ARGN})
   install_example(${name}.prg)
-  if(C1541_COMMAND)
+  if(PYTHON3_COMMAND)
     add_custom_command(TARGET ${name}.prg POST_BUILD
       COMMAND sh ${MAKE_D81_SCRIPT}
         $<TARGET_FILE:${name}.prg>
         $<TARGET_FILE_DIR:${name}.prg>
         ${name}
-        ${C1541_COMMAND}
+        ${PYTHON3_COMMAND}
       COMMENT "Splitting PRG and creating D81 for ${name}")
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${name}-main.prg TYPE BIN)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${name}.d81 TYPE BIN)
