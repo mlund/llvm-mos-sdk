@@ -6,7 +6,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "types.h"
+#include "fake6502.h"
 
 #define TRACE 0
 
@@ -41,20 +41,20 @@ static const char usage[] =
     "\t--cycles: Print cycle count to stderr.\n"
     "\t--trace: Print each instruction address to stderr.\n"
     "\t--profile: Print number of cycles executed at each PC address.\n"
-    "\t--cmos: Enable 65C02 emulation.\n";
-
-void reset6502(uint8_t cmos);
-void step6502();
-extern uint64_t clockticks6502;
-extern uint16_t pc;
-extern uint8_t a, x, y, sp, status;
+    "\t--cmos: Enable 65C02 emulation.\n"
+    "\t--ce02: Enable 65CE02 emulation. The base page, the 16-bit stack and\n"
+    "\t        the opcodes reaching them are not implemented and abort rather\n"
+    "\t        than executing. Cycle counts are the 65C02's.\n"
+    "\t--keep-z: Allow Z to be non-zero when control passes to compiled\n"
+    "\t        code, which llvm-mos requires it not to be. For assembly that\n"
+    "\t        keeps Z live across a call.\n";
 
 uint8_t memory[65536];
 uint64_t clock_start = 0;
 bool shouldPrintCycles = false;
 bool shouldTrace = false;
 bool shouldProfile = false;
-bool cmos = false;
+uint8_t cpu = CPU_6502;
 bool input_eof = false;
 
 uint64_t clockTicksAtAddress[65536];
@@ -86,6 +86,12 @@ void finish(void) {
     for (int addr = 0; addr < 65536; ++addr)
       if (clockTicksAtAddress[addr])
         fprintf(stderr, "%04x %" PRIu64 "\n", addr, clockTicksAtAddress[addr]);
+}
+
+void sim_abort(const char *msg) {
+  fprintf(stderr, "mos-sim: %s\n", msg);
+  finish();
+  abort();
 }
 
 void write6502(uint16_t address, uint8_t value) {
@@ -123,7 +129,11 @@ bool parseFlag(int *argc, const char ***argv) {
   } else if (!strcmp(flag, "--profile")) {
     shouldProfile = true;
   } else if (!strcmp(flag, "--cmos")) {
-    cmos = true;
+    cpu = CPU_65C02;
+  } else if (!strcmp(flag, "--ce02")) {
+    cpu = CPU_65CE02;
+  } else if (!strcmp(flag, "--keep-z")) {
+    fake6502_check_z = 0;
   } else
     return false;
 
@@ -195,7 +205,7 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  reset6502(cmos);
+  reset6502(cpu);
   for (;;) {
     char status_buf[9];
     status_buf[8] = '\0';

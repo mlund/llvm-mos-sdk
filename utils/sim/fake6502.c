@@ -72,10 +72,10 @@ information.
  *****************************************************
  * Useful functions in this emulator:                *
  *                                                   *
- * void reset6502(uint8_t cmos)                      *
+ * void reset6502(uint8_t cpu)                       *
  *   - Call this once before you begin execution.    *
- *   - 65C02 emulation is enabled by setting the     *
- *     cmos flag.                                    *
+ *   - cpu selects the variant to emulate; see the   *
+ *     CPU_* constants in fake6502.h.                *
  *                                                   *
  * void exec6502(uint32_t tickcount)                 *
  *   - Execute 6502 code up to the next specified    *
@@ -111,6 +111,10 @@ information.
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "fake6502.h"
 
 //6502 defines
 #define UNDOCUMENTED //when this is defined, undocumented opcodes are handled.
@@ -132,15 +136,16 @@ information.
 
 #define BASE_STACK     0x100
 
-//6502 CPU registers
+//6502 CPU registers. z is the 65CE02 index register, unused by other variants.
 uint16_t pc;
-uint8_t sp, a, x, y, status;
+uint8_t sp, a, x, y, z, status;
 
 
 //helper variables
 uint32_t instructions = 0; //keep track of total instructions executed
 uint64_t clockticks6502 = 0, clockgoal6502 = 0;
 uint16_t oldpc, ea, reladdr, value, result;
+static uint16_t opcode_pc; //the fetched opcode's address, for diagnostics
 uint8_t opcode, oldstatus;
 
 static inline void saveaccum(uint16_t result) {
@@ -190,9 +195,7 @@ static inline void overflowcalc(uint16_t result, uint16_t memory) {
     clearoverflow();
 }
 
-//externally supplied functions
-extern uint8_t read6502(uint16_t address);
-extern void write6502(uint16_t address, uint8_t value);
+//externally supplied functions are declared in fake6502.h
 
 //a few general functions used by various other functions
 void push16(uint16_t pushval) {
@@ -256,6 +259,11 @@ static void zpr() { //combined zp, rel for bbr/bbs
     if (reladdr & 0x80) reladdr |= 0xFF00;
 }
 
+static void immw() { //16-bit immediate, leaving the literal in ea
+    ea = (uint16_t)read6502(pc) | ((uint16_t)read6502(pc+1) << 8);
+    pc += 2;
+}
+
 static void abso() { //absolute
     ea = (uint16_t)read6502(pc) | ((uint16_t)read6502(pc+1) << 8);
     pc += 2;
@@ -287,11 +295,18 @@ static void absy() { //absolute,Y
     pc += 2;
 }
 
-static void ind() { //indirect
+static void ind() { //indirect, NMOS: replicate the page-boundary wraparound bug
     uint16_t eahelp, eahelp2;
     eahelp = (uint16_t)read6502(pc) | (uint16_t)((uint16_t)read6502(pc+1) << 8);
-    eahelp2 = (eahelp & 0xFF00) | ((eahelp + 1) & 0x00FF); //replicate 6502 page-boundary wraparound bug
+    eahelp2 = (eahelp & 0xFF00) | ((eahelp + 1) & 0x00FF);
     ea = (uint16_t)read6502(eahelp) | ((uint16_t)read6502(eahelp2) << 8);
+    pc += 2;
+}
+
+static void indl() { //indirect, CMOS: the 65C02 fixed the wraparound bug
+    uint16_t eahelp;
+    eahelp = (uint16_t)read6502(pc) | (uint16_t)((uint16_t)read6502(pc+1) << 8);
+    ea = (uint16_t)read6502(eahelp) | ((uint16_t)read6502((uint16_t)(eahelp + 1)) << 8);
     pc += 2;
 }
 
@@ -301,6 +316,11 @@ static void inzp() { //indirectZP
     ea = (uint16_t)read6502(eahelp & 0x00FF) | ((uint16_t)read6502((eahelp+1) & 0x00FF) << 8);
 }
 
+static void inzpz() { //indirectZP, CE02: every ($nn) is ($nn),Z
+    inzp();
+    ea += z;
+}
+
 static void indx() { // (indirect,X)
     uint16_t eahelp;
     eahelp = (uint16_t)(((uint16_t)read6502(pc++) + (uint16_t)x) & 0xFF); //zero-page wraparound for table pointer
@@ -308,10 +328,12 @@ static void indx() { // (indirect,X)
 }
 
 static void inax() { // (indirectABS,X)
-    uint16_t eahelp, eahelp2;
+    uint16_t eahelp;
     eahelp = ((uint16_t)read6502(pc) | (uint16_t)((uint16_t)read6502(pc+1) << 8)) + (uint16_t)x;
-    eahelp2 = (eahelp & 0xFF00) | ((eahelp + 1) & 0x00FF); //replicate 6502 page-boundary wraparound bug
-    ea = (uint16_t)read6502(eahelp) | ((uint16_t)read6502(eahelp2) << 8);
+    //No page-boundary wraparound: JMP (abs,X) is a 65C02 addition and jams on
+    //the NMOS 6502, so it never runs on a CPU that has the JMP (abs) bug. That
+    //bug belongs to ind(), which still replicates it.
+    ea = (uint16_t)read6502(eahelp) | ((uint16_t)read6502((uint16_t)(eahelp + 1)) << 8);
     pc += 2;
 }
 
@@ -589,7 +611,24 @@ static void jmp() {
     pc = ea;
 }
 
+//llvm-mos requires Z to be zero wherever control reaches compiled code. The
+//guard sits at those transfers rather than at the write, so that assembly is
+//free to use Z in between. Assembly that keeps Z live across a call trips it,
+//which --keep-z exists for.
+int fake6502_check_z = 1;
+
+static void checkz(const char *what) {
+    char msg[80];
+
+    if (!z || !fake6502_check_z)
+        return;
+    snprintf(msg, sizeof msg, "65CE02 Z is $%02x, not 0, at %s at $%04x",
+             z, what, opcode_pc);
+    sim_abort(msg);
+}
+
 static void jsr() {
+    checkz("jsr");
     push16(pc - 1);
     pc = ea;
 }
@@ -722,12 +761,14 @@ static void ror() {
 }
 
 static void rti() {
+    checkz("rti");
     status = pull8();
     value = pull16();
     pc = value;
 }
 
 static void rts() {
+    checkz("rts");
     value = pull16();
     pc = value + 1;
 }
@@ -1036,7 +1077,7 @@ static void (*addrtable_cmos[256])() = {
 /* 3 */     rel, indy, inzp,  imp,  zpx,  zpx,  zpx,   zp,  imp, absy,  acc,  imp, absx, absx, absx,  zpr, /* 3 */
 /* 4 */     imp, indx,  imm,  imp,   zp,   zp,   zp,   zp,  imp,  imm,  acc,  imp, abso, abso, abso,  zpr, /* 4 */
 /* 5 */     rel, indy, inzp,  imp,  zpx,  zpx,  zpx,   zp,  imp, absy,  imp,  imp, abso, absx, absx,  zpr, /* 5 */
-/* 6 */     imp, indx,  imm,  imp,   zp,   zp,   zp,   zp,  imp,  imm,  acc,  imp,  ind, abso, abso,  zpr, /* 6 */
+/* 6 */     imp, indx,  imm,  imp,   zp,   zp,   zp,   zp,  imp,  imm,  acc,  imp, indl, abso, abso,  zpr, /* 6 */
 /* 7 */     rel, indy, inzp,  imp,  zpx,  zpx,  zpx,   zp,  imp, absy,  imp,  imp, inax, absx, absx,  zpr, /* 7 */
 /* 8 */     rel, indx,  imm,  imp,   zp,   zp,   zp,   zp,  imp,  imm,  imp,  imp, abso, abso, abso,  zpr, /* 8 */
 /* 9 */     rel, indy, inzp,  imp,  zpx,  zpx,  zpy,   zp,  imp, absy,  imp,  imp, abso, absx, absx,  zpr, /* 9 */
@@ -1088,6 +1129,313 @@ static const uint32_t ticktable_cmos[256] = {
 /* F */      2,    5,    5,    1,    4,    4,    6,    5,    2,    4,    4,    1,    4,    4,    7,    5   /* F */
 };
 
+/* 65CE02.
+ *
+ * The 65CE02 tables are the 65C02 tables with the instructions llvm-mos emits
+ * patched in. Every other opcode that differs from the 65C02 is pointed at
+ * ce02_unimplemented(), which aborts. That is deliberate: an emulator that
+ * silently executes something plausible is worse than one that stops, because
+ * the wrong answer gets trusted.
+ *
+ * Aborting also keeps an invariant the rest of this file relies on: the base
+ * page stays at zero and the stack stays 8-bit, because TAB, TBA, CLE, SEE,
+ * TSY, TYS and the ($nn,S),Y forms all abort. The zero-page addressing helpers
+ * and BASE_STACK above therefore remain valid.
+ *
+ * Z is emulated rather than forbidden, so that assembly using it can run here.
+ * That is why the CE02 table swaps inzp() for inzpz(), and why the guard sits
+ * at the transfers of control where Z must be zero rather than at the write;
+ * see checkz().
+ *
+ * Cycle counts come from the 65C02 table and are not corrected for this CPU.
+ * The 65CE02 is faster throughout, and the opcodes added below sit in slots
+ * the 65C02 leaves unused, where that table holds a filler count of 1. So
+ * --cycles and --profile are indicative for 65C02 instructions and simply
+ * wrong for the 65CE02-specific ones.
+ */
+
+static void (*addrtable_ce02[256])();
+static void (*optable_ce02[256])();
+
+static void ce02_unimplemented() {
+    char msg[64];
+
+    snprintf(msg, sizeof msg, "65CE02 opcode $%02x at $%04x is not emulated",
+             opcode, pc - 1);
+    sim_abort(msg);
+}
+
+static void neg() { //negate accumulator
+    value = getvalue();
+    result = 0 - value;
+
+    zerocalc(result);
+    signcalc(result);
+
+    putvalue(result);
+}
+
+static void asr() { //arithmetic shift right, sign bit preserved
+    value = getvalue();
+    result = (value >> 1) | (value & 0x80);
+
+    if (value & 1) setcarry();
+        else clearcarry();
+    zerocalc(result);
+    signcalc(result);
+
+    putvalue(result);
+}
+
+static uint16_t readword(void) {
+    return (uint16_t)read6502(ea) | ((uint16_t)read6502(ea + 1) << 8);
+}
+
+static void writeword(uint16_t word) {
+    write6502(ea, word & 0x00FF);
+    write6502(ea + 1, (word >> 8) & 0x00FF);
+}
+
+//The word operations take N and Z from all sixteen bits, not from the low byte
+//as zerocalc and signcalc would. llvm-mos depends on it: it chains INW to the
+//next word on Z.
+static void wordflags(uint16_t word) {
+    if (word == 0) setzero();
+        else clearzero();
+    if (word & 0x8000) setsign();
+        else clearsign();
+}
+
+static void incdecw(int delta) {
+    char msg[64];
+    uint16_t word;
+
+    if (ea == 0xFF) { //would straddle the base page; hardware behavior unclear
+        snprintf(msg, sizeof msg, "65CE02 %s $ff at $%04x crosses the base page",
+                 delta > 0 ? "inw" : "dew", pc - 2);
+        sim_abort(msg);
+    }
+
+    word = readword() + delta;
+    writeword(word);
+    wordflags(word);
+}
+
+static void inw() {
+    incdecw(1);
+}
+
+static void dew() {
+    incdecw(-1);
+}
+
+static void shiftw(uint16_t carryin) {
+    uint32_t word = ((uint32_t)readword() << 1) | carryin;
+
+    if (word & 0x10000) setcarry();
+        else clearcarry();
+
+    writeword((uint16_t)word);
+    wordflags((uint16_t)word);
+}
+
+static void asw() {
+    shiftw(0);
+}
+
+static void row() {
+    shiftw((status & FLAG_CARRY) ? 1 : 0);
+}
+
+//RTS #$nn. The immediate is the number of argument bytes the caller pushed
+//before the call, dropped here so the caller does not have to.
+static void rtn() {
+    uint8_t drop = (uint8_t)getvalue();
+
+    checkz("rts #nn");
+
+    pc = pull16() + 1;
+    sp += drop;
+}
+
+//PHW pushes the low byte first, opposite to push16() and every other push here.
+static void pushword(uint16_t word) {
+    push8(word & 0x00FF);
+    push8((word >> 8) & 0x00FF);
+}
+
+//PHW #$nnnn: a 16-bit immediate, which immw() leaves in ea.
+static void phwi() {
+    pushword(ea);
+}
+
+//PHW $nnnn pushes the word held at the address, not the address.
+static void phw() {
+    pushword(readword());
+}
+
+static void ldz() {
+    value = getvalue();
+    z = (uint8_t)(value & 0x00FF);
+
+    zerocalc(z);
+    signcalc(z);
+}
+
+static void taz() {
+    z = a;
+
+    zerocalc(z);
+    signcalc(z);
+}
+
+static void tza() {
+    a = z;
+
+    zerocalc(a);
+    signcalc(a);
+}
+
+static void inz() {
+    z++;
+
+    zerocalc(z);
+    signcalc(z);
+}
+
+static void dez() {
+    z--;
+
+    zerocalc(z);
+    signcalc(z);
+}
+
+static void phz() {
+    push8(z);
+}
+
+static void plz() {
+    z = pull8();
+
+    zerocalc(z);
+    signcalc(z);
+}
+
+static void cpz() {
+    value = getvalue();
+    result = (uint16_t)z - value;
+
+    if (z >= (uint8_t)(value & 0x00FF)) setcarry();
+        else clearcarry();
+    if (z == (uint8_t)(value & 0x00FF)) setzero();
+        else clearzero();
+    signcalc(result);
+}
+
+//The 65CE02 measures a 16-bit branch displacement from the address of the
+//second displacement byte, not from the end of the instruction. By this point
+//the addressing mode has advanced pc past all three bytes, so the target is
+//pc - 1 + reladdr.
+static void rel16() { //relative for 65CE02 16-bit branch ops
+    reladdr = (uint16_t)read6502(pc) | ((uint16_t)read6502(pc + 1) << 8);
+    pc += 2;
+}
+
+static void branch16(int taken) {
+    if (!taken)
+        return;
+    pc = (uint16_t)(pc - 1 + reladdr);
+    clockticks6502++;
+}
+
+static void bpl16() { branch16(!(status & FLAG_SIGN)); }
+static void bmi16() { branch16( (status & FLAG_SIGN)); }
+static void bvc16() { branch16(!(status & FLAG_OVERFLOW)); }
+static void bvs16() { branch16( (status & FLAG_OVERFLOW)); }
+static void bcc16() { branch16(!(status & FLAG_CARRY)); }
+static void bcs16() { branch16( (status & FLAG_CARRY)); }
+static void bne16() { branch16(!(status & FLAG_ZERO)); }
+static void beq16() { branch16( (status & FLAG_ZERO)); }
+static void bra16() { branch16(1); }
+
+static void bsr16() { //branch to subroutine, 16-bit displacement
+    checkz("bsr");
+    push16(pc - 1);
+    branch16(1);
+}
+
+//Every opcode where the 65CE02 differs from the 65C02. Anything not listed
+//here keeps its 65C02 behavior. Entries marked ce02_unimplemented use imp so
+//that no operand byte is consumed and pc - 1 still names the opcode when the
+//abort reports it.
+static const struct {
+    uint8_t opcode;
+    void (*addrmode)();
+    void (*handler)();
+} ce02_opcodes[] = {
+    {0x02, imp,   ce02_unimplemented}, //cle
+    {0x03, imp,   ce02_unimplemented}, //see
+    {0x0b, imp,   ce02_unimplemented}, //tsy
+    {0x13, rel16, bpl16},
+    {0x1b, imp,   inz},
+    {0x22, indl,  jsr},
+    {0x23, inax,  jsr},
+    {0x2b, imp,   ce02_unimplemented}, //tys
+    {0x33, rel16, bmi16},
+    {0x3b, imp,   dez},
+    {0x42, acc,   neg},
+    {0x43, acc,   asr},
+    {0x44, zp,    asr},
+    {0x4b, imp,   taz},
+    {0x53, rel16, bvc16},
+    {0x54, zpx,   asr},
+    {0x5b, imp,   ce02_unimplemented}, //tab
+    {0x62, imm,   rtn},
+    {0x63, rel16, bsr16},
+    {0x6b, imp,   tza},
+    {0x73, rel16, bvs16},
+    {0x7b, imp,   ce02_unimplemented}, //tba
+    {0x82, imp,   ce02_unimplemented}, //sta ($nn,s),y
+    {0x83, rel16, bra16},
+    {0x8b, absx,  sty},
+    {0x93, rel16, bcc16},
+    {0x9b, absy,  stx},
+    {0xa3, imm,   ldz},
+    {0xab, abso,  ldz},
+    {0xb3, rel16, bcs16},
+    {0xbb, absx,  ldz},
+    {0xc2, imm,   cpz},
+    {0xc3, zp,    dew},
+    {0xcb, abso,  asw},
+    {0xd3, rel16, bne16},
+    {0xd4, zp,    cpz},
+    {0xdb, imp,   phz},
+    {0xdc, abso,  cpz},
+    {0xe2, imp,   ce02_unimplemented}, //lda ($nn,s),y
+    {0xe3, zp,    inw},
+    {0xeb, abso,  row},
+    {0xf3, rel16, beq16},
+    {0xf4, immw,  phwi},
+    {0xfb, imp,   plz},
+    {0xfc, abso,  phw},
+};
+
+static void init_ce02_tables() {
+    size_t i;
+
+    memcpy(addrtable_ce02, addrtable_cmos, sizeof addrtable_ce02);
+    memcpy(optable_ce02, optable_cmos, sizeof optable_ce02);
+
+    for (i = 0; i < 256; i++)
+        if (addrtable_ce02[i] == inzp)
+            addrtable_ce02[i] = inzpz;
+
+    for (i = 0; i < sizeof ce02_opcodes / sizeof ce02_opcodes[0]; i++) {
+        addrtable_ce02[ce02_opcodes[i].opcode] = ce02_opcodes[i].addrmode;
+        optable_ce02[ce02_opcodes[i].opcode] = ce02_opcodes[i].handler;
+    }
+}
+
 void nmi6502() {
     push16(pc);
     push8(status);
@@ -1109,6 +1457,7 @@ void exec6502(uint32_t tickcount) {
     clockgoal6502 += tickcount;
 
     while (clockticks6502 < clockgoal6502) {
+        opcode_pc = pc;
         opcode = read6502(pc++);
         status |= FLAG_CONSTANT;
 
@@ -1127,26 +1476,35 @@ void exec6502(uint32_t tickcount) {
 
 }
 
-void reset6502(uint8_t cmos) {
-    if (cmos != 0) {
+void reset6502(uint8_t cpu) {
+    if (cpu == CPU_65CE02) {
+        init_ce02_tables();
+        addrtable = addrtable_ce02;
+        optable = optable_ce02;
+        ticktable = ticktable_cmos; //not corrected for the 65CE02; see above
+    } else if (cpu == CPU_65C02) {
         addrtable = addrtable_cmos;
         optable = optable_cmos;
         ticktable = ticktable_cmos;
-    } else {
+    } else if (cpu == CPU_6502) {
         addrtable = addrtable_nmos;
         optable = optable_nmos;
         ticktable = ticktable_nmos;
+    } else {
+        sim_abort("reset6502 called with an unknown CPU variant");
     }
 
     pc = (uint16_t)read6502(0xFFFC) | ((uint16_t)read6502(0xFFFD) << 8);
     a = 0;
     x = 0;
     y = 0;
+    z = 0;
     sp = 0xFD;
     status |= FLAG_CONSTANT;
 }
 
 void step6502() {
+    opcode_pc = pc;
     opcode = read6502(pc++);
     status |= FLAG_CONSTANT;
 
