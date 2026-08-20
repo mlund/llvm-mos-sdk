@@ -27,6 +27,7 @@ extern "C" {
 #include <_45E100.h>
 #include <_6526.h>
 #include <_dmagic.h>
+#include <_sdcard.h>
 #include <_sid.h>
 #include <_vic2.h>
 #include <_vic3.h>
@@ -179,6 +180,10 @@ enum
 #define SIDMODE (*(volatile uint8_t *)0xd63c)
 /// Hypervisor traps
 #define HYPERVISOR (*(volatile struct __hypervisor *)0xd640)
+/// MEGA65 SD card controller
+#define SDCARD (*(volatile struct __sdcard *)0xd680)
+/// F011 floppy emulation: disk images and where they are
+#define SDFDC (*(volatile struct __sdfdc *)0xd68a)
 /// Ethernet controller
 #define ETHERNET (*(volatile struct __45E100 *)0xd6e0)
 /// DMAgic DMA controller

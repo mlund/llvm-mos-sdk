@@ -6,6 +6,7 @@ endif()
 install(FILES
     _45E100.h
     _dmagic.h
+    _sdcard.h
     _vic3.h
     _vic4.h
     dma.hpp
