@@ -37,10 +37,12 @@ struct __45E100 {
   /// 0 selects buffer identities, low two bits being the CPU's read buffer.
   uint8_t debug;
 };
+#ifdef __mos__
 #ifdef __cplusplus
 static_assert(sizeof(struct __45E100) == 16);
 #else
 _Static_assert(sizeof(struct __45E100) == 16, "45E100 block is $D6E0-$D6EF");
+#endif
 #endif
 
 /// 45E100 Fast Ethernet controller commands

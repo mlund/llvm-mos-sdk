@@ -88,7 +88,7 @@ struct __hypervisor {
     };
   };
 };
-#ifdef __cplusplus
+#if defined(__mos__) && defined(__cplusplus)
 static_assert(sizeof(struct __hypervisor) == 64);
 #endif
 
