@@ -155,12 +155,14 @@ function(_add_platform_examples target)
   ExternalProject_Get_Property(mos-platform INSTALL_DIR)
   set(config_flag "--config ${INSTALL_DIR}/bin/mos-${PLATFORM}.cfg")
 
-  # D81 images are built by prg-to-d81.py, which needs only python3.
-  set(d81_args "")
+  # The MEGA65 banked images are split by python scripts, which need only
+  # python3.
+  set(script_args "")
   if(PYTHON3_COMMAND)
-    set(d81_args
+    set(script_args
       -DPYTHON3_COMMAND=${PYTHON3_COMMAND}
-      -DPRG_TO_D81_SCRIPT=${CMAKE_SOURCE_DIR}/mos-platform/mega65-banked/prg-to-d81.py)
+      -DPRG_TO_D81_SCRIPT=${CMAKE_SOURCE_DIR}/mos-platform/mega65-banked/prg-to-d81.py
+      -DPRG_TO_SD_SCRIPT=${CMAKE_SOURCE_DIR}/mos-platform/mega65-banked-sd/prg-to-sd.py)
   endif()
 
   ExternalProject_Add(${target}
@@ -179,7 +181,7 @@ function(_add_platform_examples target)
       -DCMAKE_C_FLAGS=${config_flag}
       -DCMAKE_CXX_FLAGS=${config_flag}
       -DCMAKE_TOOLCHAIN_FILE=${CMAKE_SOURCE_DIR}/cmake/llvm-mos-toolchain.cmake
-      ${d81_args}
+      ${script_args}
     BUILD_ALWAYS On
     EXCLUDE_FROM_ALL ${exclude_from_all}
     DEPENDS mos-platform)

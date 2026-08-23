@@ -170,6 +170,7 @@ executables and libraries for that target.
 | Dodo 6502 Game System           | -                  | `mos-dodo-clang`                 |
 | Commodore GEOS                  | 64, 128            | `mos-geos-cbm-clang`              |
 | MEGA65                          | -                  | `mos-mega65-clang`               |
+| MEGA65                          | banked, SD card    | `mos-mega65-banked-sd-clang`     |
 | NES                             | Action53 mapper    | `mos-nes-action53-clang`         |
 | NES                             | CNROM mapper       | `mos-nes-cnrom-clang`            |
 | NES                             | GTROM mapper       | `mos-nes-gtrom-clang`            |
