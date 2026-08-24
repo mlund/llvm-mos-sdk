@@ -9,8 +9,8 @@
  * both and fails if they disagree. It needs no emulator, so run it after any
  * edit here.
  *
- * prg-to-sd.py takes __ram_fixed_size and __bank_N_size out of the ELF, so the
- * split follows this file without being restated there.
+ * Slot length is __bank_window_size from link.ld, and prg-to-sd.py takes that
+ * and __bank_N_size out of the ELF, so nothing here is restated anywhere.
  */
 
 __bank_1_lma   = 0x012000;
@@ -36,21 +36,21 @@ __bank_15_lma  = 0x0F2000;
 __bank_count = DEFINED(__ram_bank_count) ? __ram_bank_count : 15;
 
 MEMORY {
-  bank_1   : ORIGIN = __bank_1_lma,  LENGTH = __bank_count >=  1 ? 0x8000 : 0
-  bank_2   : ORIGIN = __bank_2_lma,  LENGTH = __bank_count >=  2 ? 0x8000 : 0
-  bank_3   : ORIGIN = __bank_3_lma,  LENGTH = __bank_count >=  3 ? 0x8000 : 0
-  bank_4   : ORIGIN = __bank_4_lma,  LENGTH = __bank_count >=  4 ? 0x8000 : 0
-  bank_5   : ORIGIN = __bank_5_lma,  LENGTH = __bank_count >=  5 ? 0x8000 : 0
-  bank_6   : ORIGIN = __bank_6_lma,  LENGTH = __bank_count >=  6 ? 0x8000 : 0
-  bank_7   : ORIGIN = __bank_7_lma,  LENGTH = __bank_count >=  7 ? 0x8000 : 0
-  bank_8   : ORIGIN = __bank_8_lma,  LENGTH = __bank_count >=  8 ? 0x8000 : 0
-  bank_9   : ORIGIN = __bank_9_lma,  LENGTH = __bank_count >=  9 ? 0x8000 : 0
-  bank_10  : ORIGIN = __bank_10_lma, LENGTH = __bank_count >= 10 ? 0x8000 : 0
-  bank_11  : ORIGIN = __bank_11_lma, LENGTH = __bank_count >= 11 ? 0x8000 : 0
-  bank_12  : ORIGIN = __bank_12_lma, LENGTH = __bank_count >= 12 ? 0x8000 : 0
-  bank_13  : ORIGIN = __bank_13_lma, LENGTH = __bank_count >= 13 ? 0x8000 : 0
-  bank_14  : ORIGIN = __bank_14_lma, LENGTH = __bank_count >= 14 ? 0x8000 : 0
-  bank_15  : ORIGIN = __bank_15_lma, LENGTH = __bank_count >= 15 ? 0x8000 : 0
+  bank_1   : ORIGIN = __bank_1_lma,  LENGTH = __bank_count >=  1 ? __bank_window_size : 0
+  bank_2   : ORIGIN = __bank_2_lma,  LENGTH = __bank_count >=  2 ? __bank_window_size : 0
+  bank_3   : ORIGIN = __bank_3_lma,  LENGTH = __bank_count >=  3 ? __bank_window_size : 0
+  bank_4   : ORIGIN = __bank_4_lma,  LENGTH = __bank_count >=  4 ? __bank_window_size : 0
+  bank_5   : ORIGIN = __bank_5_lma,  LENGTH = __bank_count >=  5 ? __bank_window_size : 0
+  bank_6   : ORIGIN = __bank_6_lma,  LENGTH = __bank_count >=  6 ? __bank_window_size : 0
+  bank_7   : ORIGIN = __bank_7_lma,  LENGTH = __bank_count >=  7 ? __bank_window_size : 0
+  bank_8   : ORIGIN = __bank_8_lma,  LENGTH = __bank_count >=  8 ? __bank_window_size : 0
+  bank_9   : ORIGIN = __bank_9_lma,  LENGTH = __bank_count >=  9 ? __bank_window_size : 0
+  bank_10  : ORIGIN = __bank_10_lma, LENGTH = __bank_count >= 10 ? __bank_window_size : 0
+  bank_11  : ORIGIN = __bank_11_lma, LENGTH = __bank_count >= 11 ? __bank_window_size : 0
+  bank_12  : ORIGIN = __bank_12_lma, LENGTH = __bank_count >= 12 ? __bank_window_size : 0
+  bank_13  : ORIGIN = __bank_13_lma, LENGTH = __bank_count >= 13 ? __bank_window_size : 0
+  bank_14  : ORIGIN = __bank_14_lma, LENGTH = __bank_count >= 14 ? __bank_window_size : 0
+  bank_15  : ORIGIN = __bank_15_lma, LENGTH = __bank_count >= 15 ? __bank_window_size : 0
 }
 
 SECTIONS {

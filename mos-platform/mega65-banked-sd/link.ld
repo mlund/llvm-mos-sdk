@@ -7,19 +7,22 @@
  *   $0100-$01FF  hardware stack
  *   $0200-$02FF  Hyppo filename staging page
  *   $0300-$1FFF  ram_low, uninitialised
- *   $2000-$9FFF  BANKED window (32KB, MAPLO blocks 1-3 + MAPHI block 0)
- *   $A000-$CFFF  FIXED code, rodata and .data initialisers
+ *   $2000-$7FFF  BANKED window (24KB, MAPLO blocks 1-3)
+ *   $8000-$CFFF  FIXED code, rodata and .data initialisers
  *   $D000-$DFFF  I/O
- *   $E000-$FFF9  FIXED .data, .bss, .noinit
+ *   $E000-$FFF9  FIXED .data, .bss, .noinit, and the soft stack
  *   $FFFA-$FFFF  interrupt vectors, installed by boot.S
  *
- * $C000-$DFFF is one MAPHI block, so a window reaching past $BFFF would take
- * I/O with it.
+ * MAPHI is left alone, so everything from $8000 up stays where the linker put
+ * it and the window costs nothing above $7FFF.
  *
- * Physical bank bases (ROM at $20000-$3FFFF is not writable):
- *   Chip RAM: 0: $02000  1: $12000
- *   Fast RAM: 2: $40000  3: $48000  4: $50000  5: $58000
- *   Attic:    6: $8000000 ... 15: $8048000  (HyperRAM, ~10x slower)
+ * Physical bank bases. Banks 3-7 sit where the C65 ROMs would be; startup
+ * lifts the write protection over that region because this platform runs
+ * none of them:
+ *   0: $02000    1: $12000    2: $18000
+ *   3: $20000    4: $26000    5: $2C000    6: $32000    7: $38000
+ *   8: $40000    9: $46000   10: $4C000   11: $52000   12: $58000
+ *   13: $8000000  14: $8006000  15: $800C000  (attic, ~10x slower)
  *
  * Bank 1 sits above the C65 DOS work area ($10000-$11FFF) and ends at
  * $19FFF, below the colour RAM window at $1F800.
@@ -48,11 +51,17 @@ ASSERT((__mega65_h_name_buf & 0xFF) == 0 && __mega65_h_name_buf >= 0x0100 &&
        __mega65_h_name_buf < 0x7F00,
        "mega65-banked-sd: __mega65_h_name_buf must be a page in $0100-$7E00")
 
+/* The window geometry, in one place. _ram-banked-sd.ld gives every bank slot
+ * this length, and prg-to-sd.py reads it out of the ELF, so the three cannot
+ * disagree about where a bank starts in the image. */
+__bank_window_start = 0x2000;
+__bank_window_size = 0x6000;
+
 MEMORY {
     zp             : ORIGIN = __rc31 + 1, LENGTH = __basic_zp_end - (__rc31 + 1)
     ram_low   (rw) : ORIGIN = 0x0300, LENGTH = 0x1d00
-    ram       (rw) : ORIGIN = 0x2000, LENGTH = 0x8000
-    ram_fixed (rw) : ORIGIN = 0xa000, LENGTH = 0x3000
+    ram       (rw) : ORIGIN = __bank_window_start, LENGTH = __bank_window_size
+    ram_fixed (rw) : ORIGIN = 0x8000, LENGTH = 0x5000
     ram_high  (rw) : ORIGIN = 0xe000, LENGTH = 0x1ffa
 }
 
@@ -79,9 +88,9 @@ SECTIONS {
 /* Bytes of ram_fixed that carry content; the rest is soft stack. */
 __ram_fixed_size = LOADADDR(.data) + SIZEOF(.data) - ORIGIN(ram_fixed);
 
-/* Soft stack grows down from the I/O region through the free part of
- * ram_fixed. */
-PROVIDE(__stack = 0xd000);
+/* Soft stack grows down from below the vectors, through ram_high, so it
+ * competes with .bss rather than with code. */
+PROVIDE(__stack = 0xfffa);
 
 OUTPUT_FORMAT {
     SHORT(0x2000)

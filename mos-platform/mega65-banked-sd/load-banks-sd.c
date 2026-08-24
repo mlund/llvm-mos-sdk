@@ -14,34 +14,44 @@
 extern const unsigned short __bank_sizes[15];
 
 #define ATTIC_BASE 0x8000000ul
-#define FIRST_ATTIC_BANK 6
+
+// Which banks need the attic trap, derived from the addresses rather than
+// stated as a threshold: loadfile forces the top address byte to zero and
+// still reports success, so picking the wrong trap loads nothing and says so
+// to nobody.
+#define ATTIC_BIT(n) ((BANK_PHYS_BASE_##n >= ATTIC_BASE) << n)
+#define ATTIC_BANKS                                                            \
+  (ATTIC_BIT(1) | ATTIC_BIT(2) | ATTIC_BIT(3) | ATTIC_BIT(4) |                 \
+   ATTIC_BIT(5) | ATTIC_BIT(6) | ATTIC_BIT(7) | ATTIC_BIT(8) |                 \
+   ATTIC_BIT(9) | ATTIC_BIT(10) | ATTIC_BIT(11) | ATTIC_BIT(12) |              \
+   ATTIC_BIT(13) | ATTIC_BIT(14) | ATTIC_BIT(15))
+#define IS_ATTIC(bank) ((ATTIC_BANKS >> (bank)) & 1)
 
 // What each trap wants: the base for chip and fast RAM, the offset into attic
 // for the rest. Every one is 4 KB-aligned, so a byte holds it and the table
 // costs a quarter of what the addresses would.
 #define SLOT_SHIFT 12
 #define SLOT(addr) (unsigned char)((addr) >> SLOT_SHIFT)
-#define ATTIC_SLOT(base) SLOT((base) - ATTIC_BASE)
+// Attic wants an offset into attic, everything else the base itself. Picking
+// per bank from the address, so a bank that moves needs no second edit here.
+#define BANK_SLOT_OF(n)                                                        \
+  SLOT(BANK_PHYS_BASE_##n >= ATTIC_BASE ? BANK_PHYS_BASE_##n - ATTIC_BASE      \
+                                        : BANK_PHYS_BASE_##n)
 
 static const unsigned char BANK_SLOT[15] = {
-    SLOT(BANK_PHYS_BASE_1),        SLOT(BANK_PHYS_BASE_2),
-    SLOT(BANK_PHYS_BASE_3),        SLOT(BANK_PHYS_BASE_4),
-    SLOT(BANK_PHYS_BASE_5),        ATTIC_SLOT(BANK_PHYS_BASE_6),
-    ATTIC_SLOT(BANK_PHYS_BASE_7),  ATTIC_SLOT(BANK_PHYS_BASE_8),
-    ATTIC_SLOT(BANK_PHYS_BASE_9),  ATTIC_SLOT(BANK_PHYS_BASE_10),
-    ATTIC_SLOT(BANK_PHYS_BASE_11), ATTIC_SLOT(BANK_PHYS_BASE_12),
-    ATTIC_SLOT(BANK_PHYS_BASE_13), ATTIC_SLOT(BANK_PHYS_BASE_14),
-    ATTIC_SLOT(BANK_PHYS_BASE_15),
+    BANK_SLOT_OF(1),  BANK_SLOT_OF(2),  BANK_SLOT_OF(3),  BANK_SLOT_OF(4),
+    BANK_SLOT_OF(5),  BANK_SLOT_OF(6),  BANK_SLOT_OF(7),  BANK_SLOT_OF(8),
+    BANK_SLOT_OF(9),  BANK_SLOT_OF(10), BANK_SLOT_OF(11), BANK_SLOT_OF(12),
+    BANK_SLOT_OF(13), BANK_SLOT_OF(14), BANK_SLOT_OF(15),
 };
 
 // A base that does not fit the table would be silently truncated, and the
 // bank would load somewhere else.
-_Static_assert(((BANK_PHYS_BASE_1 | BANK_PHYS_BASE_2 | BANK_PHYS_BASE_3 |
-                 BANK_PHYS_BASE_4 | BANK_PHYS_BASE_5 |
+_Static_assert(((BANK_PHYS_BASE_1 | BANK_PHYS_BASE_12 |
                  (BANK_PHYS_BASE_15 - ATTIC_BASE)) &
                 ((1ul << SLOT_SHIFT) - 1)) == 0,
                "bank addresses must be 4 KB-aligned");
-_Static_assert((BANK_PHYS_BASE_5 >> SLOT_SHIFT) <= 0xff &&
+_Static_assert((BANK_PHYS_BASE_12 >> SLOT_SHIFT) <= 0xff &&
                    ((BANK_PHYS_BASE_15 - ATTIC_BASE) >> SLOT_SHIFT) <= 0xff,
                "bank addresses must fit a byte once shifted");
 
@@ -74,8 +84,7 @@ __attribute__((weak)) void __load_banks(void) {
     if (mega65_h_setname(name))
       __bank_load_failed(bank);
 
-    if (bank >= FIRST_ATTIC_BANK ? mega65_h_loadfile_attic(addr)
-                                 : mega65_h_loadfile(addr))
+    if (IS_ATTIC(bank) ? mega65_h_loadfile_attic(addr) : mega65_h_loadfile(addr))
       __bank_load_failed(bank);
   }
 }

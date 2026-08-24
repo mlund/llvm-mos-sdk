@@ -14,15 +14,15 @@ the KERNAL.
 | `$0022-$00FF` | compiler zero page, 222 bytes |
 | `$0100-$01FF` | hardware stack |
 | `$0200-$02FF` | Hyppo filename staging page |
-| `$0300-$1FFF` | `RAM_LOW`, uninitialised |
-| `$2000-$9FFF` | bank window, 32 KB |
-| `$A000-$CFFF` | code, rodata, `.data` initialisers; soft stack grows down from `$D000` |
+| `$0300-$1FFF` | `RAM_LOW`, uninitialised, 7,424 B |
+| `$2000-$7FFF` | bank window, 24 KB |
+| `$8000-$CFFF` | code, rodata, `.data` initialisers, 20,480 B |
 | `$D000-$DFFF` | I/O |
-| `$E000-$FFF9` | `.data`, `.bss`, `.noinit` |
+| `$E000-$FFF9` | `.data`, `.bss`, `.noinit`, and the soft stack growing down |
 | `$FFFA-$FFFF` | interrupt vectors |
 
-`$C000-$DFFF` is one MAPHI block, so the window cannot reach past `$BFFF`
-without taking I/O with it.
+MAPHI is untouched, so everything from `$8000` up stays where the linker put
+it. About 19.5 KB of the fixed region is left after the runtime.
 
 ## Banks
 
@@ -31,13 +31,22 @@ sections are storage rather than padding — but only while bank 0 is selected.
 
 | Bank | Physical | Memory |
 |---|---|---|
-| 0 | `$02000` | chip |
-| 1 | `$12000` | chip |
-| 2-5 | `$40000`, `$48000`, `$50000`, `$58000` | fast |
-| 6-15 | `$8000000` … `$8048000` | attic |
+| 0 | `$02000` | the window itself |
+| 1-2 | `$12000`, `$18000` | chip |
+| 3-7 | `$20000`, `$26000`, `$2C000`, `$32000`, `$38000` | where the C65 ROMs would be |
+| 8-12 | `$40000`, `$46000`, `$4C000`, `$52000`, `$58000` | |
+| 13-15 | `$8000000`, `$8006000`, `$800C000` | attic |
 
-Attic RAM is HyperRAM: roughly ten times slower, invisible to VIC-IV and SID,
-and absent on boards without it.
+Banks 1-12 are all full speed and all reachable by VIC-IV, which fetches
+anything below `$60000` — so any of them can hold a screen, a charset or
+sprite data. Attic RAM is HyperRAM: roughly ten times slower, invisible to
+VIC-IV and SID, and absent on boards without it.
+
+Banks 3-7 occupy the second 128 KB, which on a stock machine holds the C65
+ROMs — including the character generator at `$2D000` and the KERNAL at
+`$3E000`. This platform runs none of them, so startup lifts the hypervisor's
+write protection over that region and the banks are ordinary RAM. Supply your
+own charset; there is no longer one to fall back on.
 
 ## Using it
 
@@ -85,8 +94,12 @@ not the one on the card, so a lower-case file can never be found.
   RAM. The `mega65_h_*` Hyppo wrappers are the ones that work, and they are how
   a program loads its own assets: `mega65_h_setname` then
   `mega65_h_loadfile(addr)`, or `mega65_h_loadfile_attic` above `$8000000`.
-- **Nothing writes to the screen for you.** There is no `CHROUT`, so `printf`
-  and `putchar` have nowhere to go.
+- **Nothing writes to the screen for you.** There is no `CHROUT`, no character
+  ROM and no BASIC. A program brings its own charset, or draws without one.
+- **The card is the only storage, both ways.** Read with `mega65_h_setname` and
+  `mega65_h_loadfile`; write with `mega65_h_mkfile` then `mega65_h_writefile`.
+  `mkfile` takes 8.3 names only and allocates contiguously, so create a save
+  file at its full size once and rewrite it in place.
 - **Interrupts start disabled** and the vectors at `$FFFA`/`$FFFE` point at an
   `RTI`. A handler must live in the fixed region and must not touch the bank
   window: it runs with whichever bank the interrupted code had mapped.

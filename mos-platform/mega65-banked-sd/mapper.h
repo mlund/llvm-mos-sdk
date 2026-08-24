@@ -9,33 +9,37 @@
 /**
  * @brief Physical base address of each bank.
  *
- * A bank is 32 KB -- the MAP window at $2000-$9FFF -- not one of the 64 KB
- * "banks" of the MEGA65 memory map. ROM at $20000-$3FFFF is not writable, so
- * chip RAM and fast RAM banks are not contiguous.
+ * A bank is 24 KB -- the MAP window at $2000-$7FFF -- not one of the 64 KB
+ * "banks" of the MEGA65 memory map.
  *
- * Banks 6-15 are attic RAM (HyperRAM at $8000000+): roughly ten times slower
- * than chip or fast RAM, invisible to VIC-IV and SID, and absent on boards
- * without HyperRAM. Good for large tables and code off the hot path.
+ * Banks 1-12 are full speed and reachable by VIC-IV, which fetches anything
+ * below $60000. Banks 3-7 lie where the C65 ROMs would be; startup lifts the
+ * write protection over that region, which also costs the character generator
+ * at $2D000, so a program that wants a charset brings its own.
+ *
+ * Banks 13-15 are attic RAM (HyperRAM at $8000000+): roughly ten times slower,
+ * invisible to VIC-IV and SID, and absent on boards without HyperRAM. Good for
+ * large tables and code off the hot path.
  *
  * mapper.s holds the same layout as MAP register values;
  * check-bank-tables.py fails the build if the two drift apart.
  */
 #define BANK_PHYS_BASE_0  0x02000ul
 #define BANK_PHYS_BASE_1  0x12000ul
-#define BANK_PHYS_BASE_2  0x40000ul
-#define BANK_PHYS_BASE_3  0x48000ul
-#define BANK_PHYS_BASE_4  0x50000ul
-#define BANK_PHYS_BASE_5  0x58000ul
-#define BANK_PHYS_BASE_6  0x8000000ul
-#define BANK_PHYS_BASE_7  0x8008000ul
-#define BANK_PHYS_BASE_8  0x8010000ul
-#define BANK_PHYS_BASE_9  0x8018000ul
-#define BANK_PHYS_BASE_10 0x8020000ul
-#define BANK_PHYS_BASE_11 0x8028000ul
-#define BANK_PHYS_BASE_12 0x8030000ul
-#define BANK_PHYS_BASE_13 0x8038000ul
-#define BANK_PHYS_BASE_14 0x8040000ul
-#define BANK_PHYS_BASE_15 0x8048000ul
+#define BANK_PHYS_BASE_2  0x18000ul
+#define BANK_PHYS_BASE_3  0x20000ul
+#define BANK_PHYS_BASE_4  0x26000ul
+#define BANK_PHYS_BASE_5  0x2C000ul
+#define BANK_PHYS_BASE_6  0x32000ul
+#define BANK_PHYS_BASE_7  0x38000ul
+#define BANK_PHYS_BASE_8  0x40000ul
+#define BANK_PHYS_BASE_9  0x46000ul
+#define BANK_PHYS_BASE_10 0x4C000ul
+#define BANK_PHYS_BASE_11 0x52000ul
+#define BANK_PHYS_BASE_12 0x58000ul
+#define BANK_PHYS_BASE_13 0x8000000ul
+#define BANK_PHYS_BASE_14 0x8006000ul
+#define BANK_PHYS_BASE_15 0x800C000ul
 
 /**
  * @brief Declare how many banks this program uses.
@@ -89,7 +93,7 @@
  *
  * The map is global state: a handler runs with whichever bank the interrupted
  * code had mapped, and cannot know which that was. Handlers must live in the
- * fixed region and must not touch $2000-$9FFF.
+ * fixed region and must not touch $2000-$7FFF.
  *
  * Bank switching leaves the I flag alone, so set_bank() and banked_call()
  * return with the caller's interrupt state intact and an interrupt can arrive
@@ -110,7 +114,7 @@ extern "C" {
 /**
  * @brief Call a function in the given bank.
  *
- * Maps the bank into $2000-$9FFF, calls the function, then restores the
+ * Maps the bank into $2000-$7FFF, calls the function, then restores the
  * previous bank. Caller and trampoline must both be in the fixed region.
  *
  * Nesting is safe: the previous bank is pushed on the hardware stack, so a
@@ -119,7 +123,7 @@ extern "C" {
  * the outer bank's own code is not in the window.
  *
  * @param bank_id Bank number (0-15).
- * @param method  Function pointer (address within $2000-$9FFF).
+ * @param method  Function pointer (address within $2000-$7FFF).
  */
 /* "leaf" would normally be a lie here -- this re-enters C through
  * __call_indir. It is sound only because callback(2) restores the call edge

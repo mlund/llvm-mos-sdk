@@ -43,6 +43,14 @@ __boot:
     lda #$44
     sta $d030
 
+    ; The second 128KB holds the C65 ROMs, which this platform does not use.
+    ; Writes to it are discarded until the hypervisor lifts the protection, and
+    ; Hyppo's own loader reports success either way -- so banks placed there
+    ; would silently come up empty. Needs the I/O personality set above.
+    lda #$02
+    sta $d641
+    clv
+
     ; Sources BASIC left running would fire into vectors nobody has written yet.
     lda #$00
     sta $d01a

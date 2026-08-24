@@ -7,6 +7,10 @@
 
 #define IRQ_VECTOR (*(volatile uint16_t *)0xfffe)
 
+// Compared against the symbol rather than an address range, so moving the
+// fixed region does not silently turn this into a weaker test.
+extern void __default_isr(void);
+
 int main(void) {
   // Under BASIC these are ROM for reading, so a write that reads back is the
   // whole test.
@@ -18,8 +22,7 @@ int main(void) {
   VICII.bordercolor = 6;
   xemu_assert((VICII.bordercolor & 0x0f) == 6);
 
-  // Both vectors point at the default handler, which is in the fixed region.
-  xemu_assert(IRQ_VECTOR >= 0xa000 && IRQ_VECTOR < 0xd000);
+  xemu_assert(IRQ_VECTOR == (uint16_t)(uintptr_t)&__default_isr);
 
   xemu_exit(0);
 }
