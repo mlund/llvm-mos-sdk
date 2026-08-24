@@ -5,8 +5,8 @@
 # information.
 """Split a mega65-banked-sd PRG into the directory that goes on the SD card.
 
-link.ld emits one flat image: a 2-byte load address, the $2000-$9FFF window,
-__ram_fixed_size bytes of ram_fixed, then one 32 KB slot per declared bank.
+link.ld emits one flat image: a 2-byte load address, the bank 0 window,
+__ram_fixed_size bytes of ram_fixed, then one window-sized slot per bank.
 Only the used part of each bank is written, so a program with three banks does
 not carry twelve empty ones.
 
@@ -19,8 +19,6 @@ import re
 import subprocess
 from pathlib import Path
 
-RAM_SIZE = 0x8000  # $2000-$9FFF, the bank 0 window
-BANK_SLOT = 0x8000  # each slot in the combined image, from the FULL() padding
 BANKS = 15
 
 
@@ -67,7 +65,12 @@ def main():
     ram_fixed = size.get("__ram_fixed_size", 0)
     if not ram_fixed:
         raise SystemExit(f"prg-to-sd.py: __ram_fixed_size not found in {elf}")
-    main_size = 2 + RAM_SIZE + ram_fixed
+    # The window is also the padded size of every bank slot, since both come
+    # from FULL() over a region of that length.
+    window = size.get("__bank_window_size", 0)
+    if not window:
+        raise SystemExit(f"prg-to-sd.py: __bank_window_size not found in {elf}")
+    main_size = 2 + window + ram_fixed
 
     outdir.mkdir(parents=True, exist_ok=True)
     written = set()
@@ -85,7 +88,7 @@ def main():
         used = size.get(f"__bank_{i}_size", 0)
         if not used:
             continue
-        start = main_size + (i - 1) * BANK_SLOT
+        start = main_size + (i - 1) * window
         # Raw, no PRG header: Hyppo loadfile places the whole file at the
         # address it is given.
         emit(f"BANK{i:X}.BIN", image[start : start + used])
