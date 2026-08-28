@@ -86,3 +86,28 @@ __bank_12_size   = SIZEOF(.bank_12);
 __bank_13_size   = SIZEOF(.bank_13);
 __bank_14_size   = SIZEOF(.bank_14);
 __bank_15_size   = SIZEOF(.bank_15);
+
+/* And whether each holds anything, which is all the loader needs.
+ *
+ * A byte, deliberately.  The size itself is a linker-defined absolute, and
+ * llvm-mos relocates a sixteen-bit initialiser built from one as two low-byte
+ * relocations rather than a low and a high -- so a table of sizes links only
+ * while every bank is under 256 bytes, and fails on the first real one with
+ * "R_MOS_ADDR8 out of range".  prg-to-sd.py still reads the sizes out of the
+ * ELF, where they are exact.
+ */
+__bank_1_used    = SIZEOF(.bank_1)  > 0 ? 1 : 0;
+__bank_2_used    = SIZEOF(.bank_2)  > 0 ? 1 : 0;
+__bank_3_used    = SIZEOF(.bank_3)  > 0 ? 1 : 0;
+__bank_4_used    = SIZEOF(.bank_4)  > 0 ? 1 : 0;
+__bank_5_used    = SIZEOF(.bank_5)  > 0 ? 1 : 0;
+__bank_6_used    = SIZEOF(.bank_6)  > 0 ? 1 : 0;
+__bank_7_used    = SIZEOF(.bank_7)  > 0 ? 1 : 0;
+__bank_8_used    = SIZEOF(.bank_8)  > 0 ? 1 : 0;
+__bank_9_used    = SIZEOF(.bank_9)  > 0 ? 1 : 0;
+__bank_10_used   = SIZEOF(.bank_10) > 0 ? 1 : 0;
+__bank_11_used   = SIZEOF(.bank_11) > 0 ? 1 : 0;
+__bank_12_used   = SIZEOF(.bank_12) > 0 ? 1 : 0;
+__bank_13_used   = SIZEOF(.bank_13) > 0 ? 1 : 0;
+__bank_14_used   = SIZEOF(.bank_14) > 0 ? 1 : 0;
+__bank_15_used   = SIZEOF(.bank_15) > 0 ? 1 : 0;

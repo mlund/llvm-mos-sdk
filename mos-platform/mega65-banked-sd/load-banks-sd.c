@@ -11,7 +11,11 @@
 #include <mapper.h>
 #include <mega65.h>
 
-extern const unsigned short __bank_sizes[15];
+/* Whether each bank holds anything, one byte apiece.  Not the sizes: a
+ * sixteen-bit initialiser built from a linker-defined absolute relocates as two
+ * low bytes rather than a low and a high, so a table of them links only while
+ * every bank is under 256 bytes.  Nothing here wants the size anyway. */
+extern const unsigned char __bank_used[15];
 
 #define ATTIC_BASE 0x8000000ul
 
@@ -74,7 +78,7 @@ __attribute__((weak)) void __load_banks(void) {
     unsigned char bank = i + 1;
     unsigned long addr;
 
-    if (!__bank_sizes[i])
+    if (!__bank_used[i])
       continue;
     addr = (unsigned long)BANK_SLOT[i] << SLOT_SHIFT;
 
