@@ -72,6 +72,9 @@ add_mega65_banked_sd_test(sd-load-banks)
 # fourteen banks this program does not declare.
 add_mega65_banked_sd_size_test(bank-count 70000)
 
+add_subdirectory(no-compile)
+add_subdirectory(compile)
+
 # Neither needs an emulator, so they are what a build without one still checks.
 if(PYTHON3_COMMAND)
   add_test(NAME test-bank-tables-sd
