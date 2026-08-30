@@ -97,6 +97,15 @@ gives `game_sd/` holding `GAME.PRG`, `BANK1.BIN`…, and `TILES.BIN`. Copy the
 directory onto the card and start `GAME.PRG`; the CRT loads the banks before
 `main`.
 
+`--report` adds a table of how full each bank is, while there is still room to
+do something about it:
+
+```
+bank     used     free   fill
+   1    18402     6174    74%
+   2       44    24532     0%
+```
+
 Names are upper-cased because Hyppo upper-cases the name it is asked for but
 not the one on the card, so a lower-case file can never be found.
 

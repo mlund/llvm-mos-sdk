@@ -62,3 +62,6 @@ add_mega65_banked_sd_size_test(bank-count 70000)
 
 add_test(NAME test-bank-tables-sd
   COMMAND ${PYTHON3_COMMAND} ${CMAKE_CURRENT_SOURCE_DIR}/check-bank-tables.py)
+
+add_test(NAME test-bank-report-sd
+  COMMAND ${PYTHON3_COMMAND} ${CMAKE_CURRENT_SOURCE_DIR}/check-bank-report.py)

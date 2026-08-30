@@ -28,6 +28,27 @@ def elf_sizes(elf):
     return {m[1]: int(m[0], 16) for m in re.findall(r"^([0-9a-fA-F]+) A (\S+)$", out, re.M)}
 
 
+def bank_rows(size, banks=BANKS):
+    """(bank, used, free) for each bank the link put something in.
+
+    A slot is the window's length, so free is what is left before the next
+    thing added to that bank stops linking.
+    """
+    window = size["__bank_window_size"]
+    for i in range(1, banks + 1):
+        used = size.get(f"__bank_{i}_size", 0)
+        if used:
+            yield i, used, window - used
+
+
+def print_report(size):
+    """How full each bank is, while there is still room to act on it."""
+    print("bank     used     free   fill")
+    for bank, used, free in bank_rows(size):
+        pct = 100 * used // size["__bank_window_size"]
+        print(f"{bank:4d} {used:8d} {free:8d}   {pct:3d}%")
+
+
 # Hyppo takes names up to 63 characters, and FAT rejects these outright.
 NAME_MAX = 63
 FORBIDDEN = set('"*/:<>?\\|')
@@ -55,6 +76,11 @@ def main():
         metavar="PATH",
         help="extra file to copy onto the card; repeatable",
     )
+    ap.add_argument(
+        "--report",
+        action="store_true",
+        help="print how full each bank is",
+    )
     a = ap.parse_args()
 
     prg, outdir = Path(a.prg), Path(a.outdir)
@@ -71,6 +97,9 @@ def main():
     if not window:
         raise SystemExit(f"prg-to-sd.py: __bank_window_size not found in {elf}")
     main_size = 2 + window + ram_fixed
+
+    if a.report:
+        print_report(size)
 
     outdir.mkdir(parents=True, exist_ok=True)
     written = set()
