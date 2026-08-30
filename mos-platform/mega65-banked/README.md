@@ -1,21 +1,22 @@
 # mega65-banked
 
-MEGA65 target with a 24 KB banked window, for programs larger than 64 KB.
+A banked MEGA65 target with the KERNAL still available, for programs larger
+than 64 KB. Banks are separate files on a D81 image, loaded at startup, so the
+`.prg` alone will not run.
 
-Requires the 45GS02 (`-mcpu=mos45gs02`, set by the target) and a D81 disk
-image: banks are separate files loaded at startup, so the `.prg` alone will
-not run.
+Use `mega65-banked-sd` instead if the program needs neither BASIC nor the
+KERNAL and can load from the SD card.
 
 ## Memory map
 
-| Range | Size | Contents |
-|---|---|---|
-| `$0000-$01FF` | 512 B | Zero page, hardware stack |
-| `$0200-$1FFF` | 7.5 KB | KERNAL workspace |
-| `$2000-$7FFF` | 24 KB | **Banked window** — one bank at a time |
-| `$8000-$CFFF` | 20 KB | **Fixed region** — always visible |
-| `$D000-$DFFF` | 4 KB | I/O |
-| `$E000-$FFFF` | 8 KB | KERNAL |
+| Range | Contents |
+|---|---|
+| `$0000-$01FF` | Zero page, hardware stack |
+| `$0200-$1FFF` | KERNAL workspace |
+| `$2000-$7FFF` | **bank window** — one bank at a time, 24 KB |
+| `$8000-$CFFF` | **fixed region** — always visible, 20 KB |
+| `$D000-$DFFF` | I/O |
+| `$E000-$FFFF` | KERNAL |
 
 The soft stack starts at `$D000` and grows down into the fixed region. There
 is no overflow detection.
@@ -24,14 +25,17 @@ is no overflow detection.
 
 | Bank | Address | Memory |
 |---|---|---|
-| 0 | `$02000` | Chip RAM. The default window; needs no loading |
+| 0 | `$02000` | The default window; needs no loading |
 | 1-2 | `$12000`, `$18000` | Chip RAM |
 | 3-7 | `$40800` … `$58800` | Fast RAM |
 | 8-15 | `$8000800` … `$8036800` | Attic RAM |
 
-Banks 1-2 start at `$12000` rather than at the top of chip RAM: `$10000-$11FFF` is the
-C65 DOS work area, mapped whenever the KERNAL touches a disk, so a bank placed there
-loses those bytes on the next disk call.
+Banks 1-2 start at `$12000` rather than at the top of chip RAM: `$10000-$11FFF`
+is the C65 DOS work area, mapped whenever the KERNAL touches a disk, so a bank
+placed there loses those bytes on the next disk call.
+
+Banks 3-15 sit `$800` into a 64 KB page, so KERNAL LOAD never sees a zero
+address high byte, which makes it corrupt the destination.
 
 Attic RAM is about ten times slower, is invisible to VIC-IV and SID, and is
 absent on Nexys A7 boards. Use it for tables and logic, not graphics or audio.
@@ -45,9 +49,9 @@ MAPPER_BANK_COUNT(2);          // highest bank used
 
 RODATA_BANK(1) const uint8_t table[256] = { ... };
 
-CODE_BANK(1) void compute() { result = table[index]; }
+CODE_BANK(1) void compute(void) { result = table[index]; }
 
-int main() {
+int main(void) {
   banked_call(1, compute);
 }
 ```
@@ -69,23 +73,22 @@ Keep a table in the same bank as the code reading it, so one call covers both.
 | `get_bank()` | The currently mapped bank |
 | `set_bank(bank)` | Map a bank directly; prefer `banked_call` |
 
-`bank_id` is masked to its low four bits, so 0x11 selects bank 1.
+`bank` is masked to its low four bits, so 0x11 selects bank 1.
 
 ## Rules
 
 **`banked_call` takes `void(void)` only.** No arguments, no return value. Pass
 values through variables in the fixed region.
 
-**A bank may not call another bank directly.** Return to the fixed region
-first, then make the next `banked_call`. Nesting that way is safe: the
-previous bank is restored before control returns to the outer one.
-
 **Bank data is readable only while its bank is mapped.** Anything shared or
 long-lived belongs in the fixed region.
 
 **Everything not given a bank goes in the 20 KB fixed region** — code, string
-literals, static variables, vtables, the soft stack. This is the usual limit
-a program hits first.
+literals, static variables, the soft stack. This is the usual limit a program
+hits first.
+
+**A bank may call another bank.** `banked_call` is in the fixed region, so the
+caller's bank is back before control returns to it.
 
 **Do not pass `-T`.** A supplementary linker script suppresses the platform's
 `OUTPUT_FORMAT`, producing an ELF instead of the flat image the disk build
@@ -106,33 +109,23 @@ VICIV.key = VIC4_KEY_VICIV_A;
 VICIV.key = VIC4_KEY_VICIV_B;
 ```
 
-**KERNAL disk I/O needs ROMC mapped, and it is not.** The KERNAL reaches its
-disk routines through the C65 interface ROM at `$C000-$CFFF`. The CRT clears
-ROMC once the banks are loaded, to make those 4 KB part of the fixed region,
-so a `cbm_k_load()` from your own code hangs. Map it for the call:
+**KERNAL disk I/O needs the C65 interface ROM at `$C000-$CFFF`, and it is not
+mapped.** Startup unmaps it to extend the fixed region, so a `cbm_k_load()`
+from your own code hangs. Map it for the call:
 
 ```c
 VICIV.ctrla |= VIC3_ROMC_MASK;
-mega65_k_setbnk(0, 0);           // the CRT aims LOAD per bank; say which
+mega65_k_setbnk(0, 0);           // startup aims LOAD at bank 0; say which
 cbm_k_setlfs(0, 8, 0);
 cbm_k_setnam("DATA");
 cbm_k_load(0, (void *)0xB000);   // in the fixed region, not the window
 VICIV.ctrla &= (unsigned char)~VIC3_ROMC_MASK;
 ```
 
-While ROMC is mapped, reads from `$C000-$CFFF` give ROM rather than what you
-put there; writes still reach the RAM underneath. Keep anything the call needs
-below `$C000`.
-
-A 16-bit destination inside `$2000-$7FFF` lands in whichever bank is mapped, so
-prefer the fixed region unless that is what you meant. The CRT leaves LOAD
-aimed at bank 0; call `mega65_k_setbnk()` first to reach anywhere else in the
-28-bit space.
-
-The soft stack grows down from `$D000` through the same range, but LTO
-allocates frames statically wherever it can prove functions are not
-simultaneously active, so ordinary code uses none of it and recursion uses
-about a byte per level.
+While it is mapped, reads from `$C000-$CFFF` give ROM rather than what you put
+there; writes still reach the RAM underneath. Keep anything the call needs
+below `$C000`. A destination inside `$2000-$7FFF` lands in whichever bank is
+mapped, so prefer the fixed region unless that is what you meant.
 
 **KERNAL disk I/O leaves a different bank mapped.** It installs its own
 mapping and restores the KERNAL's, not yours. Hypervisor calls are unaffected:
@@ -173,21 +166,16 @@ python3 prg-to-d81.py game.prg . game
 This writes `game-main.prg`, one file per non-empty bank, and `game.d81` with
 the main program as `AUTOBOOT.C65`. Run the disk image, not the `.prg`.
 
-In CMake, `add_banked_example(name source)` does the same.
-
 ## Changing the bank layout
 
 Four files state where banks live, in different forms:
 
 | File | Holds |
 |---|---|
-| `mapper.s` | MAP offsets and megabyte bytes |
-| `load-banks-kernal.S` | Load addresses for the disk loader |
 | `mapper.h` | `BANK_PHYS_BASE_n` |
-| `_ram-banked.ld` | Section addresses |
+| `mapper.s` | MAP register values |
+| `load-banks-kernal.S` | Load addresses for the disk loader |
+| `_ram-banked.ld` | Slot addresses |
 
 `test/mega65-banked/check-bank-tables.py` compares the first three and needs
-no emulator. Run it after any edit.
-
-`_ram-banked.ld` is maintained by hand; `test-bank-tables` is what keeps it
-in agreement with the other two.
+no emulator. Run it after any edit. `_ram-banked.ld` is not cross-checked.
