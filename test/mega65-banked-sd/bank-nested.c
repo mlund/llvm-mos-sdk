@@ -1,10 +1,9 @@
 // banked_call nests, and get_bank() tells the truth at every depth.
 //
-// The call graph is the shape banked code is supposed to use: a banked
-// function never calls into another bank directly, it returns to fixed code
-// which makes the next call. Bank 1 is unmapped while bank 2 runs, so
-// outer()'s own code is absent from the window for the duration -- it is only
-// safe because banked_call restores bank 1 before returning into it.
+// Here the hop through fixed code is explicit; bank-to-bank.c covers a banked
+// function calling banked_call itself. Bank 1 is unmapped while bank 2 runs,
+// so outer()'s own code is absent from the window for the duration -- it is
+// only safe because banked_call restores bank 1 before returning into it.
 //
 //   main (fixed) -> outer (bank 1) -> middle (fixed) -> inner (bank 2)
 
@@ -19,7 +18,7 @@ static volatile uint8_t depth[5];
 
 CODE_BANK(2) static void inner(void) { depth[2] = get_bank(); }
 
-// Deliberately in the fixed region: this is the hop that makes nesting legal.
+// Deliberately in the fixed region, to keep the hop in the call graph.
 __attribute__((noinline)) static void middle(void) { banked_call(2, inner); }
 
 CODE_BANK(1) static void outer(void) {

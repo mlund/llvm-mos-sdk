@@ -66,8 +66,9 @@ int main(void) {
 `MAPPER_BANK_COUNT` is what keeps the unused banks out of the build. Without
 it every program reserves all 15.
 
-Code that runs in a bank must not assume any other bank is mapped, and
-`banked_call` must be reached from fixed code, not from another bank.
+Code that runs in a bank must not assume any other bank is mapped. It may call
+`banked_call` itself: the trampoline is in the fixed region, so the caller's
+bank is restored before control returns to it.
 
 To pass arguments or take a return value, call from the fixed region with
 `banked_call_r` or `banked_call_v`:

@@ -115,12 +115,12 @@ extern "C" {
  * @brief Call a function in the given bank.
  *
  * Maps the bank into $2000-$7FFF, calls the function, then restores the
- * previous bank. Caller and trampoline must both be in the fixed region.
+ * previous bank.
  *
- * Nesting is safe: the previous bank is pushed on the hardware stack, so a
- * banked function may return to fixed code that makes a further banked_call.
- * It may not call another bank directly -- while the inner bank is mapped,
- * the outer bank's own code is not in the window.
+ * A banked function may call this too. The trampoline is in the fixed region
+ * and the previous bank rides on the hardware stack, so the caller's bank is
+ * back in the window before control returns to it -- it is absent only while
+ * its own code is not running. Nesting is bounded by the hardware stack.
  *
  * @param bank_id Bank number (0-15).
  * @param method  Function pointer (address within $2000-$7FFF).
