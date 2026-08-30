@@ -3,7 +3,7 @@
 // See https://github.com/llvm-mos/llvm-mos-sdk/blob/main/LICENSE for license
 // information.
 
-#include "mapper.h"
+#include "_mapper.h"
 
 // Separate asm routine because MAP/EOM are 45GS02 instructions unavailable in C.
 void __set_bank_asm(char bank_id);

@@ -23,7 +23,6 @@ target_compile_options(mega65-banked-load-banks-kernal PRIVATE -mcpu=mos45gs02)
 target_link_libraries(mega65-banked-load-banks-kernal PRIVATE common-asminc)
 
 add_platform_library(mega65-banked-c
-  mapper.c
   mapper.s
 )
 target_compile_options(mega65-banked-c PUBLIC -mcpu=mos45gs02)

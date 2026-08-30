@@ -35,12 +35,10 @@ target_include_directories(mega65-banked-sd-load-banks SYSTEM BEFORE PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/../common/include)
 target_link_libraries(mega65-banked-sd-load-banks PRIVATE common-asminc)
 
-# mapper.c is layout-independent: it only tracks the shadow and calls
-# __set_bank_asm. The identity char-conv shadows the commodore one, whose
-# startup fragment puts the screen into shifted PETSCII through CHROUT --
-# which is RAM here, so calling it hangs before main.
+# The identity char-conv shadows the commodore one, whose startup fragment
+# puts the screen into shifted PETSCII through CHROUT -- which is RAM here, so
+# calling it hangs before main.
 add_platform_library(mega65-banked-sd-c
-  ../mega65-banked/mapper.c
   ../common/c/char-conv.c
   mapper.s
 )

@@ -7,6 +7,7 @@ endif()
 install(FILES
     _45E100.h
     _dmagic.h
+    _mapper.h
     _sdcard.h
     _vic3.h
     _vic4.h
@@ -22,6 +23,7 @@ add_platform_object_file(mega65-common-basic-header basic-header.o
   basic-header.S)
 
 add_platform_library(mega65-common-c
+  mapper.c
   cbm_k_cint.c
   cbm_k_load.c
   cbm_k_save.c
