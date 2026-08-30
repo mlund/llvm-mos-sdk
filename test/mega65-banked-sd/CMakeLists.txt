@@ -8,7 +8,11 @@ include(../test.cmake)
 # that directory as the SD card so the CRT's own bank loading runs. The main
 # PRG is injected rather than loaded, because starting it is the launcher's
 # job and not the platform's; SYS reaches the entry point at its load address.
+#
+# REMOVE names a file to delete from the finished directory, for the tests that
+# need the card to disagree with the link.
 function(add_mega65_banked_sd_test name)
+  cmake_parse_arguments(arg "" "REMOVE" "" ${ARGN})
   if(NOT XMEGA65_COMMAND)
     return()
   endif()
@@ -23,6 +27,12 @@ function(add_mega65_banked_sd_test name)
       $<TARGET_FILE_DIR:${name}.prg>/${name}_sd
       ${name}
     COMMENT "Building SD card directory for ${name}")
+  if(arg_REMOVE)
+    add_custom_command(TARGET ${name}.prg POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E rm -f
+        $<TARGET_FILE_DIR:${name}.prg>/${name}_sd/${arg_REMOVE}
+      COMMENT "Removing ${arg_REMOVE} from the card for ${name}")
+  endif()
   string(TOUPPER ${name} upper)
   add_test(NAME test-${name} COMMAND
     ${XMEGA65_COMMAND} -headless -sleepless -testing -fastboot
@@ -55,6 +65,7 @@ add_mega65_banked_sd_test(bank-to-bank)
 add_mega65_banked_sd_test(bank-range)
 add_mega65_banked_sd_test(bank-interrupts)
 add_mega65_banked_sd_test(bank-irq-delivery)
+add_mega65_banked_sd_test(bank-load-failed REMOVE BANK2.BIN)
 add_mega65_banked_sd_test(sd-load-banks)
 
 # One bank slot plus the window and the fixed region, and nothing for the
