@@ -61,8 +61,10 @@ add_mega65_banked_sd_test(sd-load-banks)
 # fourteen banks this program does not declare.
 add_mega65_banked_sd_size_test(bank-count 70000)
 
-add_test(NAME test-bank-tables-sd
-  COMMAND ${PYTHON3_COMMAND} ${CMAKE_CURRENT_SOURCE_DIR}/check-bank-tables.py)
-
-add_test(NAME test-bank-report-sd
-  COMMAND ${PYTHON3_COMMAND} ${CMAKE_CURRENT_SOURCE_DIR}/check-bank-report.py)
+# Neither needs an emulator, so they are what a build without one still checks.
+if(PYTHON3_COMMAND)
+  add_test(NAME test-bank-tables-sd
+    COMMAND ${PYTHON3_COMMAND} ${CMAKE_CURRENT_SOURCE_DIR}/check-bank-tables.py)
+  add_test(NAME test-bank-report-sd
+    COMMAND ${PYTHON3_COMMAND} ${CMAKE_CURRENT_SOURCE_DIR}/check-bank-report.py)
+endif()
