@@ -161,4 +161,44 @@ __attribute__((leaf)) void set_bank(char bank_id);
 }
 #endif
 
+/**
+ * @brief Call a banked function with arguments, and with a return value.
+ *
+ *     int n = banked_call_r(1, measure, text, len);
+ *     banked_call_v(1, draw, x, y);
+ *
+ * Two macros because a statement expression cannot hold a void temporary:
+ * _r yields the call's value, _v is for functions returning void.
+ *
+ * The call is direct, so the compiler marshals the real signature and sees
+ * the call edge -- unlike banked_call(), which hides both behind a function
+ * pointer. This works because the fixed region is above the window: MAPLO
+ * moves nothing at $8000 and up, so the caller's own code survives the
+ * switch.
+ *
+ * Two rules follow from that, and neither is diagnosed:
+ *
+ * - The caller must be in the fixed region. From a banked function the first
+ *   set_bank() returns into a window that no longer holds the caller. Bank
+ *   callers want banked_call().
+ * - The argument expressions are evaluated with the target bank already
+ *   mapped, so none of them may read the outgoing bank.
+ */
+#define banked_call_r(bank, fn, ...)                                           \
+  ({                                                                           \
+    char _prev_bank = get_bank();                                              \
+    set_bank(bank);                                                            \
+    __auto_type _result = (fn)(__VA_ARGS__);                                   \
+    set_bank(_prev_bank);                                                      \
+    _result;                                                                   \
+  })
+
+#define banked_call_v(bank, fn, ...)                                           \
+  ({                                                                           \
+    char _prev_bank = get_bank();                                              \
+    set_bank(bank);                                                            \
+    (fn)(__VA_ARGS__);                                                         \
+    set_bank(_prev_bank);                                                      \
+  })
+
 #endif // _MEGA65_MAPPER_H_

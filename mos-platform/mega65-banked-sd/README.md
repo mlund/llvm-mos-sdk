@@ -69,6 +69,20 @@ it every program reserves all 15.
 Code that runs in a bank must not assume any other bank is mapped, and
 `banked_call` must be reached from fixed code, not from another bank.
 
+To pass arguments or take a return value, call from the fixed region with
+`banked_call_r` or `banked_call_v`:
+
+```c
+int n = banked_call_r(1, measure, text, len);
+banked_call_v(1, draw, x, y);
+```
+
+These switch the bank around a direct call, so the compiler marshals the real
+signature. Two rules come with that, neither of them diagnosed: the caller
+must be in the fixed region, since from a bank the switch would unmap the
+caller mid-call; and the argument expressions are evaluated with the target
+bank already mapped, so none may read the outgoing bank.
+
 ## Building
 
 The linker emits one flat image; `prg-to-sd.py` splits it into the files that
