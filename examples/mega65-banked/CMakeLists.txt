@@ -3,7 +3,7 @@ function(add_banked_example name source)
   install_example(${name}.prg)
   if(PYTHON3_COMMAND)
     add_custom_command(TARGET ${name}.prg POST_BUILD
-      COMMAND ${PYTHON3_COMMAND} ${PRG_TO_D81_SCRIPT}
+      COMMAND ${PYTHON3_COMMAND} ${PLATFORM_SOURCE_DIR}/prg-to-d81.py
         $<TARGET_FILE:${name}.prg>
         $<TARGET_FILE_DIR:${name}.prg>
         ${name}

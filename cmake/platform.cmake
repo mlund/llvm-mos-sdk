@@ -155,14 +155,12 @@ function(_add_platform_examples target)
   ExternalProject_Get_Property(mos-platform INSTALL_DIR)
   set(config_flag "--config ${INSTALL_DIR}/bin/mos-${PLATFORM}.cfg")
 
-  # The MEGA65 banked images are split by python scripts, which need only
-  # python3.
+  # Some platforms post-process the linked image with a tool of their own.
+  # PLATFORM_SOURCE_DIR below is how their examples reach it, so no platform
+  # is named here.
   set(script_args "")
   if(PYTHON3_COMMAND)
-    set(script_args
-      -DPYTHON3_COMMAND=${PYTHON3_COMMAND}
-      -DPRG_TO_D81_SCRIPT=${CMAKE_SOURCE_DIR}/mos-platform/mega65-banked/prg-to-d81.py
-      -DPRG_TO_SD_SCRIPT=${CMAKE_SOURCE_DIR}/mos-platform/mega65-banked-sd/prg-to-sd.py)
+    set(script_args -DPYTHON3_COMMAND=${PYTHON3_COMMAND})
   endif()
 
   ExternalProject_Add(${target}
@@ -177,6 +175,7 @@ function(_add_platform_examples target)
       -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
       -DLLVM_MOS=${llvm_mos}
       -DPLATFORM=${PLATFORM}
+      -DPLATFORM_SOURCE_DIR=${CMAKE_SOURCE_DIR}/mos-platform/${PLATFORM}
       -DHOSTED=${HOSTED}
       -DCMAKE_C_FLAGS=${config_flag}
       -DCMAKE_CXX_FLAGS=${config_flag}
