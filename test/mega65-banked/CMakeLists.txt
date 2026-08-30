@@ -32,36 +32,6 @@ function(add_mega65_banked_test name)
   set_tests_properties(test-${name} PROPERTIES TIMEOUT 30)
 endfunction()
 
-# Like add_mega65_banked_test, but also splits the combined PRG into bank
-# files and creates a D81 disk image with main PRG as AUTOBOOT.C65 and
-# bank files for KERNAL LOAD at startup. Boots from D81 (no -prg injection).
-function(add_mega65_banked_disk_test name)
-  set(source_dir ".")
-  if(ARGC GREATER 1)
-    set(source_dir ${ARGV1})
-  endif()
-  if(NOT XMEGA65_COMMAND)
-    return()
-  endif()
-  if(NOT PYTHON3_COMMAND)
-    message(STATUS "python3 not found, skipping disk test: test-${name}")
-    return()
-  endif()
-  add_executable(${name}.prg ${source_dir}/${name}.c)
-
-  add_custom_command(TARGET ${name}.prg POST_BUILD
-    COMMAND ${PYTHON3_COMMAND} ${PRG_TO_D81_SCRIPT}
-      $<TARGET_FILE:${name}.prg>
-      $<TARGET_FILE_DIR:${name}.prg>
-      ${name}
-    COMMENT "Splitting PRG and creating D81 for ${name}")
-
-  add_test(NAME test-${name} COMMAND
-    ${XMEGA65_COMMAND} -headless -sleepless -testing
-    -8 $<TARGET_FILE_DIR:${name}.prg>/${name}.d81)
-  set_tests_properties(test-${name} PROPERTIES TIMEOUT 30)
-endfunction()
-
 # Loads banks through Hyppo rather than the KERNAL, so the bank files go on
 # the HDOS virtual SD card with their PRG headers stripped.
 function(add_mega65_banked_bload_test name)
@@ -116,10 +86,6 @@ function(add_mega65_banked_dump_test name)
     message(STATUS "python3 not found, skipping dump test: test-${name}")
     return()
   endif()
-  if(NOT PYTHON3_COMMAND)
-    message(STATUS "python3 not found, skipping dump test: test-${name}")
-    return()
-  endif()
   add_executable(${name}.prg ${name}.c)
   add_custom_command(TARGET ${name}.prg POST_BUILD
     COMMAND ${PYTHON3_COMMAND} ${PRG_TO_D81_SCRIPT}
@@ -160,10 +126,10 @@ add_mega65_banked_dump_test(bank-probe FB=00 FC=A5)
 # stays set, through both set_bank and the banked_call trampoline. Only bit 2
 # of P is recorded.
 add_mega65_banked_dump_test(bank-interrupts FB=00 FC=04 FD=00 FE=A5)
-add_mega65_banked_disk_test(kernal-load-banks)
-add_mega65_banked_disk_test(attic-load-banks)
-add_mega65_banked_disk_test(banked-dma)
-add_mega65_banked_disk_test(banked-dma-loop)
+add_mega65_banked_test(kernal-load-banks)
+add_mega65_banked_test(attic-load-banks)
+add_mega65_banked_test(banked-dma)
+add_mega65_banked_test(banked-dma-loop)
 add_mega65_banked_bload_test(hyppo-load-banks)
 # An out-of-range bank id is masked to its low four bits: set_bank(0x11)
 # maps bank 1, rather than indexing past bank_map_table into the MAP registers.
