@@ -1,4 +1,4 @@
-platform(mega65-banked COMPLETE HOSTED PARENT mega65)
+platform(mega65-banked COMPLETE HOSTED PARENT mega65-common)
 
 if(NOT CMAKE_CROSSCOMPILING)
   return()

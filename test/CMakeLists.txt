@@ -67,7 +67,7 @@ add_test_target(atari8-cart-std)
 add_test_target(mega65
   -DXMEGA65_COMMAND=${XMEGA65_COMMAND}
   -DPYTHON3_COMMAND=${PYTHON3_COMMAND}
-  -DD81_SCRIPT=${CMAKE_SOURCE_DIR}/mos-platform/mega65/d81.py)
+  -DD81_SCRIPT=${CMAKE_SOURCE_DIR}/mos-platform/mega65-common/d81.py)
 add_test_target(mega65-banked
   -DXMEGA65_COMMAND=${XMEGA65_COMMAND}
   -DPYTHON3_COMMAND=${PYTHON3_COMMAND}

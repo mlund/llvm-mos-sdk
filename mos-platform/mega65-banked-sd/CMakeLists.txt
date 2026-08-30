@@ -1,4 +1,4 @@
-platform(mega65-banked-sd COMPLETE HOSTED PARENT mega65)
+platform(mega65-banked-sd COMPLETE HOSTED PARENT mega65-common)
 
 if(NOT CMAKE_CROSSCOMPILING)
   return()
@@ -29,7 +29,7 @@ add_platform_object_file(mega65-banked-sd-load-banks load-banks-sd.o
 target_compile_options(mega65-banked-sd-load-banks PRIVATE -mcpu=mos45gs02)
 target_include_directories(mega65-banked-sd-load-banks SYSTEM BEFORE PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mega65
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mega65-common
   ${CMAKE_CURRENT_SOURCE_DIR}/../c64
   ${CMAKE_CURRENT_SOURCE_DIR}/../commodore
   ${CMAKE_CURRENT_SOURCE_DIR}/../common/include)

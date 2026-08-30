@@ -20,10 +20,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-# d81.py sits beside this script once installed, and with the parent platform
-# in the source tree.
+# d81.py sits beside this script once installed, and in another platform's
+# directory in the source tree.
 _HERE = Path(__file__).resolve().parent
-sys.path[:0] = [str(_HERE), str(_HERE.parent / "mega65")]
+sys.path[:0] = [str(_HERE)] + [str(p.parent) for p in _HERE.parent.glob("*/d81.py")]
 
 import d81  # noqa: E402
 
