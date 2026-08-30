@@ -23,4 +23,5 @@ endfunction()
 
 add_banked_sd_example(banked-colors banked-colors.cc)
 add_banked_sd_example(banked-args banked-args.cc)
+add_banked_sd_example(banked-irq banked-irq.cc)
 add_banked_sd_example(sd-asset sd-asset.c ASSETS stripes.bin)
