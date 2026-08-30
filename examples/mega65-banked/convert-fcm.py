@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# Copyright 2026 LLVM-MOS Project
+# Licensed under the Apache License, Version 2.0 with LLVM Exceptions.
+# See https://github.com/llvm-mos/llvm-mos-sdk/blob/main/LICENSE for license
+# information.
 """Convert a PNG image to MEGA65 FCM tile data for banked-fcm example.
 
 Produces binary files for use with C23 #embed in banked-fcm.cc:
