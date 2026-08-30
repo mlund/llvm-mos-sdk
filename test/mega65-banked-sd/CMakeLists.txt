@@ -54,6 +54,7 @@ add_mega65_banked_sd_test(bank-nested)
 add_mega65_banked_sd_test(bank-to-bank)
 add_mega65_banked_sd_test(bank-range)
 add_mega65_banked_sd_test(bank-interrupts)
+add_mega65_banked_sd_test(bank-irq-delivery)
 add_mega65_banked_sd_test(sd-load-banks)
 
 # One bank slot plus the window and the fixed region, and nothing for the
