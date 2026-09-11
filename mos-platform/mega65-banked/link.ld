@@ -19,14 +19,15 @@
  * Physical memory (ROM at $20000-$3FFFF must be skipped; banks 3-15 sit
  * +$800 into a 64KB page so KERNAL LOAD never sees a zero high byte):
  *   Chip RAM:   Bank 0: $02000  Bank 1: $12000  Bank 2: $18000
- *   Fast RAM:   Bank 3: $40800  Bank 4: $46800  Bank 5: $4C800
+ *               Bank 3: $40800  Bank 4: $46800  Bank 5: $4C800
  *               Bank 6: $52800  Bank 7: $58800
  *   Attic RAM:  Bank 8: $8000800 ... Bank 15: $8036800 (HyperRAM, ~10x slower)
  *
- * Chip RAM banks start at $12000, clear of both ram_fixed and the C65 DOS
+ * Banks 1-2 start at $12000, clear of both ram_fixed and the C65 DOS
  * work area ($10000-$11FFF), which CBDOS claims whenever it runs. Bank 2
- * ends at $1DFFF, below the colour RAM window at $1F800-$1FFFF. Fast RAM
- * banks use $6000 spacing (= 24KB bank size) to maximize utilization.
+ * ends at $1DFFF, below the colour RAM window at $1F800-$1FFFF. Banks 3-7,
+ * above the ROMs, use $6000 spacing (= 24KB bank size) to maximize
+ * utilization.
  */
 
 __basic_zp_start = 0x0002;

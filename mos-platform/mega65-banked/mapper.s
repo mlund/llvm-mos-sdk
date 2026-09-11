@@ -26,7 +26,7 @@
 ;
 ; A two-MAP sequence is used to first set the megabyte byte (bits
 ; [27:20] of the physical address) from bank_mega_table ($00 for
-; chip/fast RAM, $80 for attic RAM). The KERNAL boot and disk I/O
+; chip RAM, $80 for attic RAM). The KERNAL boot and disk I/O
 ; may use 28-bit MAP operations internally, leaving stale megabyte
 ; bytes that persist across single-MAP instructions. Without
 ; explicitly setting them, the 20-bit bank offset would be combined
@@ -55,7 +55,7 @@ __set_bank_asm:
 
     ; First MAP: set megabyte byte from table.
     ; X=$0F / Z=$0F is the special "set megabyte byte" encoding;
-    ; A provides the MAPLO megabyte value ($00 for chip/fast, $80 for attic).
+    ; A provides the MAPLO megabyte value ($00 for chip, $80 for attic).
     lda bank_mega_table,x   ; MAPLO megabyte from table
     ldx #$0f
     ldy #$00                ; MAPHI megabyte = $00 (KERNAL at $3E000)
@@ -84,7 +84,7 @@ __set_bank_asm:
 ;   $10000-$11FFF  Chip RAM — C65 DOS work area, mapped whenever CBDOS runs
 ;   $12000-$1FFFF  Chip RAM (banks 1-2; $1F800 = colour RAM window)
 ;   $20000-$3FFFF  ROM — NOT WRITABLE
-;   $40000-$5FFFF  Fast RAM (128KB, banks 3-7 with $6000 spacing)
+;   $40000-$5FFFF  Chip RAM above the ROMs (banks 3-7 with $6000 spacing)
 ;   $8000000+      Attic RAM (HyperRAM, 8MB; megabyte byte $80)
 ;
 ; All banks offset +$800 from 64KB page boundaries to avoid a KERNAL LOAD
@@ -94,11 +94,11 @@ __set_bank_asm:
 ;   0: $00000 → $02000  (Chip RAM — default, no MAP needed)
 ;   1: $10000 → $12000  (Chip RAM — clear of the C65 DOS work area below)
 ;   2: $16000 → $18000  (Chip RAM — ends at $1DFFF, below colour RAM at $1F800)
-;   3: $3E800 → $40800  (Fast RAM — skip ROM at $20000)
-;   4: $44800 → $46800  (Fast RAM)
-;   5: $4A800 → $4C800  (Fast RAM)
-;   6: $50800 → $52800  (Fast RAM)
-;   7: $56800 → $58800  (Fast RAM — ends at $5E7FF)
+;   3: $3E800 → $40800  (Chip RAM — skip ROM at $20000)
+;   4: $44800 → $46800  (Chip RAM)
+;   5: $4A800 → $4C800  (Chip RAM)
+;   6: $50800 → $52800  (Chip RAM)
+;   7: $56800 → $58800  (Chip RAM — ends at $5E7FF)
 ;
 ; Attic RAM banks (megabyte byte $80, 2 per 64KB page at +$0800 and +$6800):
 ;   8:  $FE800 → $8000800  (Attic RAM)
@@ -139,10 +139,10 @@ bank_map_table:
     .byte $48, $e3          ; bank 15: offset $34800 (attic, mega=$80)
 
 ; MAPLO megabyte byte lookup table (1 byte per bank).
-; Chip/fast RAM banks use $00, attic RAM banks use $80.
+; Chip RAM banks use $00, attic RAM banks use $80.
 .section .rodata.bank_mega_table,"a",@progbits
 bank_mega_table:
-    .byte $00, $00, $00, $00, $00, $00, $00, $00  ; banks 0-7: chip/fast RAM
+    .byte $00, $00, $00, $00, $00, $00, $00, $00  ; banks 0-7: chip RAM
     .byte $80, $80, $80, $80, $80, $80, $80, $80  ; banks 8-15: attic RAM
 
 ; --------------------------------------------------------------------------

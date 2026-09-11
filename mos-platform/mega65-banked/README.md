@@ -27,18 +27,22 @@ is no overflow detection.
 |---|---|---|
 | 0 | `$02000` | The default window; needs no loading |
 | 1-2 | `$12000`, `$18000` | Chip RAM |
-| 3-7 | `$40800` … `$58800` | Fast RAM |
+| 3-7 | `$40800` … `$58800` | Chip RAM, above the ROMs |
 | 8-15 | `$8000800` … `$8036800` | Attic RAM |
 
-Banks 1-2 start at `$12000` rather than at the top of chip RAM: `$10000-$11FFF`
-is the C65 DOS work area, mapped whenever the KERNAL touches a disk, so a bank
-placed there loses those bytes on the next disk call.
+Chip RAM is all of `$00000-$5FFFF`, ROMs included: full speed, and fetched
+from directly by VIC-IV, so any of banks 0-7 can hold graphics.
+
+Banks 1-2 start at `$12000` rather than `$10000`: `$10000-$11FFF` is the C65
+DOS work area, mapped whenever the KERNAL touches a disk, so a bank placed
+there loses those bytes on the next disk call.
 
 Banks 3-15 sit `$800` into a 64 KB page, so KERNAL LOAD never sees a zero
 address high byte, which makes it corrupt the destination.
 
-Attic RAM is about ten times slower, is invisible to VIC-IV and SID, and is
-absent on Nexys A7 boards. Use it for tables and logic, not graphics or audio.
+Attic RAM is about ten times slower, out of reach of VIC-IV and audio DMA,
+and absent on Nexys A7 boards. Use it for tables and logic, not graphics or
+audio.
 
 ## Using banks
 

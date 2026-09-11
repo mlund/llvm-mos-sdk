@@ -30,21 +30,21 @@ linker put it. About 19.5 KB of the fixed region is left after the runtime.
 |---|---|---|
 | 0 | `$02000` | The default window; needs no loading |
 | 1-2 | `$12000`, `$18000` | Chip RAM |
-| 3-7 | `$20000` … `$38000` | Where the C65 ROMs would be |
-| 8-12 | `$40000` … `$58000` | Fast RAM |
+| 3-7 | `$20000` … `$38000` | Chip RAM, where the C65 ROMs would be |
+| 8-12 | `$40000` … `$58000` | Chip RAM |
 | 13-15 | `$8000000` … `$800C000` | Attic RAM |
 
 Bank 0 is the window unmapped, so `.bank_0` content ships inside the main
 program rather than a bank file.
 
-Banks 1-12 are full speed and reachable by VIC-IV, which fetches anything
-below `$60000`, so any of them can hold a screen, a charset or sprite data.
+Chip RAM is all of `$00000-$5FFFF`: full speed, and fetched from directly by
+VIC-IV, so any of banks 0-12 can hold a screen, a charset or sprite data.
 Banks 3-7 sit where the C65 ROMs would be, including the character generator
 at `$2D000`; startup lifts the write protection there. Bring your own charset,
 as there is no longer one to fall back on.
 
-Attic RAM is about ten times slower, is invisible to VIC-IV and SID, and is
-absent on boards without it. Use it for tables and logic, not graphics or
+Attic RAM is about ten times slower, out of reach of VIC-IV and audio DMA,
+and absent on boards without it. Use it for tables and logic, not graphics or
 audio.
 
 ## Using banks

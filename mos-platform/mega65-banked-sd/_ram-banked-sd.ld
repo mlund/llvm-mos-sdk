@@ -1,7 +1,7 @@
 /* Bank section layout for mega65-banked-sd.
  *
  * On MOS a symbol's address is the low 16 bits of its LMA, so every bank LMA
- * ends in $2000 and bank symbols resolve into the $2000-$9FFF window whatever
+ * ends in $2000 and bank symbols resolve into the $2000-$7FFF window whatever
  * bank they belong to. The high bits only have to be unique.
  *
  * The physical addresses these stand for live in mapper.s and mapper.h;

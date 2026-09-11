@@ -5,13 +5,13 @@
 
 // Banked example: each bank prints a greeting via printf().
 //
-// printf() lives in the fixed region ($8000-$BFFF), so it's callable
+// printf() lives in the fixed region ($8000-$CFFF), so it's callable
 // from any bank. The string literals are placed in each bank's section
 // and are only accessible while that bank is mapped.
 //
 // Border color changes track execution progress:
 //   red(2) -> bank 1, green(5) -> bank 2, yellow(7) -> bank 4.
-// Banks 1-2 use chip RAM ($10000, $16000), banks 3-7 use fast RAM ($40000+).
+// Banks 1-2 sit at $12000 and $18000, banks 3-7 from $40800; all chip RAM.
 
 #include <cstdio>
 #include <mapper.h>

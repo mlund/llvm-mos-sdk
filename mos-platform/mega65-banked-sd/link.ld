@@ -24,8 +24,8 @@
  *   8: $40000    9: $46000   10: $4C000   11: $52000   12: $58000
  *   13: $8000000  14: $8006000  15: $800C000  (attic, ~10x slower)
  *
- * Bank 1 sits above the C65 DOS work area ($10000-$11FFF) and ends at
- * $19FFF, below the colour RAM window at $1F800.
+ * Banks 1-2 sit above the C65 DOS work area ($10000-$11FFF) and end at
+ * $1DFFF, below the colour RAM window at $1F800.
  */
 
 __basic_zp_start = 0x0002;

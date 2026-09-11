@@ -13,15 +13,16 @@
  *
  * Platform banks are 24 KB each (the MAP window at $2000-$7FFF), not the
  * 64 KB "banks" described in the MEGA65 memory map. Each bank's content
- * starts at the physical address below. ROM at $20000-$3FFFF creates a
- * gap between chip RAM banks (0-2) and fast RAM banks (3-7).
+ * starts at the physical address below. Banks 0-7 are all chip RAM, which
+ * VIC-IV fetches from directly; the ROMs at $20000-$3FFFF split them into
+ * 0-2 and 3-7.
  *
  * Banks 3-15 sit +$800 into a 64KB page so KERNAL LOAD never sees a zero
  * address high byte, which makes it corrupt the destination. Banks 1 and 2
  * clear that by starting at $12000 and $18000, above the C65 DOS work area.
  *
  * Banks 8-15 are in attic RAM (HyperRAM at $8000000+). Attic RAM is
- * ~10x slower than chip/fast RAM and is not visible to VIC-IV or SID.
+ * ~10x slower than chip RAM and out of reach of VIC-IV and audio DMA.
  * It is useful for large data sets, lookup tables, and code that does
  * not need peak performance. Two banks are packed per 64KB page
  * (at offsets +$0800 and +$6800) to avoid crossing 64KB boundaries.

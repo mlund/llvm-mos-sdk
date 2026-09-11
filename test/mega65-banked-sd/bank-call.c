@@ -1,4 +1,4 @@
-// Code runs from every chip and fast RAM bank, loaded off the card by the CRT.
+// Code runs from every chip RAM bank, loaded off the card by the CRT.
 
 #include <mapper.h>
 #include <stdint.h>

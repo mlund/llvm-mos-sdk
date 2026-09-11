@@ -48,7 +48,7 @@ __do_kernal_load:
     cli
 
     ; SETBNK 28-bit mode: A bit 7 set, A[3:0] = address[27:24].
-    ; Chip/fast banks (indices 0-6): A=$80. Attic banks (indices 7+): A=$88.
+    ; Chip RAM banks (indices 0-6): A=$80. Attic banks (indices 7+): A=$88.
     ldx __rc4
     ldy setbnk_y,x
     lda #$80
@@ -197,7 +197,7 @@ name_buf:
 
 ; 28-bit SETBNK Y values — address bits [23:16].
 ;   Banks 1-2: $01,$01 (Chip RAM, second 64KB page)
-;   Banks 3-7: $04,$04,$04,$05,$05 (Fast RAM)
+;   Banks 3-7: $04,$04,$04,$05,$05 (Chip RAM, above the ROMs)
 ;   Banks 8-15: 2 per 64KB page at $800.xx00+$0800 and $800.xx00+$6800
 setbnk_y:
     .byte $01, $01, $04, $04, $04, $05, $05         ; banks 1-7

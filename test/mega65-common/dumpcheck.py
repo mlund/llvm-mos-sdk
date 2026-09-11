@@ -11,7 +11,7 @@ the whole of main_ram on exit (targets/mega65/mega65.c, dump_memory), and
 main_ram is indexed by physical address, so a test that stores a value at
 $CF00 is checked by reading offset 0xCF00 of the dump.
 
-That covers chip and fast RAM.  Attic RAM is a separate array in xemu and
+That covers chip RAM.  Attic RAM is a separate array in xemu and
 never appears here; a test that needs it wants the serial monitor instead.
 
     dumpcheck.py --emulator xmega65 --d81 t.d81 --dump t.bin CF00=00 CF01=A5

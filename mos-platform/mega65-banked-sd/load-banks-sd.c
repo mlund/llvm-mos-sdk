@@ -31,7 +31,7 @@ extern const unsigned char __bank_used[15];
    ATTIC_BIT(13) | ATTIC_BIT(14) | ATTIC_BIT(15))
 #define IS_ATTIC(bank) ((ATTIC_BANKS >> (bank)) & 1)
 
-// What each trap wants: the base for chip and fast RAM, the offset into attic
+// What each trap wants: the base for chip RAM, the offset into attic
 // for the rest. Every one is 4 KB-aligned, so a byte holds it and the table
 // costs a quarter of what the addresses would.
 #define SLOT_SHIFT 12

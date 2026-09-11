@@ -20,8 +20,8 @@
  * at $2D000, so a program that wants a charset brings its own.
  *
  * Banks 13-15 are attic RAM (HyperRAM at $8000000+): roughly ten times slower,
- * invisible to VIC-IV and SID, and absent on boards without HyperRAM. Good for
- * large tables and code off the hot path.
+ * out of reach of VIC-IV and audio DMA, and absent on boards without HyperRAM.
+ * Good for large tables and code off the hot path.
  *
  * mapper.s holds the same layout as MAP register values;
  * check-bank-tables.py fails the build if the two drift apart.

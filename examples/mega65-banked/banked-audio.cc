@@ -15,8 +15,8 @@
 // $2000 and means nothing to the DMA controller. That is the same rule
 // banked-fcm.cc follows for VIC-IV's scrnptr.
 //
-// Attic RAM cannot serve this. Banks 8-15 are invisible to DMA audio and SID
-// however much room they have, so a sample belongs in a chip or fast RAM bank.
+// Attic RAM cannot serve this. Audio DMA cannot reach banks 8-15 however much
+// room they have, so a sample belongs in a chip RAM bank.
 
 #include <mapper.h>
 #include <mega65.h>

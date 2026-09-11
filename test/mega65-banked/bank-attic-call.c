@@ -7,7 +7,7 @@
 // fetches instructions from attic RAM has never been exercised.
 //
 // The probes live in ram_fixed rather than attic, which is what lets this run
-// under -dumpmem: xemu's memory dump covers main_ram (chip and fast RAM) only,
+// under -dumpmem: xemu's memory dump covers main_ram (chip RAM) only,
 // and attic is a separate array that never appears in it.
 //
 // Exit codes (via xemu $D6CF protocol):

@@ -6,20 +6,20 @@
 // Banked FCM (Full Color Mode) image demo for mega65-banked platform.
 //
 // Displays the LLVM-MOS logo as a full-screen 320x200 FCM image:
-//   - Bank 4: 380 unique 8x8 FCM tiles in fast RAM (BANK_PHYS_BASE_4)
+//   - Bank 4: 380 unique 8x8 FCM tiles in chip RAM (BANK_PHYS_BASE_4)
 //   - Pre-converted from PNG via k-means tile quantization (380 tiles)
 //   - Screen map assigns each of the 40x25 positions to its best tile
 //   - 256-colour palette extracted from the source image
-//   - Bank 5: screen map + palette in fast RAM (BANK_PHYS_BASE_5)
-//   - VIC-IV scrnptr points directly to screen map in fast RAM
-//   - DMA copies palette from fast RAM to VIC-IV palette registers
+//   - Bank 5: screen map + palette in chip RAM (BANK_PHYS_BASE_5)
+//   - VIC-IV scrnptr points directly to screen map in chip RAM
+//   - DMA copies palette from chip RAM to VIC-IV palette registers
 //
 // FCM addressing: char_address = screen_value * 64 (charptr is ignored).
 // Screen values are absolute character numbers: BANK_PHYS_BASE_4 / 64 +
 // tile_index. The converter reads the physical address from mapper.h.
 //
 // Binary data files are generated offline by convert-fcm.py and included
-// via C23 #embed. The CRT bank loader places them in fast RAM at startup.
+// via C23 #embed. The CRT bank loader places them in chip RAM at startup.
 
 #include <cstdint>
 #include <dma.hpp>
