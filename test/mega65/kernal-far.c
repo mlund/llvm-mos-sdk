@@ -1,5 +1,5 @@
 // MEGA65 KERNAL FAR memory wrapper test — exercises LDA_FAR, STA_FAR,
-// and CMP_FAR by writing data to bank 4 (fast RAM) and reading it back.
+// and CMP_FAR by writing data to bank 4 (chip RAM) and reading it back.
 //
 // Test plan:
 //   1. STA_FAR: write 8 bytes to bank 4:$2000
@@ -15,7 +15,7 @@
 static const uint8_t pattern[] = {0xDE, 0xAD, 0xBE, 0xEF,
                                   0xCA, 0xFE, 0xBA, 0xBE};
 
-// Bank 4 = fast RAM at physical $42000; address $2000 within the bank.
+// Bank 4 = chip RAM at physical $42000; address $2000 within the bank.
 #define FAR_BANK 4
 #define FAR_ADDR 0x2000
 
