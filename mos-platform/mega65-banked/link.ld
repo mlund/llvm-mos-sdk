@@ -61,16 +61,14 @@ ASSERT(__basic_zp_end - (__rc31 + 1) == 110,
 PROVIDE(__mega65_h_name_buf = 0x0100);
 INCLUDE _name-buf.ld
 
-__bank_window_start = 0x2000;
-__bank_window_size = 0x6000;
-
 /* MAPHI during a bank switch: $E000-$FFFF stays the MEGA65 KERNAL at $3E000. */
 __bank_maphi_sel = 0x83;
 
 MEMORY {
     zp       : ORIGIN = __rc31 + 1, LENGTH = __basic_zp_end - (__rc31 + 1)
-    /* One byte in: the image loads at $2001, behind the BASIC stub. */
-    ram (rw) : ORIGIN = __bank_window_start + 1, LENGTH = __bank_window_size - 1
+    /* $2001-$7FFF whatever the window: the stub loads at $2001, and autoboot
+     * clears the rest before SYS. */
+    ram (rw) : ORIGIN = 0x2001, LENGTH = 0x5fff
     ram_fixed (rw) : ORIGIN = 0x8000, LENGTH = 0x5000
 }
 
@@ -108,9 +106,6 @@ SECTIONS {
     INCLUDE data.ld
     INCLUDE bss.ld
     INCLUDE noinit.ld
-
-    /* Per-file layout records for the converter; not part of the image. */
-    .mapper_layout (INFO) : { KEEP(*(.mapper_layout)) }
 }
 
 /* Bytes of ram_fixed that actually carry content. Everything after .data is
@@ -127,7 +122,10 @@ ASSERT(__load_banks >= ADDR(.kernal_load) &&
 
 /* Set initial soft stack address to start of I/O region. (It grows down.)
  * ROMC is cleared during CRT init, making $C000-$CFFF RAM. */
-PROVIDE(__stack = 0xd000);
+/* A smaller window frees the top of $2000-$7FFF. Autoboot clears it, so it
+ * holds nothing loaded; the soft stack takes it, leaving ram_fixed to code and
+ * data. */
+PROVIDE(__stack = __bank_window_size < 0x6000 ? 0x8000 : 0xd000);
 
 OUTPUT_FORMAT {
     SHORT(0x2001)

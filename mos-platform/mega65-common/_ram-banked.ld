@@ -4,8 +4,8 @@
  * ends in $2000 and bank symbols resolve into the $2000-$7FFF window whatever
  * bank they belong to. The high bits only have to be unique.
  *
- * Slot length is __bank_window_size from the platform's link.ld; the
- * converters read it and __bank_N_size out of the ELF.
+ * Slot length is __bank_window_size, below; the converters read it and
+ * __bank_N_size out of the ELF.
  */
 
 __bank_1_lma   = 0x012000;
@@ -98,3 +98,15 @@ __bank_12_used   = SIZEOF(.bank_12) > 0 ? 1 : 0;
 __bank_13_used   = SIZEOF(.bank_13) > 0 ? 1 : 0;
 __bank_14_used   = SIZEOF(.bank_14) > 0 ? 1 : 0;
 __bank_15_used   = SIZEOF(.bank_15) > 0 ? 1 : 0;
+
+SECTIONS {
+  /* Per-file layout records and the window-size marker; not in the image. */
+  .mapper_layout (INFO) : { KEEP(*(.mapper_layout)) }
+  .mapper_window (INFO) : { KEEP(*(.mapper_window)) }
+}
+
+/* <mapper.h> encodes MAPPER_WINDOW_KB as its marker's alignment: 8 KB as 2,
+ * 16 KB as 4. No marker means the 24 KB default. */
+__bank_window_start = 0x2000;
+__bank_window_size = ALIGNOF(.mapper_window) == 2 ? 0x2000 :
+                     ALIGNOF(.mapper_window) == 4 ? 0x4000 : 0x6000;

@@ -24,7 +24,6 @@ import bank_image  # noqa: E402
 import d81  # noqa: E402
 
 RAM_SIZE = 24575  # $2001-$7FFF, the bank 0 window
-BANK_SLOT = 24576  # each slot in the combined image, from the FULL() padding
 PRG_HEADER = b"\x00\x20"  # KERNAL LOAD with SA=0 discards it and uses our address
 
 # Banks 1-9 take a decimal digit, 10-15 a hex letter, matching the filename
@@ -67,7 +66,7 @@ def main(argv=None):
     prg_name = "autoboot.c65" if not a.no_autoboot else disk_name.lower()
     disk.add_file(prg_name, main_prg.read_bytes())
 
-    for i, data in bank_image.banks(image, sym, main_size, BANK_SLOT):
+    for i, data in bank_image.banks(image, sym, main_size, sym["__bank_window_size"]):
         suffix = SUFFIXES[i - 1]
         bank = outdir / f"{a.basename}-BANK{suffix.upper()}"
         bank.write_bytes(PRG_HEADER + data)

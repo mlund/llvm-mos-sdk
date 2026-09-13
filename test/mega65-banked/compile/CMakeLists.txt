@@ -3,3 +3,4 @@ cmake_minimum_required(VERSION 3.18)
 set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL ON)
 
 add_compile_test(bank-fits)
+add_compile_test(bank-fits-16)

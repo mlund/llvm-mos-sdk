@@ -20,11 +20,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "mos-platform" / "m
 import bank_image  # noqa: E402
 
 
-def expected(bases):
+def expected(bases, kb):
+    select = {24: 0xE0, 16: 0x60, 8: 0x20}[kb]
     off = [((b & 0xFFFFF) - 0x2000) & 0xFFFFF for b in bases]
     return {
         "__bank_offset_lo": [0] + [o >> 8 & 0xFF for o in off[1:]],
-        "__bank_maplo_sel": [0] + [0xE0 | o >> 16 for o in off[1:]],
+        "__bank_maplo_sel": [0] + [select | o >> 16 for o in off[1:]],
         "__bank_megabyte": [b >> 20 & 0xFF for b in bases],
         "__bank_addr_mid": [b >> 16 & 0xFF for b in bases],
         "__bank_addr_page": [b >> 8 & 0xFF for b in bases],
@@ -39,11 +40,11 @@ def check(prg):
     found = bank_image.layouts(elf)
     if len(found) != 1:
         return [f"{prg}: {len(found)} distinct layouts recorded, expected 1"]
-    bases = next(iter(found))
-    problems = [f"{prg}: {p}" for p in bank_image.layout_problems(bases, kernal)]
+    *bases, kb = next(iter(found))
+    problems = [f"{prg}: {p}" for p in bank_image.layout_problems(bases, kernal, kb * 1024)]
     out = subprocess.run(["nm", str(elf)], capture_output=True, text=True).stdout
     addr = {m[2]: int(m[0], 16) for m in re.findall(r"^([0-9a-fA-F]+) (\w) (\S+)$", out, re.M)}
-    for name, want in expected(bases).items():
+    for name, want in expected(bases, kb).items():
         if name not in addr:
             problems.append(f"{prg}: {name} not linked")
             continue

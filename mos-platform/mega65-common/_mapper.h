@@ -176,6 +176,8 @@ void __bank_load_failed(unsigned char bank);
  *
  *     -DMAPPER_BANK_13=0x8010000
  *
+ * MAPPER_WINDOW_KB (24, 16 or 8) sizes the window, and with it every bank.
+ *
  * Each file including <mapper.h> emits the tables the bank switch and the
  * loaders read, as identical weak definitions, and records the layout it saw;
  * the converter rejects a program whose files disagree.
@@ -187,6 +189,11 @@ void __bank_load_failed(unsigned char bank);
 #else
 #define _MAPPER_UL(x) x##ul
 #endif
+
+#ifndef MAPPER_WINDOW_KB
+#define MAPPER_WINDOW_KB 24
+#endif
+#define _MAPPER_WINDOW (MAPPER_WINDOW_KB * _MAPPER_UL(1024))
 
 #define BANK_PHYS_BASE_0 _MAPPER_UL(0x02000)
 #ifdef MAPPER_BANK_1
@@ -280,9 +287,9 @@ void __bank_load_failed(unsigned char bank);
 #define _MAPPER_CHECK(n)                                                       \
   _MAPPER_ASSERT((BANK_PHYS_BASE_##n & 0xFF) == 0,                             \
                  "MAPPER_BANK_" #n " must be page-aligned");                   \
-  _MAPPER_ASSERT(BANK_PHYS_BASE_##n + 0x6000ul <= 0x60000ul ||                 \
+  _MAPPER_ASSERT(BANK_PHYS_BASE_##n + _MAPPER_WINDOW <= 0x60000ul ||                 \
                      (BANK_PHYS_BASE_##n >= 0x8000000ul &&                     \
-                      BANK_PHYS_BASE_##n + 0x6000ul <= 0x8800000ul),           \
+                      BANK_PHYS_BASE_##n + _MAPPER_WINDOW <= 0x8800000ul),           \
                  "MAPPER_BANK_" #n " must lie below $60000 or in attic RAM");  \
   _MAPPER_PLATFORM_CHECK(n)
 _MAPPER_CHECK(1)
@@ -300,11 +307,17 @@ _MAPPER_CHECK(12)
 _MAPPER_CHECK(13)
 _MAPPER_CHECK(14)
 _MAPPER_CHECK(15)
+_MAPPER_ASSERT(MAPPER_WINDOW_KB == 24 || MAPPER_WINDOW_KB == 16 ||
+                   MAPPER_WINDOW_KB == 8,
+               "MAPPER_WINDOW_KB must be 24, 16 or 8");
 
 #ifndef __MAPPER_NO_TABLES
 #define _MAPPER_OFF(n) (((BANK_PHYS_BASE_##n & 0xFFFFFul) - 0x2000ul) & 0xFFFFFul)
 #define _MAPPER_OFFSET_LO(n) (unsigned char)(n ? _MAPPER_OFF(n) >> 8 : 0)
-#define _MAPPER_MAPLO_SEL(n) (unsigned char)(n ? 0xE0 | _MAPPER_OFF(n) >> 16 : 0)
+/* MAPLO selects 8 KB blocks from $2000: 1-3, 1-2 or just 1. */
+#define _MAPPER_SELECT                                                         \
+  (MAPPER_WINDOW_KB == 24 ? 0xE0 : MAPPER_WINDOW_KB == 16 ? 0x60 : 0x20)
+#define _MAPPER_MAPLO_SEL(n) (unsigned char)(n ? _MAPPER_SELECT | _MAPPER_OFF(n) >> 16 : 0)
 #define _MAPPER_MEGABYTE(n) (unsigned char)(BANK_PHYS_BASE_##n >> 20)
 #define _MAPPER_ADDR_MID(n) (unsigned char)(BANK_PHYS_BASE_##n >> 16)
 #define _MAPPER_ADDR_PAGE(n) (unsigned char)(BANK_PHYS_BASE_##n >> 8)
@@ -327,9 +340,21 @@ _MAPPER_TABLE _MAPPER_EXTERN const unsigned char __bank_addr_page[16] =
 }
 #endif
 
+/* The linker reads the window size off this marker's alignment, the one section
+ * property that combines alike with LTO and without. */
+#ifdef __cplusplus
+extern "C" {
+#endif
+__attribute__((weak, used, section(".mapper_window"),
+               aligned(MAPPER_WINDOW_KB == 24 ? 8 : MAPPER_WINDOW_KB / 4)))
+_MAPPER_EXTERN const unsigned char __bank_window_marker = 0;
+#ifdef __cplusplus
+}
+#endif
+
 __attribute__((used, section(".mapper_layout")))
-static const unsigned long __mapper_layout[16] = {
-    BANK_PHYS_BASE_0, BANK_PHYS_BASE_1, BANK_PHYS_BASE_2, BANK_PHYS_BASE_3, BANK_PHYS_BASE_4, BANK_PHYS_BASE_5, BANK_PHYS_BASE_6, BANK_PHYS_BASE_7, BANK_PHYS_BASE_8, BANK_PHYS_BASE_9, BANK_PHYS_BASE_10, BANK_PHYS_BASE_11, BANK_PHYS_BASE_12, BANK_PHYS_BASE_13, BANK_PHYS_BASE_14, BANK_PHYS_BASE_15};
+static const unsigned long __mapper_layout[17] = {
+    BANK_PHYS_BASE_0, BANK_PHYS_BASE_1, BANK_PHYS_BASE_2, BANK_PHYS_BASE_3, BANK_PHYS_BASE_4, BANK_PHYS_BASE_5, BANK_PHYS_BASE_6, BANK_PHYS_BASE_7, BANK_PHYS_BASE_8, BANK_PHYS_BASE_9, BANK_PHYS_BASE_10, BANK_PHYS_BASE_11, BANK_PHYS_BASE_12, BANK_PHYS_BASE_13, BANK_PHYS_BASE_14, BANK_PHYS_BASE_15, MAPPER_WINDOW_KB};
 #endif /* __MAPPER_NO_TABLES */
 
 #endif /* __ASSEMBLER__ */

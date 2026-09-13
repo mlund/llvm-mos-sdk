@@ -179,6 +179,10 @@ in a header passed with `-include`.
 mos-mega65-banked-clang -DMAPPER_BANK_2=0x8040800 -Os -o game.prg game.c
 ```
 
+`MAPPER_WINDOW_KB` set to 16 or 8 shrinks every bank to that size. Autoboot
+clears the freed top of the window before your code runs, so the soft stack
+moves there and leaves the fixed region to code and data.
+
 `<mapper.h>` checks each address at compile time; the converter rejects
 overlapping banks and files that disagree. A bank's address high byte must not be `$00`, and the C65 ROMs at
 `$20000-$3FFFF` stay write-protected.

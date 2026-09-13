@@ -49,12 +49,6 @@ ASSERT(__basic_zp_end - (__rc31 + 1) == 222,
 PROVIDE(__mega65_h_name_buf = 0x0200);
 INCLUDE _name-buf.ld
 
-/* The window geometry, in one place. _ram-banked.ld gives every bank slot
- * this length, and prg-to-sd.py reads it out of the ELF, so the three cannot
- * disagree about where a bank starts in the image. */
-__bank_window_start = 0x2000;
-__bank_window_size = 0x6000;
-
 /* MAPHI during a bank switch: nothing, so $8000-$FFFF stays RAM. */
 __bank_maphi_sel = 0x00;
 
@@ -62,7 +56,9 @@ MEMORY {
     zp             : ORIGIN = __rc31 + 1, LENGTH = __basic_zp_end - (__rc31 + 1)
     ram_low   (rw) : ORIGIN = 0x0300, LENGTH = 0x1d00
     ram       (rw) : ORIGIN = __bank_window_start, LENGTH = __bank_window_size
-    ram_fixed (rw) : ORIGIN = 0x8000, LENGTH = 0x5000
+    /* Straight after the window, so a smaller window grows it. */
+    ram_fixed (rw) : ORIGIN = __bank_window_start + __bank_window_size,
+                     LENGTH = 0xD000 - (__bank_window_start + __bank_window_size)
     ram_high  (rw) : ORIGIN = 0xe000, LENGTH = 0x1ffa
 }
 
@@ -84,9 +80,6 @@ SECTIONS {
     .ram_low (NOLOAD) : { *(.ram_low .ram_low.*) } >ram_low
 
     INCLUDE c.ld
-
-    /* Per-file layout records for the converter; not part of the image. */
-    .mapper_layout (INFO) : { KEEP(*(.mapper_layout)) }
 }
 
 /* Bytes of ram_fixed that carry content; the rest is soft stack. */

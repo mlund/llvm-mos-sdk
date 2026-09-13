@@ -188,5 +188,8 @@ in a header passed with `-include`.
 mos-mega65-banked-sd-clang -DMAPPER_BANK_2=0x8012000 -Os -o game.prg game.c
 ```
 
+`MAPPER_WINDOW_KB` set to 16 or 8 shrinks every bank to that size and moves the
+fixed region down to meet the window: 28 KB or 36 KB of it.
+
 `<mapper.h>` checks each address at compile time; the converter rejects
 overlapping banks and files that disagree.
