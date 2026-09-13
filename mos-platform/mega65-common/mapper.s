@@ -1,0 +1,54 @@
+; Copyright 2026 LLVM-MOS Project
+; Licensed under the Apache License, Version 2.0 with LLVM Exceptions.
+; See https://github.com/llvm-mos/llvm-mos-sdk/blob/main/LICENSE for license
+; information.
+
+.include "imag.inc"
+
+; __set_bank_asm — map a bank into $2000-$7FFF.
+;
+; Input: A = bank_id (0-15)
+; Clobbers: A, X, Y, Z
+;
+; The first MAP sets the megabyte bytes, which the second cannot reach: X=$0F
+; with Z=$0F is the encoding for that. Without it a stale megabyte byte, such as
+; one the KERNAL's own 28-bit MAPs leave behind, would combine with a fresh
+; offset and land somewhere else entirely.
+;
+; A MAP writes MAPHI too, so the platform's link.ld supplies it as
+; __bank_maphi_sel.
+;
+; MAP inhibits interrupts, NMI included, until EOM -- through a dedicated
+; signal and not the I flag (gs4510.vhdl sets map_interrupt_inhibit; EOM
+; clears it; neither touches flag_i). The caller's interrupt state survives
+; untouched, so nothing has to be restored. The MEGA65 Book calls MAP
+; "similar to SEI", which is wrong here: following it and re-asserting SEI
+; after EOM would leave interrupts off for good.
+.section .text.__set_bank_asm,"ax",@progbits
+.globl __set_bank_asm
+__set_bank_asm:
+    and #$0f                ; ids past 15 would index off the end of the
+                            ; tables and hand junk to MAP, which covers
+                            ; $0000-$7FFF and so could move zero page
+    tax
+
+    lda __bank_offset_lo,x
+    pha
+    lda __bank_maplo_sel,x
+    pha
+
+    lda __bank_megabyte,x
+    ldy #$00                ; MAPHI megabyte: chip RAM on both platforms
+    ldx #$0f
+    ldz #$0f
+    map
+
+    pla
+    tax
+    pla                     ; A = MAPLO offset low byte
+    ldy #$00
+    ldz #__bank_maphi_sel
+    map
+    eom
+    ldz #$00                ; compiled code depends on Z = 0
+    rts

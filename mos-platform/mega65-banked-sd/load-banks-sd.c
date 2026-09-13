@@ -55,15 +55,6 @@ _Static_assert((BANK_PHYS_BASE_12 >> SLOT_SHIFT) <= 0xff &&
                    ((BANK_PHYS_BASE_15 - ATTIC_BASE) >> SLOT_SHIFT) <= 0xff,
                "bank addresses must fit a byte once shifted");
 
-/// Replaceable. The border is the only output that needs no setup, and
-/// returning would run a program whose code is silently absent.
-__attribute__((weak)) void __bank_load_failed(unsigned char bank) {
-  (void)bank;
-  VICII.bordercolor = 2;
-  for (;;)
-    asm volatile("");
-}
-
 asm(".section .init.250,\"ax\",@progbits\n"
     "jsr __load_banks\n");
 

@@ -8,8 +8,8 @@
 Three files state where a bank lives, in three different forms, and nothing but
 a SYNC comment holds them together:
 
-  mapper.s            bank_map_table  -- MAP offset, as the MAPLO A/X pair
-                      bank_mega_table -- megabyte byte
+  bank-tables.s       __bank_offset_lo, __bank_maplo_sel -- MAP offset
+                      __bank_megabyte                    -- megabyte byte
   load-banks-kernal.S setbnk_y        -- address bits [23:16] for KERNAL LOAD
                       load_addr_hi    -- address bits [15:8]
   mapper.h            BANK_PHYS_BASE_n
@@ -60,12 +60,13 @@ def bytes_after(text: str, label: str) -> list[int]:
 
 
 def main() -> int:
-    mapper_s = (PLATFORM / "mapper.s").read_text()
+    tables_s = (PLATFORM / "bank-tables.s").read_text()
     kernal_s = (PLATFORM / "load-banks-kernal.S").read_text()
     mapper_h = (PLATFORM / "mapper.h").read_text()
 
-    map_table = bytes_after(mapper_s, "bank_map_table")
-    mega_table = bytes_after(mapper_s, "bank_mega_table")
+    offset_lo = bytes_after(tables_s, "__bank_offset_lo")
+    maplo_sel = bytes_after(tables_s, "__bank_maplo_sel")
+    mega_table = bytes_after(tables_s, "__bank_megabyte")
     setbnk_y = bytes_after(kernal_s, "setbnk_y")
     load_addr_hi = bytes_after(kernal_s, "load_addr_hi")
 
@@ -75,8 +76,9 @@ def main() -> int:
     }
 
     problems: list[str] = []
-    for expected, count, name in ((32, len(map_table), "bank_map_table"),
-                                  (16, len(mega_table), "bank_mega_table"),
+    for expected, count, name in ((16, len(offset_lo), "__bank_offset_lo"),
+                                  (16, len(maplo_sel), "__bank_maplo_sel"),
+                                  (16, len(mega_table), "__bank_megabyte"),
                                   (15, len(setbnk_y), "setbnk_y"),
                                   (15, len(load_addr_hi), "load_addr_hi"),
                                   (16, len(declared), "BANK_PHYS_BASE_n")):
@@ -89,12 +91,12 @@ def main() -> int:
     for bank in range(16):
         # From the MAP tables: A is offset[15:8], the low nibble of X is
         # offset[19:16], and the megabyte byte lands at bits 27-20.
-        offset = ((map_table[bank * 2 + 1] & 0x0F) << 16) | (map_table[bank * 2] << 8)
+        offset = ((maplo_sel[bank] & 0x0F) << 16) | (offset_lo[bank] << 8)
         mapped = (mega_table[bank] << 20) | ((WINDOW + offset) & 0xFFFFF)
 
         if mapped != declared[bank]:
             problems.append(
-                f"bank {bank}: mapper.s gives ${mapped:07X}, "
+                f"bank {bank}: bank-tables.s gives ${mapped:07X}, "
                 f"mapper.h declares ${declared[bank]:07X}")
 
         if bank == 0:

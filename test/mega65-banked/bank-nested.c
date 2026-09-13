@@ -1,7 +1,7 @@
 // banked_call must nest, and get_bank() must tell the truth at every depth.
 //
 // The trampoline pushes the previous shadow on the hardware stack before
-// switching (mapper.s, banked_call), so nesting is structurally safe -- but
+// switching (banked_call in mega65-common/banked-call.s), so nesting is structurally safe -- but
 // nothing exercised it, and get_bank() had no coverage anywhere in the repo.
 //
 // The call graph is the shape banked code is supposed to use: a banked

@@ -57,7 +57,8 @@ extern void __clear_map(void);
 asm(".section .init.150,\"ax\",@progbits\n"
     "jsr __load_banks\n");
 
-__attribute__((weak)) void __load_banks(void) {
+// In .kernal_load, which startup reaches while BASIC ROM still covers $A000.
+__attribute__((weak, section(".text.kernal_load"))) void __load_banks(void) {
   // Unmap BASIC ROM at $A000-$BFFF. The BASIC SYS bootstrap sets $01=$37
   // (LORAM=1), which maps C64 BASIC ROM there. We only need KERNAL
   // ($E000-$FFFF), not BASIC. $3E clears LORAM while keeping HIRAM and

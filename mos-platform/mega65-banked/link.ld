@@ -64,6 +64,9 @@ INCLUDE _name-buf.ld
 __bank_window_start = 0x2000;
 __bank_window_size = 0x6000;
 
+/* MAPHI during a bank switch: $E000-$FFFF stays the MEGA65 KERNAL at $3E000. */
+__bank_maphi_sel = 0x83;
+
 MEMORY {
     zp       : ORIGIN = __rc31 + 1, LENGTH = __basic_zp_end - (__rc31 + 1)
     /* One byte in: the image loads at $2001, behind the BASIC stub. */
@@ -113,8 +116,11 @@ SECTIONS {
 __ram_fixed_size = LOADADDR(.data) + SIZEOF(.data) - ORIGIN(ram_fixed);
 
 /* BASIC ROM covers $A000-$BFFF until __load_banks maps it out. */
-ASSERT(_fini <= 0xA000 && __load_banks < 0xA000,
+ASSERT(_fini <= 0xA000 && ADDR(.kernal_load) + SIZEOF(.kernal_load) <= 0xA000,
        "mega65-banked: startup code must stay below $A000")
+ASSERT(__load_banks >= ADDR(.kernal_load) &&
+       __load_banks < ADDR(.kernal_load) + SIZEOF(.kernal_load),
+       "mega65-banked: __load_banks must be in section .text.kernal_load")
 
 /* Set initial soft stack address to start of I/O region. (It grows down.)
  * ROMC is cleared during CRT init, making $C000-$CFFF RAM. */

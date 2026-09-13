@@ -186,7 +186,7 @@ Three files state where banks live, in different forms:
 | File | Holds |
 |---|---|
 | `mapper.h` | `BANK_PHYS_BASE_n` |
-| `mapper.s` | MAP register values |
+| `bank-tables.s` | MAP register values |
 | `../mega65-common/_ram-banked.ld` | Slot addresses |
 
 `test/mega65-banked-sd/check-bank-tables.py` recomputes each base from the

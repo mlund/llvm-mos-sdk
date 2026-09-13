@@ -177,7 +177,7 @@ Four files state where banks live, in different forms:
 | File | Holds |
 |---|---|
 | `mapper.h` | `BANK_PHYS_BASE_n` |
-| `mapper.s` | MAP register values |
+| `bank-tables.s` | MAP register values |
 | `load-banks-kernal.S` | Load addresses for the disk loader |
 | `../mega65-common/_ram-banked.ld` | Slot addresses |
 

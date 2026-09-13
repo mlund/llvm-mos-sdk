@@ -22,7 +22,7 @@ target_compile_options(mega65-banked-sd-boot PRIVATE -mcpu=mos45gs02)
 target_link_libraries(mega65-banked-sd-boot PRIVATE common-asminc)
 
 add_platform_object_file(mega65-banked-sd-load-banks load-banks-sd.o
-  load-banks-sd.c bank-sizes.s)
+  load-banks-sd.c)
 target_compile_options(mega65-banked-sd-load-banks PRIVATE -mcpu=mos45gs02)
 target_include_directories(mega65-banked-sd-load-banks SYSTEM BEFORE PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -37,7 +37,7 @@ target_link_libraries(mega65-banked-sd-load-banks PRIVATE common-asminc)
 # calling it hangs before main.
 add_platform_library(mega65-banked-sd-c
   ../common/c/char-conv.c
-  mapper.s
+  bank-tables.s
 )
 target_compile_options(mega65-banked-sd-c PUBLIC -mcpu=mos45gs02)
 target_include_directories(mega65-banked-sd-c BEFORE PUBLIC .)

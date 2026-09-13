@@ -5,7 +5,7 @@
 # information.
 """Check that the bank layout says the same thing wherever it is written down.
 
-mapper.h states each bank's physical base; mapper.s states it as MAP register
+mapper.h states each bank's physical base; bank-tables.s states it as MAP register
 values; mega65-common/_ram-banked.ld states the slot each bank occupies in the image.
 Nothing makes them agree, and a disagreement maps the window somewhere the
 loader did not write, which shows up as a bank of zeroes rather than an error.
@@ -32,7 +32,7 @@ RESERVED = {
 
 
 def read_table(text, label):
-    """The 16 .byte values following `label:` in mapper.s."""
+    """The 16 .byte values following `label:` in bank-tables.s."""
     body = text.split(label + ":", 1)[1]
     values = []
     for line in body.splitlines()[1:]:
@@ -55,7 +55,7 @@ def linker_value(text, symbol):
 
 def main():
     header = (PLATFORM / "mapper.h").read_text()
-    asm = (PLATFORM / "mapper.s").read_text()
+    asm = (PLATFORM / "bank-tables.s").read_text()
     script = (PLATFORM.parent / "mega65-common" / "_ram-banked.ld").read_text()
     link = (PLATFORM / "link.ld").read_text()
 
@@ -70,9 +70,9 @@ def main():
     if sorted(declared) != list(range(BANKS)):
         raise SystemExit(f"mapper.h declares banks {sorted(declared)}")
 
-    offset_lo = read_table(asm, "bank_offset_lo")
-    maplo = read_table(asm, "bank_maplo_sel")
-    megabyte = read_table(asm, "bank_megabyte")
+    offset_lo = read_table(asm, "__bank_offset_lo")
+    maplo = read_table(asm, "__bank_maplo_sel")
+    megabyte = read_table(asm, "__bank_megabyte")
 
     problems = []
 

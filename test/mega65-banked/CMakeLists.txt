@@ -134,7 +134,7 @@ add_mega65_banked_test(banked-dma)
 add_mega65_banked_test(banked-dma-loop)
 add_mega65_banked_bload_test(hyppo-load-banks)
 # An out-of-range bank id is masked to its low four bits: set_bank(0x11)
-# maps bank 1, rather than indexing past bank_map_table into the MAP registers.
+# maps bank 1, rather than indexing past the MAP tables into the MAP registers.
 add_mega65_banked_dump_test(bank-range FB=5A FC=A5)
 # One declared bank: main image plus a single 24 KB slot, not fifteen -- and
 # the main image carries only the ram_fixed bytes actually used, not the whole

@@ -23,7 +23,7 @@
  * out of reach of VIC-IV and audio DMA, and absent on boards without HyperRAM.
  * Good for large tables and code off the hot path.
  *
- * mapper.s holds the same layout as MAP register values;
+ * bank-tables.s holds the same layout as MAP register values;
  * check-bank-tables.py fails the build if the two drift apart.
  */
 #define BANK_PHYS_BASE_0  0x02000ul

@@ -55,6 +55,9 @@ INCLUDE _name-buf.ld
 __bank_window_start = 0x2000;
 __bank_window_size = 0x6000;
 
+/* MAPHI during a bank switch: nothing, so $8000-$FFFF stays RAM. */
+__bank_maphi_sel = 0x00;
+
 MEMORY {
     zp             : ORIGIN = __rc31 + 1, LENGTH = __basic_zp_end - (__rc31 + 1)
     ram_low   (rw) : ORIGIN = 0x0300, LENGTH = 0x1d00

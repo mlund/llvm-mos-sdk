@@ -1,7 +1,7 @@
 // A bank id outside 0-15 must not reach the MAP registers unchecked.
 //
-// bank_map_table holds 16 entries and is indexed by bank_id * 2, so a caller
-// passing 16 or more reads past the end of it and hands whatever follows to
+// The MAP tables hold 16 entries each, so a caller passing 16 or more reads
+// past their end and hands whatever follows to
 // the MAP instruction.  MAPLO covers $0000-$7FFF, which includes zero page
 // and therefore the compiler's imaginary registers, so the damage from a wild
 // offset is not confined to the banked window.

@@ -110,6 +110,14 @@ __attribute__((leaf)) void resync_bank(void);
  */
 __attribute__((leaf)) void set_bank(char bank_id);
 
+/**
+ * @brief Called when startup cannot load a bank the program declared.
+ *
+ * Weak: define it to handle the failure. The default halts with a red border,
+ * since the bank would read back as zeroes. Returning goes on to the next bank.
+ */
+void __bank_load_failed(unsigned char bank);
+
 #ifdef __cplusplus
 }
 #endif

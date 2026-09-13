@@ -25,8 +25,11 @@ add_platform_object_file(mega65-common-basic-header basic-header.o
   basic-header.S)
 
 add_platform_library(mega65-common-c
+  bank-load-failed.c
+  bank-sizes.s
   banked-call.s
   mapper.c
+  mapper.s
   cbm_k_cint.c
   cbm_k_load.c
   cbm_k_save.c

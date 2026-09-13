@@ -28,7 +28,7 @@
  * (at offsets +$0800 and +$6800) to avoid crossing 64KB boundaries.
  * Not available on Nexys A7 boards (no HyperRAM).
  *
- * SYNC: mapper.s, mapper.h and load-banks-kernal.S; check-bank-tables.py
+ * SYNC: bank-tables.s, mapper.h and load-banks-kernal.S; check-bank-tables.py
  * compares them.
  */
 #define BANK_PHYS_BASE_0  0x02000ul

@@ -14,8 +14,9 @@
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
 
-// Override the CRT KERNAL bank loader — we load via Hyppo instead.
-void __load_banks(void) {}
+// Override the CRT KERNAL bank loader — we load via Hyppo instead. Startup
+// calls it while BASIC ROM covers $A000, hence the section.
+__attribute__((section(".text.kernal_load"))) void __load_banks(void) {}
 
 // Signal address outside the banked window.
 // ZP byte $FC is free from compiler ($02-$8F) and never remapped.

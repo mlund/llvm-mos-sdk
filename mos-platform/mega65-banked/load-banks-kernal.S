@@ -17,7 +17,6 @@ SETLFS = $FFBA
 SETNAM = $FFBD
 KLOAD  = $FFD5
 CLRCHN = $FFCC
-BORDER = $D020
 
 ; __do_kernal_load — load one bank file from D81 via KERNAL.
 ;
@@ -35,11 +34,8 @@ BORDER = $D020
 .section .text.kernal_load,"ax",@progbits
 .globl __do_kernal_load
 __do_kernal_load:
-    ; The size check must be here (not in C) because the compiler assumes
-    ; &extern_symbol != 0, eliminating zero-checks for linker-defined symbols.
     tax
-    lda bank_size_lo,x
-    ora bank_size_hi,x
+    lda __bank_used,x
     beq .Lskip
 
     stx __rc4
@@ -109,24 +105,12 @@ __do_kernal_load:
     rts
 
 .Lfail:
+    sei                         ; the state C runs with on success
+    ldz #0
+    ldx __rc4
+    inx
+    txa                         ; A = bank number
     jmp __bank_load_failed
-
-; __bank_load_failed — a bank the program declared could not be loaded.
-;
-; Input: A = KERNAL error code (4 = file not found, 5 = device not present).
-;
-; Halts with a red border. Returning is worse than stopping: the bank reads
-; back as zeros, so the program runs on with its code or data silently
-; missing, which is indistinguishable from working. The border is the only
-; output certain to be visible this early, before the screen is set up.
-;
-; Define __bank_load_failed strongly to handle the failure instead.
-.weak __bank_load_failed
-__bank_load_failed:
-    lda #2                      ; red
-    sta BORDER
-.Lhang:
-    jmp .Lhang
 
 ; __clear_map — reset MAP to bank 0 boot state.
 ;
@@ -135,7 +119,7 @@ __bank_load_failed:
 ; configuration may remain, which can interfere with subsequent KERNAL
 ; calls like CHROUT.
 ;
-; This restores the same MAP state as __set_bank_asm(0) in mapper.s:
+; This restores the same MAP state as __set_bank_asm(0) in mega65-common/mapper.s:
 ;   MAPLO: cleared (no blocks selected) — $2000-$7FFF = default chip RAM
 ;   MAPHI: Z=$83 — $E000-$FFFF mapped to $3E000 (MEGA65 KERNAL ROM)
 ;
@@ -161,34 +145,11 @@ __clear_map:
     eom
     ; No SEI here: MAP/EOM inhibit interrupts through a dedicated signal, not
     ; the I flag (gs4510.vhdl, c65_map_instruction / opcode $EA), so the
-    ; caller's interrupt state comes back unchanged. See mapper.s.
+    ; caller's interrupt state comes back unchanged. See mega65-common/mapper.s.
     ldz #0              ; restore Z for C code
     rts
 
-; Linker-provided section sizes (banks 1-15, indexed 0-14).
-; Referenced in assembly (not C) because the C compiler assumes
-; &extern_symbol is always non-null, eliminating zero-checks for
-; linker-defined "address = value" symbols.
-bank_size_lo:
-    .byte __bank_1_size@mos16lo,  __bank_2_size@mos16lo
-    .byte __bank_3_size@mos16lo,  __bank_4_size@mos16lo
-    .byte __bank_5_size@mos16lo,  __bank_6_size@mos16lo
-    .byte __bank_7_size@mos16lo,  __bank_8_size@mos16lo
-    .byte __bank_9_size@mos16lo,  __bank_10_size@mos16lo
-    .byte __bank_11_size@mos16lo, __bank_12_size@mos16lo
-    .byte __bank_13_size@mos16lo, __bank_14_size@mos16lo
-    .byte __bank_15_size@mos16lo
-bank_size_hi:
-    .byte __bank_1_size@mos16hi,  __bank_2_size@mos16hi
-    .byte __bank_3_size@mos16hi,  __bank_4_size@mos16hi
-    .byte __bank_5_size@mos16hi,  __bank_6_size@mos16hi
-    .byte __bank_7_size@mos16hi,  __bank_8_size@mos16hi
-    .byte __bank_9_size@mos16hi,  __bank_10_size@mos16hi
-    .byte __bank_11_size@mos16hi, __bank_12_size@mos16hi
-    .byte __bank_13_size@mos16hi, __bank_14_size@mos16hi
-    .byte __bank_15_size@mos16hi
-
-; SYNC: mapper.s, mapper.h and load-banks-kernal.S; check-bank-tables.py compares them.
+; SYNC: bank-tables.s, mapper.h and load-banks-kernal.S; check-bank-tables.py compares them.
 
 ; PETSCII filename for directory matching. d81.py writes names as
 ; $41-$5A (standard uppercase), not $C1-$DA (shifted).

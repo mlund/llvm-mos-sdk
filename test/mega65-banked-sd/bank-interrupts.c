@@ -1,5 +1,5 @@
 // Switching banks leaves the caller's interrupt state alone. The erratum
-// this pins down is written up in mega65-banked-sd/mapper.s.
+// this pins down is written up in mega65-common/mapper.s.
 
 #include <mapper.h>
 #include <stdint.h>
