@@ -51,7 +51,7 @@ ASSERT((__mega65_h_name_buf & 0xFF) == 0 && __mega65_h_name_buf >= 0x0100 &&
        __mega65_h_name_buf < 0x7F00,
        "mega65-banked-sd: __mega65_h_name_buf must be a page in $0100-$7E00")
 
-/* The window geometry, in one place. _ram-banked-sd.ld gives every bank slot
+/* The window geometry, in one place. _ram-banked.ld gives every bank slot
  * this length, and prg-to-sd.py reads it out of the ELF, so the three cannot
  * disagree about where a bank starts in the image. */
 __bank_window_start = 0x2000;
@@ -65,7 +65,7 @@ MEMORY {
     ram_high  (rw) : ORIGIN = 0xe000, LENGTH = 0x1ffa
 }
 
-INCLUDE _ram-banked-sd.ld
+INCLUDE _ram-banked.ld
 
 INPUT(boot.o)
 INPUT(load-banks-sd.o)

@@ -28,8 +28,8 @@
  * (at offsets +$0800 and +$6800) to avoid crossing 64KB boundaries.
  * Not available on Nexys A7 boards (no HyperRAM).
  *
- * SYNC: see _ram-banked.ld header for the full list of files encoding
- * bank layout.
+ * SYNC: mapper.s, mapper.h and load-banks-kernal.S; check-bank-tables.py
+ * compares them.
  */
 #define BANK_PHYS_BASE_0  0x02000ul
 #define BANK_PHYS_BASE_1  0x12000ul

@@ -1,16 +1,11 @@
-/* Bank section layout for mega65-banked-sd.
+/* Bank slots for the banked MEGA65 platforms.
  *
  * On MOS a symbol's address is the low 16 bits of its LMA, so every bank LMA
  * ends in $2000 and bank symbols resolve into the $2000-$7FFF window whatever
  * bank they belong to. The high bits only have to be unique.
  *
- * The physical addresses these stand for live in mapper.s and mapper.h;
- * test/mega65-banked-sd/check-bank-tables.py recomputes each bank's base from
- * both and fails if they disagree. It needs no emulator, so run it after any
- * edit here.
- *
- * Slot length is __bank_window_size from link.ld, and prg-to-sd.py takes that
- * and __bank_N_size out of the ELF, so nothing here is restated anywhere.
+ * Slot length is __bank_window_size from the platform's link.ld; the
+ * converters read it and __bank_N_size out of the ELF.
  */
 
 __bank_1_lma   = 0x012000;
@@ -93,7 +88,7 @@ __bank_15_size   = SIZEOF(.bank_15);
  * llvm-mos relocates a sixteen-bit initialiser built from one as two low-byte
  * relocations rather than a low and a high -- so a table of sizes links only
  * while every bank is under 256 bytes, and fails on the first real one with
- * "R_MOS_ADDR8 out of range".  prg-to-sd.py still reads the sizes out of the
+ * "R_MOS_ADDR8 out of range".  The converters still read the sizes out of the
  * ELF, where they are exact.
  */
 __bank_1_used    = SIZEOF(.bank_1)  > 0 ? 1 : 0;

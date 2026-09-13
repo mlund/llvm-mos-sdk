@@ -5,8 +5,6 @@
 
 .include "imag.inc"
 
-.zeropage _BANK_SHADOW
-
 ; --------------------------------------------------------------------------
 ; __set_bank_asm — map a bank into $2000-$7FFF.
 ;
@@ -78,27 +76,3 @@ bank_maplo_sel:
 bank_megabyte:
     .byte $00, $00, $00, $00, $00, $00, $00, $00
     .byte $00, $00, $00, $00, $00, $80, $80, $80
-
-; --------------------------------------------------------------------------
-; banked_call — switch bank, call function, restore previous bank.
-;
-; Calling convention: A = bank_id, __rc2:__rc3 = function pointer.
-; Must reside in fixed code.
-; --------------------------------------------------------------------------
-.section .text.banked_call,"ax",@progbits
-.weak banked_call
-banked_call:
-    tay                     ; free A for the shadow load
-    lda _BANK_SHADOW
-    pha                     ; on the hardware stack, so nesting is safe
-    tya
-    sta _BANK_SHADOW
-    jsr __set_bank_asm
-    lda __rc2               ; __call_indir wants the pointer in __rc18:__rc19
-    sta __rc18
-    lda __rc3
-    sta __rc19
-    jsr __call_indir
-    pla
-    sta _BANK_SHADOW
-    jmp __set_bank_asm

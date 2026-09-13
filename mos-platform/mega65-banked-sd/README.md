@@ -187,7 +187,7 @@ Three files state where banks live, in different forms:
 |---|---|
 | `mapper.h` | `BANK_PHYS_BASE_n` |
 | `mapper.s` | MAP register values |
-| `_ram-banked-sd.ld` | Slot addresses |
+| `../mega65-common/_ram-banked.ld` | Slot addresses |
 
 `test/mega65-banked-sd/check-bank-tables.py` recomputes each base from the
 others and fails if they disagree. It needs no emulator. Run it after any edit.

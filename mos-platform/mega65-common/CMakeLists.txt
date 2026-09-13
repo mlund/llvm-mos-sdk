@@ -15,7 +15,9 @@ install(FILES
     mega65.h
 TYPE INCLUDE)
 
+install(FILES _ram-banked.ld TYPE LIB)
 install(PROGRAMS d81.py TYPE BIN)
+install(FILES bank_image.py TYPE BIN)
 
 # Both the plain and the D81-banked platform emit the BASIC stub that makes
 # the image RUNnable, so the object lives here rather than in either.
@@ -23,6 +25,7 @@ add_platform_object_file(mega65-common-basic-header basic-header.o
   basic-header.S)
 
 add_platform_library(mega65-common-c
+  banked-call.s
   mapper.c
   cbm_k_cint.c
   cbm_k_load.c
@@ -68,6 +71,7 @@ add_platform_library(mega65-common-c
   mega65_h_geterrorcode.c
 )
 target_compile_options(mega65-common-c PRIVATE -mcpu=mos45gs02)
+target_link_libraries(mega65-common-c PRIVATE common-asminc)
 target_include_directories(mega65-common-c BEFORE PUBLIC .
   ${CMAKE_CURRENT_SOURCE_DIR}/../c64
   ${CMAKE_CURRENT_SOURCE_DIR}/../commodore)

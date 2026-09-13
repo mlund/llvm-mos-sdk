@@ -4,9 +4,6 @@ if(NOT CMAKE_CROSSCOMPILING)
   return()
 endif()
 
-install(FILES
-  _ram-banked.ld
-TYPE LIB)
 install(FILES mapper.h TYPE INCLUDE)
 install(FILES README.md DESTINATION mos-platform/mega65-banked)
 install(PROGRAMS prg-to-d81.py TYPE BIN)

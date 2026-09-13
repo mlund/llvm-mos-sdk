@@ -188,7 +188,7 @@ bank_size_hi:
     .byte __bank_13_size@mos16hi, __bank_14_size@mos16hi
     .byte __bank_15_size@mos16hi
 
-; SYNC: see _ram-banked.ld header for the full list of files encoding bank layout.
+; SYNC: mapper.s, mapper.h and load-banks-kernal.S; check-bank-tables.py compares them.
 
 ; PETSCII filename for directory matching. d81.py writes names as
 ; $41-$5A (standard uppercase), not $C1-$DA (shifted).

@@ -66,6 +66,9 @@ MEMORY {
     ram_fixed (rw) : ORIGIN = 0x8000, LENGTH = 0x5000
 }
 
+/* Slot length for _ram-banked.ld. */
+__bank_window_size = 0x6000;
+
 INCLUDE _ram-banked.ld
 
 INPUT(basic-header.o)

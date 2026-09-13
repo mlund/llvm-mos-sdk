@@ -6,7 +6,7 @@
 """Check that the bank layout says the same thing wherever it is written down.
 
 mapper.h states each bank's physical base; mapper.s states it as MAP register
-values; _ram-banked-sd.ld states the slot each bank occupies in the image.
+values; mega65-common/_ram-banked.ld states the slot each bank occupies in the image.
 Nothing makes them agree, and a disagreement maps the window somewhere the
 loader did not write, which shows up as a bank of zeroes rather than an error.
 
@@ -56,7 +56,7 @@ def linker_value(text, symbol):
 def main():
     header = (PLATFORM / "mapper.h").read_text()
     asm = (PLATFORM / "mapper.s").read_text()
-    script = (PLATFORM / "_ram-banked-sd.ld").read_text()
+    script = (PLATFORM.parent / "mega65-common" / "_ram-banked.ld").read_text()
     link = (PLATFORM / "link.ld").read_text()
 
     # Taken from link.ld rather than restated: the window is what the MAP
@@ -105,7 +105,7 @@ def main():
     # 16 bits are the window, so that symbols resolve into it.
     slots = {int(n): int(v, 16) for n, v in re.findall(r"__bank_(\d+)_lma\s*=\s*(0x[0-9A-Fa-f]+);", script)}
     if sorted(slots) != list(range(1, BANKS)):
-        raise SystemExit(f"_ram-banked-sd.ld declares slots {sorted(slots)}")
+        raise SystemExit(f"_ram-banked.ld declares slots {sorted(slots)}")
     for bank, lma in slots.items():
         if lma & 0xFFFF != window:
             problems.append(f"bank {bank} slot ${lma:06X} does not resolve into the window")

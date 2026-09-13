@@ -9,26 +9,21 @@ link.ld emits one flat image: a 2-byte load address, the bank 0 window,
 __ram_fixed_size bytes of ram_fixed, then one window-sized slot per bank.
 Only the used part of each bank is written, so a program with three banks does
 not carry twelve empty ones.
-
-Sizes come from the ELF rather than being restated here: getting them out of
-step slices at the wrong offset and the banks load as garbage.
 """
 
 import argparse
-import re
-import subprocess
+import sys
 from pathlib import Path
 
-BANKS = 15
+# bank_image.py sits beside this script once installed, and in mega65-common in
+# the source tree.
+_HERE = Path(__file__).resolve().parent
+sys.path[:0] = [str(_HERE)] + [str(p.parent) for p in _HERE.parent.glob("*/bank_image.py")]
+
+import bank_image  # noqa: E402
 
 
-def elf_sizes(elf):
-    """The linker-defined absolute symbols, by name."""
-    out = subprocess.run(["nm", str(elf)], capture_output=True, text=True).stdout
-    return {m[1]: int(m[0], 16) for m in re.findall(r"^([0-9a-fA-F]+) A (\S+)$", out, re.M)}
-
-
-def bank_rows(size, banks=BANKS):
+def bank_rows(size, banks=bank_image.BANKS):
     """(bank, used, free) for each bank the link put something in.
 
     A slot is the window's length, so free is what is left before the next
@@ -87,7 +82,7 @@ def main():
     elf = Path(str(prg) + ".elf")
     image = prg.read_bytes()
 
-    size = elf_sizes(elf)
+    size = bank_image.symbols(elf)
     ram_fixed = size.get("__ram_fixed_size", 0)
     if not ram_fixed:
         raise SystemExit(f"prg-to-sd.py: __ram_fixed_size not found in {elf}")
@@ -113,14 +108,10 @@ def main():
 
     emit(f"{a.basename}.prg", image[:main_size])
 
-    for i in range(1, BANKS + 1):
-        used = size.get(f"__bank_{i}_size", 0)
-        if not used:
-            continue
-        start = main_size + (i - 1) * window
-        # Raw, no PRG header: Hyppo loadfile places the whole file at the
-        # address it is given.
-        emit(f"BANK{i:X}.BIN", image[start : start + used])
+    # Raw, no PRG header: Hyppo loadfile places the whole file at the address
+    # it is given.
+    for i, data in bank_image.banks(image, size, main_size, window):
+        emit(f"BANK{i:X}.BIN", data)
 
     for asset in a.asset:
         src = Path(asset)

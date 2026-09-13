@@ -9,7 +9,7 @@
 void __set_bank_asm(char bank_id);
 
 // In ZP for fast access from the banked_call trampoline hot path.
-// Also referenced as .zeropage import in mapper.s (banked_call).
+// Also referenced as .zeropage import in banked-call.s.
 __attribute__((section(".zp.bss"))) volatile char _BANK_SHADOW;
 
 __attribute__((leaf)) char get_bank(void) { return _BANK_SHADOW; }

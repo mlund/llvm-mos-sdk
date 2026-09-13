@@ -179,7 +179,7 @@ Four files state where banks live, in different forms:
 | `mapper.h` | `BANK_PHYS_BASE_n` |
 | `mapper.s` | MAP register values |
 | `load-banks-kernal.S` | Load addresses for the disk loader |
-| `_ram-banked.ld` | Slot addresses |
+| `../mega65-common/_ram-banked.ld` | Slot addresses |
 
 `test/mega65-banked/check-bank-tables.py` compares the first three and needs
-no emulator. Run it after any edit. `_ram-banked.ld` is not cross-checked.
+no emulator. Run it after any edit. `test/mega65-banked-sd/check-bank-tables.py` checks `_ram-banked.ld`.

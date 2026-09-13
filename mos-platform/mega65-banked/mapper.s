@@ -5,8 +5,6 @@
 
 .include "imag.inc"
 
-.zeropage _BANK_SHADOW
-
 ; --------------------------------------------------------------------------
 ; __set_bank_asm — perform MAP/EOM to switch the $2000-$7FFF window.
 ;
@@ -77,7 +75,7 @@ __set_bank_asm:
 
 ; Bank-to-MAP parameter lookup table.
 ; Each entry: 2 bytes = { A_value (offset low), X_value (selection|offset high) }
-; SYNC: see _ram-banked.ld header for the full list of files encoding bank layout.
+; SYNC: mapper.s, mapper.h and load-banks-kernal.S; check-bank-tables.py compares them.
 ;
 ; Physical memory layout:
 ;   $00000-$0FFFF  Chip RAM first 64KB (bank 0 + ram_fixed + ROM/IO)
@@ -144,27 +142,3 @@ bank_map_table:
 bank_mega_table:
     .byte $00, $00, $00, $00, $00, $00, $00, $00  ; banks 0-7: chip RAM
     .byte $80, $80, $80, $80, $80, $80, $80, $80  ; banks 8-15: attic RAM
-
-; --------------------------------------------------------------------------
-; banked_call — switch bank, call function, restore previous bank.
-;
-; Calling convention: A = bank_id, __rc2:__rc3 = function pointer.
-; This trampoline must reside in fixed code ($8000-$CFFF).
-; --------------------------------------------------------------------------
-.section .text.banked_call,"ax",@progbits
-.weak banked_call
-banked_call:
-    tay                     ; free A for shadow load
-    lda _BANK_SHADOW        ; save current bank for restore after call
-    pha
-    tya
-    sta _BANK_SHADOW
-    jsr __set_bank_asm
-    lda __rc2               ; __call_indir expects pointer in __rc18:__rc19
-    sta __rc18
-    lda __rc3
-    sta __rc19
-    jsr __call_indir
-    pla                     ; restore previous bank
-    sta _BANK_SHADOW
-    jmp __set_bank_asm
