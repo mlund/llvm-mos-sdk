@@ -51,6 +51,9 @@ def main(argv=None):
     image = prg.read_bytes()
 
     sym = bank_image.symbols(elf)
+    problems = bank_image.check_layout(elf, kernal=True)
+    if problems:
+        raise SystemExit("prg-to-d81.py: " + "; ".join(problems))
     ram_fixed = sym.get("__ram_fixed_size", 0)
     if not ram_fixed:
         raise SystemExit(f"prg-to-d81.py: __ram_fixed_size not found in {elf}")

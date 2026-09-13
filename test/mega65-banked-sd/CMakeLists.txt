@@ -69,6 +69,7 @@ add_mega65_banked_sd_test(bank-interrupts)
 add_mega65_banked_sd_test(bank-irq-delivery)
 add_mega65_banked_sd_test(bank-load-failed REMOVE BANK2.BIN)
 add_mega65_banked_sd_test(sd-load-banks)
+add_mega65_banked_sd_test(bank-moved)
 
 # One bank slot plus the window and the fixed region, and nothing for the
 # fourteen banks this program does not declare.
@@ -79,8 +80,11 @@ add_subdirectory(compile)
 
 # Neither needs an emulator, so they are what a build without one still checks.
 if(PYTHON3_COMMAND)
+  add_executable(layout-default.prg ../mega65-common/layout-probe.c)
+  add_executable(layout-moved.prg bank-moved.c)
   add_test(NAME test-bank-tables-sd
-    COMMAND ${PYTHON3_COMMAND} ${CMAKE_CURRENT_SOURCE_DIR}/check-bank-tables.py)
+    COMMAND ${PYTHON3_COMMAND} ${CMAKE_CURRENT_SOURCE_DIR}/../mega65-common/check-bank-tables.py
+      $<TARGET_FILE:layout-default.prg> $<TARGET_FILE:layout-moved.prg>)
   add_test(NAME test-bank-report-sd
     COMMAND ${PYTHON3_COMMAND} ${CMAKE_CURRENT_SOURCE_DIR}/check-bank-report.py)
 endif()

@@ -20,7 +20,9 @@ target_compile_options(mega65-banked-load-banks-kernal PRIVATE -mcpu=mos45gs02)
 target_link_libraries(mega65-banked-load-banks-kernal PRIVATE common-asminc)
 
 add_platform_library(mega65-banked-c
-  bank-tables.s
+  bank-layout.c
 )
 target_compile_options(mega65-banked-c PUBLIC -mcpu=mos45gs02)
 target_link_libraries(mega65-banked-c PRIVATE common-asminc)
+target_include_directories(mega65-banked-c BEFORE PUBLIC .
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mega65-common)

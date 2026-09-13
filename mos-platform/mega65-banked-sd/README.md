@@ -181,13 +181,12 @@ not the one on the card, so a lower-case file can never be found.
 
 ## Changing the bank layout
 
-Three files state where banks live, in different forms:
+Define `MAPPER_BANK_n` to move bank *n*, the same in every file: with `-D`, or
+in a header passed with `-include`.
 
-| File | Holds |
-|---|---|
-| `mapper.h` | `BANK_PHYS_BASE_n` |
-| `bank-tables.s` | MAP register values |
-| `../mega65-common/_ram-banked.ld` | Slot addresses |
+```sh
+mos-mega65-banked-sd-clang -DMAPPER_BANK_2=0x8012000 -Os -o game.prg game.c
+```
 
-`test/mega65-banked-sd/check-bank-tables.py` recomputes each base from the
-others and fails if they disagree. It needs no emulator. Run it after any edit.
+`<mapper.h>` checks each address at compile time; the converter rejects
+overlapping banks and files that disagree.

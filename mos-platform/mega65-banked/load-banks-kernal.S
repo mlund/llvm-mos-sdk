@@ -43,15 +43,16 @@ __do_kernal_load:
     ; KERNAL disk I/O requires interrupts enabled.
     cli
 
-    ; SETBNK 28-bit mode: A bit 7 set, A[3:0] = address[27:24].
-    ; Chip RAM banks (indices 0-6): A=$80. Attic banks (indices 7+): A=$88.
+    ; SETBNK 28-bit mode: A bit 7 set, A[3:0] = address[27:24], Y = [23:16].
+    ; The tables are indexed by bank, one past this loop's index.
     ldx __rc4
-    ldy setbnk_y,x
-    lda #$80
-    cpx #7
-    bcc .Lsetbnk
-    lda #$88
-.Lsetbnk:
+    ldy __bank_addr_mid+1,x
+    lda __bank_megabyte+1,x
+    lsr a
+    lsr a
+    lsr a
+    lsr a
+    ora #$80
     ldx #$00
     jsr SETBNK
 
@@ -81,7 +82,7 @@ __do_kernal_load:
 
     ; LOAD: A=0 selects load (not verify), X/Y = destination address.
     ldx __rc4
-    ldy load_addr_hi,x         ; Y = addr hi
+    ldy __bank_addr_page+1,x   ; Y = addr hi
     lda #0                      ; load flag
     tax                         ; X = addr lo (always $00)
     jsr KLOAD
@@ -149,29 +150,7 @@ __clear_map:
     ldz #0              ; restore Z for C code
     rts
 
-; SYNC: bank-tables.s, mapper.h and load-banks-kernal.S; check-bank-tables.py compares them.
-
 ; PETSCII filename for directory matching. d81.py writes names as
 ; $41-$5A (standard uppercase), not $C1-$DA (shifted).
 name_buf:
     .byte $42, $41, $4E, $4B, $31
-
-; 28-bit SETBNK Y values — address bits [23:16].
-;   Banks 1-2: $01,$01 (Chip RAM, second 64KB page)
-;   Banks 3-7: $04,$04,$04,$05,$05 (Chip RAM, above the ROMs)
-;   Banks 8-15: 2 per 64KB page at $800.xx00+$0800 and $800.xx00+$6800
-setbnk_y:
-    .byte $01, $01, $04, $04, $04, $05, $05         ; banks 1-7
-    .byte $00, $00, $01, $01, $02, $02, $03, $03    ; banks 8-15
-
-; Load address high bytes — offset within each 64KB page.
-; Lo byte is always $00 since all bank origins are page-aligned.
-; All addresses offset +$800 from page boundaries to avoid KERNAL LOAD bug
-; that corrupts data when load_addr_hi=$00 (Y=0 in KLOAD call).
-;   Bank 1: $2000 ($12000)  Bank 2: $8000 ($18000)
-;   Bank 3: $0800 ($40800)  Bank 4: $6800 ($46800)  Bank 5: $C800 ($4C800)
-;   Bank 6: $2800 ($52800)  Bank 7: $8800 ($58800)
-;   Banks 8-15: alternating $0800/$6800 (2 banks per 64KB page)
-load_addr_hi:
-    .byte $20, $80, $08, $68, $C8, $28, $88         ; banks 1-7
-    .byte $08, $68, $08, $68, $08, $68, $08, $68    ; banks 8-15

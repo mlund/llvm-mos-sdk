@@ -37,8 +37,9 @@ target_link_libraries(mega65-banked-sd-load-banks PRIVATE common-asminc)
 # calling it hangs before main.
 add_platform_library(mega65-banked-sd-c
   ../common/c/char-conv.c
-  bank-tables.s
+  bank-layout.c
 )
 target_compile_options(mega65-banked-sd-c PUBLIC -mcpu=mos45gs02)
-target_include_directories(mega65-banked-sd-c BEFORE PUBLIC .)
+target_include_directories(mega65-banked-sd-c BEFORE PUBLIC .
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mega65-common)
 target_link_libraries(mega65-banked-sd-c PRIVATE common-asminc)

@@ -121,6 +121,7 @@ add_subdirectory(compile)
 
 add_mega65_banked_test(bank-call)
 add_mega65_banked_test(bank-zero)
+add_mega65_banked_test(bank-moved)
 add_mega65_banked_test(bank-to-bank)
 # Tracer bullet: get_bank() reads 0 at boot, sentinel proves the program ran.
 add_mega65_banked_dump_test(bank-probe FB=00 FC=A5)
@@ -141,12 +142,14 @@ add_mega65_banked_dump_test(bank-range FB=5A FC=A5)
 # 20 KB region. Budget is 24575 (bank 0 window) + 24576 (one bank) + slack.
 add_mega65_banked_size_test(bank-count 55000)
 
-# The bank layout is encoded in three files that nothing but a SYNC comment
-# keeps in agreement. Recomputes each bank's physical base from every form and
-# compares. Needs no emulator and no build.
+# The tables <mapper.h> emits, checked in built images against the layout each
+# records: the default and a moved bank. Needs python, not an emulator.
 if(PYTHON3_COMMAND)
+  add_executable(layout-default.prg ../mega65-common/layout-probe.c)
+  add_executable(layout-moved.prg bank-moved.c)
   add_test(NAME test-bank-tables COMMAND
-    ${PYTHON3_COMMAND} ${CMAKE_CURRENT_SOURCE_DIR}/check-bank-tables.py)
+    ${PYTHON3_COMMAND} ${CMAKE_CURRENT_SOURCE_DIR}/../mega65-common/check-bank-tables.py
+      $<TARGET_FILE:layout-default.prg> $<TARGET_FILE:layout-moved.prg>)
 endif()
 
 # banked_call nests, and get_bank() reports the live bank at each depth:

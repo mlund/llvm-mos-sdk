@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+# Copyright 2026 LLVM-MOS Project
+# Licensed under the Apache License, Version 2.0 with LLVM Exceptions.
+# See https://github.com/llvm-mos/llvm-mos-sdk/blob/main/LICENSE for license
+# information.
+"""Check the bank tables in built images against the layout each records.
+
+<mapper.h> derives the MAP and loader tables with preprocessor arithmetic; this
+recomputes them independently from the recorded bases and compares bytes.
+Usage: check-bank-tables.py IMAGE.prg...  (each beside its .prg.elf)
+"""
+
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "mos-platform" / "mega65-common"))
+import bank_image  # noqa: E402
+
+
+def expected(bases):
+    off = [((b & 0xFFFFF) - 0x2000) & 0xFFFFF for b in bases]
+    return {
+        "__bank_offset_lo": [0] + [o >> 8 & 0xFF for o in off[1:]],
+        "__bank_maplo_sel": [0] + [0xE0 | o >> 16 for o in off[1:]],
+        "__bank_megabyte": [b >> 20 & 0xFF for b in bases],
+        "__bank_addr_mid": [b >> 16 & 0xFF for b in bases],
+        "__bank_addr_page": [b >> 8 & 0xFF for b in bases],
+    }
+
+
+def check(prg):
+    elf = Path(str(prg) + ".elf")
+    image = Path(prg).read_bytes()
+    load = int.from_bytes(image[:2], "little")
+    kernal = load == 0x2001
+    found = bank_image.layouts(elf)
+    if len(found) != 1:
+        return [f"{prg}: {len(found)} distinct layouts recorded, expected 1"]
+    bases = next(iter(found))
+    problems = [f"{prg}: {p}" for p in bank_image.layout_problems(bases, kernal)]
+    out = subprocess.run(["nm", str(elf)], capture_output=True, text=True).stdout
+    addr = {m[2]: int(m[0], 16) for m in re.findall(r"^([0-9a-fA-F]+) (\w) (\S+)$", out, re.M)}
+    for name, want in expected(bases).items():
+        if name not in addr:
+            problems.append(f"{prg}: {name} not linked")
+            continue
+        start = 2 + addr[name] - load
+        got = list(image[start : start + 16])
+        if got != want:
+            problems.append(f"{prg}: {name} is {bytes(got).hex(' ')}, expected {bytes(want).hex(' ')}")
+    return problems
+
+
+problems = [p for prg in sys.argv[1:] for p in check(prg)]
+for p in problems:
+    print(f"FAIL: {p}", file=sys.stderr)
+sys.exit(1 if problems or len(sys.argv) < 2 else 0)

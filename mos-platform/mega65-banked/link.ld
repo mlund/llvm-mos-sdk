@@ -108,6 +108,9 @@ SECTIONS {
     INCLUDE data.ld
     INCLUDE bss.ld
     INCLUDE noinit.ld
+
+    /* Per-file layout records for the converter; not part of the image. */
+    .mapper_layout (INFO) : { KEEP(*(.mapper_layout)) }
 }
 
 /* Bytes of ram_fixed that actually carry content. Everything after .data is

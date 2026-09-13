@@ -172,14 +172,13 @@ the main program as `AUTOBOOT.C65`. Run the disk image, not the `.prg`.
 
 ## Changing the bank layout
 
-Four files state where banks live, in different forms:
+Define `MAPPER_BANK_n` to move bank *n*, the same in every file: with `-D`, or
+in a header passed with `-include`.
 
-| File | Holds |
-|---|---|
-| `mapper.h` | `BANK_PHYS_BASE_n` |
-| `bank-tables.s` | MAP register values |
-| `load-banks-kernal.S` | Load addresses for the disk loader |
-| `../mega65-common/_ram-banked.ld` | Slot addresses |
+```sh
+mos-mega65-banked-clang -DMAPPER_BANK_2=0x8040800 -Os -o game.prg game.c
+```
 
-`test/mega65-banked/check-bank-tables.py` compares the first three and needs
-no emulator. Run it after any edit. `test/mega65-banked-sd/check-bank-tables.py` checks `_ram-banked.ld`.
+`<mapper.h>` checks each address at compile time; the converter rejects
+overlapping banks and files that disagree. A bank's address high byte must not be `$00`, and the C65 ROMs at
+`$20000-$3FFFF` stay write-protected.

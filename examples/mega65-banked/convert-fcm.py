@@ -38,7 +38,7 @@ MAPPER_H = os.path.join(os.path.dirname(__file__),
 
 def read_bank_phys_base(bank):
     """Read BANK_PHYS_BASE_N from mapper.h."""
-    pattern = rf"#define\s+BANK_PHYS_BASE_{bank}\s+(0x[0-9A-Fa-f]+)"
+    pattern = rf"#define\s+_MAPPER_DEFAULT_BANK_{bank}\s+_MAPPER_UL\((0x[0-9A-Fa-f]+)\)"
     with open(MAPPER_H) as f:
         for line in f:
             m = re.match(pattern, line)

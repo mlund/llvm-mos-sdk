@@ -6,10 +6,8 @@
 #ifndef _MEGA65_BANKED_MAPPER_H_
 #define _MEGA65_BANKED_MAPPER_H_
 
-#include <_mapper.h>
-
 /**
- * @brief Physical base address of each bank.
+ * @brief Default physical base of each bank, overridden by MAPPER_BANK_n.
  *
  * Platform banks are 24 KB each (the MAP window at $2000-$7FFF), not the
  * 64 KB "banks" described in the MEGA65 memory map. Each bank's content
@@ -27,26 +25,33 @@
  * not need peak performance. Two banks are packed per 64KB page
  * (at offsets +$0800 and +$6800) to avoid crossing 64KB boundaries.
  * Not available on Nexys A7 boards (no HyperRAM).
- *
- * SYNC: bank-tables.s, mapper.h and load-banks-kernal.S; check-bank-tables.py
- * compares them.
  */
-#define BANK_PHYS_BASE_0  0x02000ul
-#define BANK_PHYS_BASE_1  0x12000ul
-#define BANK_PHYS_BASE_2  0x18000ul
-#define BANK_PHYS_BASE_3  0x40800ul
-#define BANK_PHYS_BASE_4  0x46800ul
-#define BANK_PHYS_BASE_5  0x4C800ul
-#define BANK_PHYS_BASE_6  0x52800ul
-#define BANK_PHYS_BASE_7  0x58800ul
-#define BANK_PHYS_BASE_8  0x8000800ul
-#define BANK_PHYS_BASE_9  0x8006800ul
-#define BANK_PHYS_BASE_10 0x8010800ul
-#define BANK_PHYS_BASE_11 0x8016800ul
-#define BANK_PHYS_BASE_12 0x8020800ul
-#define BANK_PHYS_BASE_13 0x8026800ul
-#define BANK_PHYS_BASE_14 0x8030800ul
-#define BANK_PHYS_BASE_15 0x8036800ul
+#define _MAPPER_DEFAULT_BANK_1  _MAPPER_UL(0x12000)
+#define _MAPPER_DEFAULT_BANK_2  _MAPPER_UL(0x18000)
+#define _MAPPER_DEFAULT_BANK_3  _MAPPER_UL(0x40800)
+#define _MAPPER_DEFAULT_BANK_4  _MAPPER_UL(0x46800)
+#define _MAPPER_DEFAULT_BANK_5  _MAPPER_UL(0x4C800)
+#define _MAPPER_DEFAULT_BANK_6  _MAPPER_UL(0x52800)
+#define _MAPPER_DEFAULT_BANK_7  _MAPPER_UL(0x58800)
+#define _MAPPER_DEFAULT_BANK_8  _MAPPER_UL(0x8000800)
+#define _MAPPER_DEFAULT_BANK_9  _MAPPER_UL(0x8006800)
+#define _MAPPER_DEFAULT_BANK_10 _MAPPER_UL(0x8010800)
+#define _MAPPER_DEFAULT_BANK_11 _MAPPER_UL(0x8016800)
+#define _MAPPER_DEFAULT_BANK_12 _MAPPER_UL(0x8020800)
+#define _MAPPER_DEFAULT_BANK_13 _MAPPER_UL(0x8026800)
+#define _MAPPER_DEFAULT_BANK_14 _MAPPER_UL(0x8030800)
+#define _MAPPER_DEFAULT_BANK_15 _MAPPER_UL(0x8036800)
+
+/* KERNAL LOAD corrupts a destination whose address high byte is $00, and the
+ * C65 ROMs stay write-protected here. */
+#define _MAPPER_PLATFORM_CHECK(n)                                              \
+  _MAPPER_ASSERT((BANK_PHYS_BASE_##n & 0xFF00) != 0,                           \
+                 "MAPPER_BANK_" #n " must not have a $00 high byte");          \
+  _MAPPER_ASSERT(BANK_PHYS_BASE_##n + 0x6000ul <= 0x20000ul ||                 \
+                     BANK_PHYS_BASE_##n >= 0x40000ul,                          \
+                 "MAPPER_BANK_" #n " must avoid the ROMs at $20000-$3FFFF");
+
+#include <_mapper.h>
 
 /**
  * @brief Interrupts and the ROMs on this platform.

@@ -84,6 +84,9 @@ SECTIONS {
     .ram_low (NOLOAD) : { *(.ram_low .ram_low.*) } >ram_low
 
     INCLUDE c.ld
+
+    /* Per-file layout records for the converter; not part of the image. */
+    .mapper_layout (INFO) : { KEEP(*(.mapper_layout)) }
 }
 
 /* Bytes of ram_fixed that carry content; the rest is soft stack. */

@@ -83,6 +83,9 @@ def main():
     image = prg.read_bytes()
 
     size = bank_image.symbols(elf)
+    problems = bank_image.check_layout(elf, kernal=False)
+    if problems:
+        raise SystemExit("prg-to-sd.py: " + "; ".join(problems))
     ram_fixed = size.get("__ram_fixed_size", 0)
     if not ram_fixed:
         raise SystemExit(f"prg-to-sd.py: __ram_fixed_size not found in {elf}")

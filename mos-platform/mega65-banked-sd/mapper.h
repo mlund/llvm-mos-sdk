@@ -6,10 +6,8 @@
 #ifndef _MEGA65_BANKED_SD_MAPPER_H_
 #define _MEGA65_BANKED_SD_MAPPER_H_
 
-#include <_mapper.h>
-
 /**
- * @brief Physical base address of each bank.
+ * @brief Default physical base of each bank, overridden by MAPPER_BANK_n.
  *
  * A bank is 24 KB -- the MAP window at $2000-$7FFF -- not one of the 64 KB
  * "banks" of the MEGA65 memory map.
@@ -22,26 +20,26 @@
  * Banks 13-15 are attic RAM (HyperRAM at $8000000+): roughly ten times slower,
  * out of reach of VIC-IV and audio DMA, and absent on boards without HyperRAM.
  * Good for large tables and code off the hot path.
- *
- * bank-tables.s holds the same layout as MAP register values;
- * check-bank-tables.py fails the build if the two drift apart.
  */
-#define BANK_PHYS_BASE_0  0x02000ul
-#define BANK_PHYS_BASE_1  0x12000ul
-#define BANK_PHYS_BASE_2  0x18000ul
-#define BANK_PHYS_BASE_3  0x20000ul
-#define BANK_PHYS_BASE_4  0x26000ul
-#define BANK_PHYS_BASE_5  0x2C000ul
-#define BANK_PHYS_BASE_6  0x32000ul
-#define BANK_PHYS_BASE_7  0x38000ul
-#define BANK_PHYS_BASE_8  0x40000ul
-#define BANK_PHYS_BASE_9  0x46000ul
-#define BANK_PHYS_BASE_10 0x4C000ul
-#define BANK_PHYS_BASE_11 0x52000ul
-#define BANK_PHYS_BASE_12 0x58000ul
-#define BANK_PHYS_BASE_13 0x8000000ul
-#define BANK_PHYS_BASE_14 0x8006000ul
-#define BANK_PHYS_BASE_15 0x800C000ul
+#define _MAPPER_DEFAULT_BANK_1  _MAPPER_UL(0x12000)
+#define _MAPPER_DEFAULT_BANK_2  _MAPPER_UL(0x18000)
+#define _MAPPER_DEFAULT_BANK_3  _MAPPER_UL(0x20000)
+#define _MAPPER_DEFAULT_BANK_4  _MAPPER_UL(0x26000)
+#define _MAPPER_DEFAULT_BANK_5  _MAPPER_UL(0x2C000)
+#define _MAPPER_DEFAULT_BANK_6  _MAPPER_UL(0x32000)
+#define _MAPPER_DEFAULT_BANK_7  _MAPPER_UL(0x38000)
+#define _MAPPER_DEFAULT_BANK_8  _MAPPER_UL(0x40000)
+#define _MAPPER_DEFAULT_BANK_9  _MAPPER_UL(0x46000)
+#define _MAPPER_DEFAULT_BANK_10 _MAPPER_UL(0x4C000)
+#define _MAPPER_DEFAULT_BANK_11 _MAPPER_UL(0x52000)
+#define _MAPPER_DEFAULT_BANK_12 _MAPPER_UL(0x58000)
+#define _MAPPER_DEFAULT_BANK_13 _MAPPER_UL(0x8000000)
+#define _MAPPER_DEFAULT_BANK_14 _MAPPER_UL(0x8006000)
+#define _MAPPER_DEFAULT_BANK_15 _MAPPER_UL(0x800C000)
+
+#define _MAPPER_PLATFORM_CHECK(n)
+
+#include <_mapper.h>
 
 /**
  * @brief Place uninitialised data in $0300-$1FFF, outside the bank window.
