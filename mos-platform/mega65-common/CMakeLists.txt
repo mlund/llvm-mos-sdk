@@ -15,7 +15,7 @@ install(FILES
     mega65.h
 TYPE INCLUDE)
 
-install(FILES _ram-banked.ld TYPE LIB)
+install(FILES _name-buf.ld _ram-banked.ld TYPE LIB)
 install(PROGRAMS d81.py TYPE BIN)
 install(FILES bank_image.py TYPE BIN)
 

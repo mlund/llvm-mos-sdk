@@ -82,15 +82,7 @@ __bank_13_size   = SIZEOF(.bank_13);
 __bank_14_size   = SIZEOF(.bank_14);
 __bank_15_size   = SIZEOF(.bank_15);
 
-/* And whether each holds anything, which is all the loader needs.
- *
- * A byte, deliberately.  The size itself is a linker-defined absolute, and
- * llvm-mos relocates a sixteen-bit initialiser built from one as two low-byte
- * relocations rather than a low and a high -- so a table of sizes links only
- * while every bank is under 256 bytes, and fails on the first real one with
- * "R_MOS_ADDR8 out of range".  The converters still read the sizes out of the
- * ELF, where they are exact.
- */
+/* And whether each holds anything, which is all a loader needs. */
 __bank_1_used    = SIZEOF(.bank_1)  > 0 ? 1 : 0;
 __bank_2_used    = SIZEOF(.bank_2)  > 0 ? 1 : 0;
 __bank_3_used    = SIZEOF(.bank_3)  > 0 ? 1 : 0;

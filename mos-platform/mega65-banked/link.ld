@@ -12,7 +12,7 @@
  * $C000-$CFFF available as RAM instead of C65 Interface ROM.
  * KERNAL CHROUT/printf still work (40-column editor is in $E000-$FFFF).
  *
- * Bank 0 occupies the $2000-$7FFF window at startup (no MAP needed).
+ * Bank 0 is the window unmapped; its content lives in ram_fixed (.bank_0).
  * All non-annotated code and data goes into ram_fixed ($8000-$CFFF).
  * Functions placed in .bank_N sections are called via banked_call().
  *
@@ -59,15 +59,17 @@ ASSERT(__basic_zp_end - (__rc31 + 1) == 110,
 /* Where mega65_h_setname() stages the filename Hyppo reads; see the parent
  * mega65 link.ld for why the stack page is free for it. */
 PROVIDE(__mega65_h_name_buf = 0x0100);
+INCLUDE _name-buf.ld
+
+__bank_window_start = 0x2000;
+__bank_window_size = 0x6000;
 
 MEMORY {
     zp       : ORIGIN = __rc31 + 1, LENGTH = __basic_zp_end - (__rc31 + 1)
-    ram (rw) : ORIGIN = 0x2001, LENGTH = 0x5fff
+    /* One byte in: the image loads at $2001, behind the BASIC stub. */
+    ram (rw) : ORIGIN = __bank_window_start + 1, LENGTH = __bank_window_size - 1
     ram_fixed (rw) : ORIGIN = 0x8000, LENGTH = 0x5000
 }
-
-/* Slot length for _ram-banked.ld. */
-__bank_window_size = 0x6000;
 
 INCLUDE _ram-banked.ld
 
@@ -90,7 +92,19 @@ SECTIONS {
      * everything after the BASIC stub ($200E-$7FFF) before SYS runs. */
     .kernal_load : { *(.text.kernal_load) } >ram_fixed
 
-    INCLUDE c.ld
+    INCLUDE zp.ld
+    INCLUDE text.ld
+    INCLUDE rodata.ld
+
+    /* Bank 0 is the window unmapped, but the autoboot CLR wipes the window
+     * before SYS, so its content lives in the fixed region: after .text, which
+     * must stay below $A000 until startup maps out BASIC, and before .data, so
+     * __ram_fixed_size still covers it. */
+    .bank_0 : { *(.bank_0 .bank_0.*) } >ram_fixed
+
+    INCLUDE data.ld
+    INCLUDE bss.ld
+    INCLUDE noinit.ld
 }
 
 /* Bytes of ram_fixed that actually carry content. Everything after .data is
@@ -98,9 +112,13 @@ SECTIONS {
  * would be padding the loader reads off the disk and then overwrites. */
 __ram_fixed_size = LOADADDR(.data) + SIZEOF(.data) - ORIGIN(ram_fixed);
 
+/* BASIC ROM covers $A000-$BFFF until __load_banks maps it out. */
+ASSERT(_fini <= 0xA000 && __load_banks < 0xA000,
+       "mega65-banked: startup code must stay below $A000")
+
 /* Set initial soft stack address to start of I/O region. (It grows down.)
  * ROMC is cleared during CRT init, making $C000-$CFFF RAM. */
-__stack = 0xd000;
+PROVIDE(__stack = 0xd000);
 
 OUTPUT_FORMAT {
     SHORT(0x2001)

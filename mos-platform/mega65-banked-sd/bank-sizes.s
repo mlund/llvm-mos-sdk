@@ -5,14 +5,8 @@
 
 ; Which banks hold anything, as data rather than as the linker symbols it comes
 ; from: C takes the address of an extern to be non-null, which is wrong for a
-; symbol the linker defines as a plain value.
-
-; One byte a bank, and a flag rather than a size.  `mos16hi` of a
-; linker-defined absolute assembles to a *low* byte relocation, so a table of
-; sizes emits R_MOS_ADDR8 for both halves of every entry and the link fails on
-; the first bank over 255 bytes with "relocation R_MOS_ADDR8 out of range".
-; The loader only asks whether a bank is empty, and prg-to-sd.py reads the real
-; sizes out of the ELF, so nothing wants the sixteen-bit form.
+; symbol the linker defines as a plain value. A flag rather than a size, since
+; the loader only asks whether a bank is empty.
 
 .section .rodata.bank_sizes,"a",@progbits
 .globl __bank_used

@@ -52,12 +52,7 @@ PROVIDE(__stack = 0xd000);
  *   -Wl,--defsym=__mega65_h_name_buf=0x0400
  */
 PROVIDE(__mega65_h_name_buf = 0x0100);
-
-/* Hyppo accepts page $00; we do not, because a name there would overwrite the
- * imaginary registers. */
-ASSERT((__mega65_h_name_buf & 0xFF) == 0 && __mega65_h_name_buf >= 0x0100 &&
-       __mega65_h_name_buf < 0x7F00,
-    "__mega65_h_name_buf: hyppo copies only into a page-aligned buffer below $7F00")
+INCLUDE _name-buf.ld
 
 OUTPUT_FORMAT {
     /* Tells the LOAD command where to place the file's contents. */

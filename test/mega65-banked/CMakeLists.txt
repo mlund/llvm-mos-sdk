@@ -120,6 +120,7 @@ add_subdirectory(no-compile)
 add_subdirectory(compile)
 
 add_mega65_banked_test(bank-call)
+add_mega65_banked_test(bank-zero)
 add_mega65_banked_test(bank-to-bank)
 # Tracer bullet: get_bank() reads 0 at boot, sentinel proves the program ran.
 add_mega65_banked_dump_test(bank-probe FB=00 FC=A5)

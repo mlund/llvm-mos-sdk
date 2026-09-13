@@ -47,9 +47,7 @@ ASSERT(__basic_zp_end - (__rc31 + 1) == 222,
 /* Hyppo reads the filename by page number, and only accepts a page below
  * $7F00, so this cannot move into the fixed region. */
 PROVIDE(__mega65_h_name_buf = 0x0200);
-ASSERT((__mega65_h_name_buf & 0xFF) == 0 && __mega65_h_name_buf >= 0x0100 &&
-       __mega65_h_name_buf < 0x7F00,
-       "mega65-banked-sd: __mega65_h_name_buf must be a page in $0100-$7E00")
+INCLUDE _name-buf.ld
 
 /* The window geometry, in one place. _ram-banked.ld gives every bank slot
  * this length, and prg-to-sd.py reads it out of the ELF, so the three cannot
