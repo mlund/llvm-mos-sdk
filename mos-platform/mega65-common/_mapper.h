@@ -686,7 +686,7 @@ _MAPPER_CHECK(31)
 #define _MAPPER_ADDR_MID(n) (unsigned char)(BANK_PHYS_BASE_##n >> 16)
 #define _MAPPER_ADDR_PAGE(n) (unsigned char)(BANK_PHYS_BASE_##n >> 8)
 #define _MAPPER_TABLE                                                          \
-  __attribute__((weak, used, section(".rodata.bank_tables")))
+  __attribute__((weak, section(".rodata.bank_tables")))
 
 /* F(0) to F(n): one table entry per bank in use. n must be a plain number. */
 #define _MAPPER_ROWS_0(F) F(0)
