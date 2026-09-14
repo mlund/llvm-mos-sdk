@@ -125,6 +125,7 @@ add_mega65_banked_test(bank-moved)
 add_mega65_banked_test(bank-window-16)
 add_mega65_banked_test(bank-tail)
 add_mega65_banked_test(banked-call-args-first)
+add_mega65_banked_test(d81-load)
 add_mega65_banked_test(bank-to-bank)
 # Tracer bullet: get_bank() reads 0 at boot, sentinel proves the program ran.
 add_mega65_banked_dump_test(bank-probe FB=00 FC=A5)

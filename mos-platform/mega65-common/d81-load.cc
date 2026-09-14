@@ -3,22 +3,12 @@
 // See https://github.com/llvm-mos/llvm-mos-sdk/blob/main/LICENSE for license
 // information.
 
-// Bank loader for MAPPER_LOADER_FLOPPY: every non-empty bank off the mounted
-// D81, through the F011. No ROM and no Hyppo; DMA lands each sector's data at
-// the bank's 28-bit address, so nothing is ever mapped.
+// mega65_d81_load: a file off the mounted D81, through the F011, with no ROM
+// and no Hyppo. DMA lands each sector at the destination's 28-bit address, so
+// nothing is ever mapped.
 
-#define __MAPPER_NO_TABLES
 #include <dma.hpp>
-#include <mapper.h>
 #include <mega65.h>
-
-extern "C" {
-extern const unsigned char __bank_used[15];
-extern const unsigned char __bank_megabyte[16];
-extern const unsigned char __bank_addr_mid[16];
-extern const unsigned char __bank_addr_page[16];
-void __load_banks_floppy(void);
-}
 
 namespace {
 
@@ -26,17 +16,18 @@ constexpr uint32_t SECTOR_BUFFER = 0xFFD6C00;
 constexpr unsigned char DIR_TRACK = 40;
 constexpr unsigned char FIRST_DIR_SECTOR = 3;
 constexpr unsigned char DIR_ENTRIES = 8;
-constexpr unsigned char PRG_CLOSED = 0x82;
+constexpr unsigned char NAME_LEN = 16;
 constexpr unsigned char NAME_PAD = 0xA0;
+constexpr unsigned char CLOSED = 0x80;
+constexpr unsigned char TYPE_MASK = 0x07; // 0 is DEL
 
 // One 512-byte physical sector: two 256-byte CBM logical sectors.
 unsigned char buffer[512];
-unsigned char cached_track = 0xFF, cached_sector, cached_side;
+unsigned char cached_track, cached_sector, cached_side;
 
 // The 256 bytes of a logical sector (track from 1, sector 0-39), or nullptr
-// on a controller error. Each physical sector is read once, since a file's
-// consecutive logical sectors share one.
-__attribute__((section(".bank_0")))
+// on a controller error. A file's consecutive logical sectors share one
+// physical sector, so each is read once.
 unsigned char *read_logical(unsigned char track, unsigned char sector) {
   unsigned char phys = (sector >> 1) + 1, side = 0;
   if (phys > 10) {
@@ -64,24 +55,23 @@ unsigned char *read_logical(unsigned char track, unsigned char sector) {
   return buffer + (sector & 1 ? 256 : 0);
 }
 
-// Whether a 16-byte directory name is BANKn, as the converter writes it.
-__attribute__((section(".bank_0")))
-bool is_bank_name(const unsigned char *name, unsigned char bank) {
-  static const char prefix[] = "BANK";
-  for (unsigned char i = 0; i < 4; ++i)
-    if (name[i] != prefix[i])
-      return false;
-  if (name[4] != (bank <= 9 ? '0' + bank : 'A' + bank - 10))
-    return false;
-  for (unsigned char i = 5; i < 16; ++i)
-    if (name[i] != NAME_PAD)
-      return false;
-  return true;
+// A name as d81.py stores it: PETSCII upper case, $A0-padded to 16.
+void to_cbm_name(const char *name, unsigned char *out) {
+  unsigned char i = 0;
+  for (; i < NAME_LEN && name[i]; ++i) {
+    unsigned char c = name[i];
+    if (c >= 'a' && c <= 'z')
+      c -= 0x20;
+    else if (c < 0x20 || c > 0x5F)
+      c = '?';
+    out[i] = c;
+  }
+  for (; i < NAME_LEN; ++i)
+    out[i] = NAME_PAD;
 }
 
-// The first track and sector of BANKn, walking the directory chain.
-__attribute__((section(".bank_0")))
-bool find_bank(unsigned char bank, unsigned char &track,
+// The first track and sector of the named file, walking the directory chain.
+bool find_file(const unsigned char *want, unsigned char &track,
                unsigned char &sector) {
   unsigned char t = DIR_TRACK, s = FIRST_DIR_SECTOR;
   while (t) {
@@ -89,8 +79,13 @@ bool find_bank(unsigned char bank, unsigned char &track,
     if (!dir)
       return false;
     for (unsigned char i = 0; i < DIR_ENTRIES; ++i) {
-      unsigned char *entry = dir + 2 + i * 32;
-      if (entry[0] == PRG_CLOSED && is_bank_name(entry + 3, bank)) {
+      const unsigned char *entry = dir + 2 + i * 32;
+      if (!(entry[0] & CLOSED) || !(entry[0] & TYPE_MASK))
+        continue;
+      unsigned char j = 0;
+      while (j < NAME_LEN && entry[3 + j] == want[j])
+        ++j;
+      if (j == NAME_LEN) {
         track = entry[1];
         sector = entry[2];
         return true;
@@ -104,19 +99,19 @@ bool find_bank(unsigned char bank, unsigned char &track,
 
 // Follow a file's sector chain, copying each sector's data to dest. A link
 // track of 0 ends it, and the link sector is then the offset of the last byte.
-__attribute__((section(".bank_0")))
-bool load_chain(unsigned char track, unsigned char sector, uint32_t dest) {
+uint32_t load_chain(unsigned char track, unsigned char sector, uint32_t dest) {
+  uint32_t total = 0;
   for (;;) {
     unsigned char *block = read_logical(track, sector);
     if (!block)
-      return false;
+      return 0;
     unsigned char next_track = block[0], next_sector = block[1];
     unsigned char count = next_track ? 254 : next_sector - 1;
     mega65::dma::trigger_dma(mega65::dma::make_dma_copy(
-        SECTOR_BUFFER + (uint16_t)(block - buffer) + 2, dest, count));
+        SECTOR_BUFFER + (uint16_t)(block - buffer) + 2, dest + total, count));
+    total += count;
     if (!next_track)
-      return true;
-    dest += count;
+      return total;
     track = next_track;
     sector = next_sector;
   }
@@ -124,21 +119,14 @@ bool load_chain(unsigned char track, unsigned char sector, uint32_t dest) {
 
 } // namespace
 
-// In .bank_0, like the rest: it runs only at startup, with bank 0 mapped,
-// so the window holds it and the fixed region stays free.
-__attribute__((noinline, section(".bank_0")))
-void __load_banks_floppy(void) {
+uint32_t mega65_d81_load(const char *name, uint32_t address) {
+  unsigned char want[NAME_LEN], track, sector;
+  to_cbm_name(name, want);
+  cached_track = 0xFF; // the disk may have changed since the last call
   SDCARD.control &= (uint8_t)~SD_BUFFSEL_MASK;
   F011.control = F011_MOTOR_MASK;
-  for (unsigned char i = 0; i < 15; ++i) {
-    unsigned char bank = i + 1, track, sector;
-    if (!__bank_used[i])
-      continue;
-    uint32_t base = (uint32_t)__bank_megabyte[bank] << 20 |
-                    (uint32_t)(__bank_addr_mid[bank] & 0x0F) << 16 |
-                    (uint16_t)(__bank_addr_page[bank] << 8);
-    if (!find_bank(bank, track, sector) || !load_chain(track, sector, base))
-      __bank_load_failed(bank);
-  }
+  uint32_t loaded =
+      find_file(want, track, sector) ? load_chain(track, sector, address) : 0;
   F011.control = 0;
+  return loaded;
 }

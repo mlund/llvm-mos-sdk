@@ -94,6 +94,7 @@ string(ASCII 1 113 222 173 190 239 202 254 186 190 _disk_test_data)
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/TEST.PRG" "${_disk_test_data}")
 
 add_mega65_disk_test(disk "." "${CMAKE_CURRENT_BINARY_DIR}/TEST.PRG=test")
+add_mega65_disk_test(d81-load "." "${CMAKE_CURRENT_BINARY_DIR}/TEST.PRG=test")
 
 add_mega65_hdos_test(hyppo)
 if(TARGET hyppo.prg)

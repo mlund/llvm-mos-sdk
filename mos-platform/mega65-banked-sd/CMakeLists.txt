@@ -37,7 +37,7 @@ target_link_libraries(mega65-banked-sd-load-banks PRIVATE common-asminc)
 add_platform_library(mega65-banked-sd-c
   ../common/c/char-conv.c
   bank-layout.c
-  load-banks-floppy.cc
+  load-banks-floppy.c
   load-banks-hyppo.c
 )
 target_compile_options(mega65-banked-sd-c PUBLIC -mcpu=mos45gs02)

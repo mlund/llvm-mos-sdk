@@ -29,6 +29,7 @@ add_platform_library(mega65-common-c
   bank-load-failed.c
   bank-sizes.s
   banked-call.s
+  d81-load.cc
   mapper.c
   mapper.s
   cbm_k_cint.c

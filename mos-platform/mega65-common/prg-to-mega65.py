@@ -11,7 +11,7 @@ the program's files recorded:
 
   KERNAL LOAD (mega65-banked)   BASE.d81, autobooting, holding bank1-bankf
   Hyppo (mega65-banked-sd)      OUTDIR as the SD card: BASE.PRG, BANKn.BIN
-  F011 (MAPPER_LOADER_FLOPPY)   BASE.PRG, and BASE.D81 holding BANKn
+  F011 (MAPPER_LOADER_FLOPPY)   BASE.PRG, and BASE.D81 holding BANKn and assets
 """
 
 import argparse
@@ -85,15 +85,18 @@ def write_card(a, outdir, image, sym, main_size, floppy):
         disk = d81.D81((a.name or a.basename)[:16], "01")
         for i, data in bank_image.banks(image, sym, main_size):
             disk.add_file(f"BANK{i:X}", data)
+        # Assets go where the program can reach them without a ROM.
+        for asset in a.asset:
+            disk.add_file(Path(asset).stem, Path(asset).read_bytes())
         name = card_name(f"{a.basename}.d81")
         written.add(name)
         disk.save(str(outdir / name))
     else:
         for i, data in bank_image.banks(image, sym, main_size):
             emit(f"BANK{i:X}.BIN", data)
-    for asset in a.asset:
-        src = Path(asset)
-        emit(src.name, src.read_bytes())
+        for asset in a.asset:
+            src = Path(asset)
+            emit(src.name, src.read_bytes())
 
 
 def main():

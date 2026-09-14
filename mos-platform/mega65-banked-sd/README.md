@@ -199,5 +199,8 @@ overlapping banks and files that disagree.
 
 Define `MAPPER_LOADER_FLOPPY`, the same in every file, to load banks off the D81
 mounted as drive 8, through the F011. `prg-to-mega65.py` then writes the banks
-into `NAME.D81` beside `NAME.PRG`. Tested on mounted images in xemu; a real
-drive is untested.
+into `NAME.D81` beside `NAME.PRG`, with any `--asset` files. Tested on mounted
+images in xemu; a real drive is untested.
+
+`mega65_d81_load(name, address)` loads any other file off that disk the same
+way, into any 28-bit address, at any time.

@@ -45,15 +45,21 @@ endfunction()
 # Like add_mega65_banked_sd_test, for MAPPER_LOADER_FLOPPY: the converter
 # writes the banks to a D81, mounted as drive 8, and no card is served.
 function(add_mega65_banked_sd_floppy_test name)
+  cmake_parse_arguments(arg "" "" "ASSETS" ${ARGN})
   if(NOT XMEGA65_COMMAND OR NOT PYTHON3_COMMAND)
     return()
   endif()
+  set(asset_flags "")
+  foreach(asset ${arg_ASSETS})
+    list(APPEND asset_flags --asset ${asset})
+  endforeach()
   add_executable(${name}.prg ${name}.c)
   add_custom_command(TARGET ${name}.prg POST_BUILD
     COMMAND ${PYTHON3_COMMAND} ${PRG_TO_MEGA65_SCRIPT}
       $<TARGET_FILE:${name}.prg>
       $<TARGET_FILE_DIR:${name}.prg>/${name}_sd
       ${name}
+      ${asset_flags}
     COMMENT "Building D81 for ${name}")
   string(TOUPPER ${name} upper)
   add_test(NAME test-${name} COMMAND
@@ -96,6 +102,16 @@ add_mega65_banked_sd_test(bank-window-16)
 add_mega65_banked_sd_test(bank-tail)
 add_mega65_banked_sd_test(banked-call-args-first)
 add_mega65_banked_sd_floppy_test(floppy-load-banks)
+# 700 bytes of i % 251: three logical sectors, and a pattern that shows where a
+# sector's data was put.
+if(PYTHON3_COMMAND)
+  set(pattern ${CMAKE_CURRENT_BINARY_DIR}/pattern.bin)
+  execute_process(COMMAND ${PYTHON3_COMMAND} -c
+    "import sys; data = bytes(i % 251 for i in range(700)); \
+open(sys.argv[1], 'wb').write(data)"
+    ${pattern})
+  add_mega65_banked_sd_floppy_test(d81-load ASSETS ${pattern})
+endif()
 
 # One bank slot plus the window and the fixed region, and nothing for the
 # fourteen banks this program does not declare.
