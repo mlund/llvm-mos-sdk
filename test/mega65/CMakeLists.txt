@@ -88,6 +88,7 @@ endif()
 
 add_mega65_test(kernal)
 add_mega65_test(kernal-far)
+add_mega65_test(peek-poke-far)
 
 # Load address ($7101 LE) plus 8 bytes; no $00, which string(ASCII) cannot hold.
 string(ASCII 1 113 222 173 190 239 202 254 186 190 _disk_test_data)

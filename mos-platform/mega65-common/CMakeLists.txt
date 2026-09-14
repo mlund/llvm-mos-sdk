@@ -79,6 +79,8 @@ add_platform_library(mega65-common-c
   mega65_h_get_freeze_slot_count.c
   mega65_h_writefile.c
   mega65_d81_load.cc
+  mega65_peek_far.s
+  mega65_poke_far.s
   mega65_h_getversion.c
   mega65_h_geterrorcode.c
 )

@@ -810,6 +810,24 @@ mega65_h_err mega65_h_loadfile(uint32_t addr) __attribute__((leaf));
 /// @return MEGA65_H_OK or error code
 mega65_h_err mega65_h_loadfile_attic(uint32_t addr) __attribute__((leaf));
 
+// --- Far memory (no KERNAL) ---
+
+/// Read one byte from any 28-bit address, leaving the memory map alone.
+/// One 45GS02 instruction does the read, so this works with or without the
+/// KERNAL, and from banked code.
+///
+/// @param address  28-bit address, attic RAM and I/O included
+/// @return The byte at @p address
+uint8_t mega65_peek_far(uint32_t address) __attribute__((leaf));
+
+/// Write one byte to any 28-bit address, leaving the memory map alone.
+/// Writes to the C65 ROM area, $20000-$3FFFF, are dropped while it is
+/// write-protected.
+///
+/// @param address  28-bit address, attic RAM and I/O included
+/// @param value    The byte to write
+void mega65_poke_far(uint32_t address, uint8_t value) __attribute__((leaf));
+
 // --- F011 file loading (no KERNAL, no Hyppo) ---
 
 /// Load a file from the D81 mounted as drive 8 into memory, through the F011.
