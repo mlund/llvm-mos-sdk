@@ -94,6 +94,7 @@ add_mega65_banked_sd_test(sd-load-banks)
 add_mega65_banked_sd_test(bank-moved)
 add_mega65_banked_sd_test(bank-window-16)
 add_mega65_banked_sd_test(bank-tail)
+add_mega65_banked_sd_test(banked-call-args-first)
 add_mega65_banked_sd_floppy_test(floppy-load-banks)
 
 # One bank slot plus the window and the fixed region, and nothing for the

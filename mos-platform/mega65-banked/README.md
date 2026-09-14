@@ -74,15 +74,22 @@ Keep a table in the same bank as the code reading it, so one call covers both.
 | Function | Purpose |
 |---|---|
 | `banked_call(bank, fn)` | Map `bank`, call `fn`, restore the previous bank |
+| `banked_call_r(bank, fn, ...)` | As above, with arguments and a return value |
+| `banked_call_v(bank, fn, ...)` | As above, for `void` functions |
 | `get_bank()` | The currently mapped bank |
 | `set_bank(bank)` | Map a bank directly; prefer `banked_call` |
 
 `bank` is masked to its low four bits, so 0x11 selects bank 1.
 
+The `_r` and `_v` forms switch the bank around a direct call, so the compiler
+marshals the real signature. The caller must be in the fixed region: from a
+bank the switch would unmap it, and the link fails. Up to eight arguments are
+evaluated before the switch.
+
 ## Rules
 
-**`banked_call` takes `void(void)` only.** No arguments, no return value. Pass
-values through variables in the fixed region.
+**`banked_call` takes `void(void)` only.** For arguments or a return value, use
+`banked_call_r` or `banked_call_v`.
 
 **Bank data is readable only while its bank is mapped.** Anything shared or
 long-lived belongs in the fixed region.

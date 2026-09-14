@@ -20,3 +20,12 @@ __attribute__((leaf)) void set_bank(char bank_id) {
   _BANK_SHADOW = bank_id;
   __set_bank_asm(bank_id);
 }
+
+// banked_call_r and banked_call_v switch through this. In a section of its own,
+// so the linker refuses a caller in a bank, which the switch would unmap.
+__attribute__((leaf, noinline, section(".banked_call_r_needs_fixed_caller")))
+char __banked_call_enter(char bank_id) {
+  char prev = _BANK_SHADOW;
+  set_bank(bank_id);
+  return prev;
+}

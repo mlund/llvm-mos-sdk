@@ -165,3 +165,13 @@ __bank_15_length = ALIGNOF(.mapper_bank_15) == 2 ? 0x2000 : ALIGNOF(.mapper_bank
 
 __window_tail_start = __bank_window_start +
     MIN(__bank_1_length, MIN(__bank_2_length, MIN(__bank_3_length, MIN(__bank_4_length, MIN(__bank_5_length, MIN(__bank_6_length, MIN(__bank_7_length, MIN(__bank_8_length, MIN(__bank_9_length, MIN(__bank_10_length, MIN(__bank_11_length, MIN(__bank_12_length, MIN(__bank_13_length, MIN(__bank_14_length, __bank_15_length))))))))))))));
+
+/* banked_call_r and _v switch through a section of their own, after .text; no
+ * bank may reference it, since the switch would unmap a caller in a bank. */
+SECTIONS {
+  .banked_call_r_needs_fixed_caller :
+    { *(.banked_call_r_needs_fixed_caller) } >ram_fixed
+} INSERT AFTER .text;
+NOCROSSREFS_TO(.banked_call_r_needs_fixed_caller
+  .bank_0 .bank_1 .bank_2 .bank_3 .bank_4 .bank_5 .bank_6 .bank_7
+  .bank_8 .bank_9 .bank_10 .bank_11 .bank_12 .bank_13 .bank_14 .bank_15)

@@ -90,12 +90,9 @@ banked_call_v(1, draw, x, y);
 ```
 
 The `_r` and `_v` forms switch the bank around a direct call, so the compiler
-marshals the real signature. Two rules, neither diagnosed:
-
-- The caller must be in the fixed region. From a bank the switch unmaps the
-  caller mid-call.
-- Arguments are evaluated with the target bank mapped, so none may read the
-  outgoing bank.
+marshals the real signature. The caller must be in the fixed region: from a
+bank the switch would unmap it, and the link fails. Up to eight arguments are
+evaluated before the switch.
 
 ## Rules
 
