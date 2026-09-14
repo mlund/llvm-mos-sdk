@@ -42,8 +42,7 @@
 #define _MAPPER_DEFAULT_BANK_14 _MAPPER_UL(0x8030800)
 #define _MAPPER_DEFAULT_BANK_15 _MAPPER_UL(0x8036800)
 
-/* KERNAL LOAD corrupts a destination whose address high byte is $00, and the
- * C65 ROMs stay write-protected here. */
+/* KERNAL LOAD corrupts $00-high destinations; ROMs stay write-protected. */
 #define _MAPPER_PLATFORM_CHECK(n)                                              \
   _MAPPER_ASSERT((BANK_PHYS_BASE_##n & 0xFF00) != 0,                           \
                  "MAPPER_BANK_" #n " must not have a $00 high byte");          \
@@ -59,19 +58,16 @@
 #include <_mapper.h>
 
 /**
- * @brief Interrupts and the ROMs on this platform.
+ * @brief Interrupts and ROM access.
  *
- * MAP inhibits interrupts through a dedicated signal rather than the I flag
- * (gs4510.vhdl), which is why a bank switch returns with the caller's
- * interrupt state intact.
+ * MAP inhibits interrupts through a dedicated signal, not the I flag
+ * (gs4510.vhdl), so bank switches preserve the interrupt state. Hyppo traps
+ * are unaffected by banking (hardware-saved); KERNAL disk I/O installs its own
+ * map and restores the KERNAL's, not yours.
  *
- * Hyppo traps are unaffected by banking: entering hypervisor mode saves and
- * restores the map, megabyte bytes and CPU port in hardware. KERNAL disk I/O
- * is not -- it installs its own map and restores the KERNAL's, not yours.
- *
- * KERNAL disk calls also need the C65 interface ROM at $C000-$CFFF, which the
- * CRT unmaps to extend the fixed region. Set VIC3_ROMC_MASK in VICIV.ctrla for
- * the duration of such a call or it will not return. See the README.
+ * KERNAL disk calls need the C65 interface ROM at $C000-$CFFF, which startup
+ * unmaps. Set VIC3_ROMC_MASK in VICIV.ctrla for the call, or it will not
+ * return. See the README.
  */
 
 #endif // _MEGA65_BANKED_MAPPER_H_

@@ -8,9 +8,8 @@
  *   $D000-$DFFF  I/O registers
  *   $E000-$FFFF  KERNAL ROM
  *
- * Startup clears ROMC ($D030 bit 5), making
- * $C000-$CFFF available as RAM instead of C65 Interface ROM.
- * KERNAL CHROUT/printf still work (40-column editor is in $E000-$FFFF).
+ * Startup clears ROMC ($D030 bit 5), freeing $C000-$CFFF as RAM. KERNAL
+ * CHROUT/printf still work: the 40-column editor is in $E000-$FFFF.
  *
  * Bank 0 is the window unmapped; its content lives in ram_fixed (.bank_0).
  * All non-annotated code and data goes into ram_fixed ($8000-$CFFF).
@@ -93,10 +92,8 @@ SECTIONS {
     INCLUDE text.ld
     INCLUDE rodata.ld
 
-    /* Bank 0 is the window unmapped, but the autoboot CLR wipes the window
-     * before SYS, so its content lives in the fixed region: after .text, which
-     * must stay below $A000 until startup maps out BASIC, and before .data, so
-     * __ram_fixed_size still covers it. */
+    /* Bank 0: autoboot wipes the window, so .bank_0 lives in ram_fixed,
+     * before .data so __ram_fixed_size covers it. */
     .bank_0 : { *(.bank_0 .bank_0.*) } >ram_fixed
 
     INCLUDE data.ld
@@ -116,11 +113,9 @@ ASSERT(_fini <= 0xA000, "mega65-banked: startup code must stay below $A000")
 ASSERT(ADDR(.kernal_load) + SIZEOF(.kernal_load) <= 0xC000,
        "mega65-banked: the KERNAL loader must stay below $C000")
 
-/* Set initial soft stack address to start of I/O region. (It grows down.)
- * ROMC is cleared during CRT init, making $C000-$CFFF RAM. */
-/* A smaller window frees the top of $2000-$7FFF. Autoboot clears it, so it
- * holds nothing loaded; the soft stack takes it, leaving ram_fixed to code and
- * data. */
+/* The soft stack grows down from I/O. A smaller window frees the top of
+ * $2000-$7FFF, which autoboot has cleared, so the stack starts there instead
+ * and leaves ram_fixed to code and data. */
 PROVIDE(__stack = __bank_window_size < 0x6000 ? 0x8000 : 0xd000);
 
 OUTPUT_FORMAT {

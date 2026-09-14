@@ -1,6 +1,6 @@
-// mega65_d81_load() reads a named file off the mounted D81 into any 28-bit
-// address, with no ROM and no Hyppo. The converter put pattern.bin on the disk
-// as PATTERN: 700 bytes of i % 251.
+// Loads a file off the mounted D81 via mega65_d81_load() into any 28-bit
+// address (no ROM or Hyppo). Converter puts pattern.bin as PATTERN on disk:
+// 700 bytes of i % 251.
 
 #define MAPPER_LOADER_FLOPPY
 

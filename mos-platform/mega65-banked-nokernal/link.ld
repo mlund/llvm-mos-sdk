@@ -1,6 +1,6 @@
-/* MEGA65 banked PRG linker script, SD-card variant.
+/* MEGA65 banked PRG, no KERNAL variant.
  *
- * BASIC and the KERNAL are mapped out for good, so the ROM windows are RAM
+ * BASIC and KERNAL are unmapped, so ROM windows are RAM
  * and the bank window gains a MAPHI block:
  *
  *   $0002-$00FF  imaginary registers, then 222 bytes of compiler zero page

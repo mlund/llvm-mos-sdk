@@ -1,9 +1,13 @@
-# Banks on the MEGA65
+# mega65-common
+
+Documentation shared by the MEGA65 targets.
+
+## Banking
 
 This covers both `mega65-banked` and `mega65-banked-nokernal`. Each platform's
 README gives its memory map, bank addresses and its own rules.
 
-## Using banks
+### Using banks
 
 ```c
 #include <mapper.h>
@@ -19,16 +23,15 @@ int main(void) {
 }
 ```
 
-`MAPPER_BANK_COUNT(n)` keeps banks above `n` out of the image. Without it all
-15 are reserved, nearly all empty space read off the disk at boot.
+`MAPPER_BANK_COUNT(n)` excludes banks above `n` from the image; without it all
+15 are included (mostly empty, read off disk).
 
-`CODE_BANK` supplies `noinline`, without which a function may be inlined back
-into the fixed region leaving the bank empty. `RODATA_BANK` supplies `used`
-and `retain`, without which unreferenced data is discarded.
+`CODE_BANK` adds `noinline` to prevent inlining back into the fixed region.
+`RODATA_BANK` adds `used` and `retain` to prevent discarding unreferenced data.
 
 Keep a table in the same bank as the code reading it, so one call covers both.
 
-## API
+### API
 
 | Function | Purpose |
 |---|---|
@@ -45,12 +48,11 @@ int n = banked_call_r(1, measure, text, len);
 banked_call_v(1, draw, x, y);
 ```
 
-The `_r` and `_v` forms switch the bank around a direct call, so the compiler
-marshals the real signature. The caller must be in the fixed region: from a
-bank the switch would unmap it, and the link fails. Up to eight arguments are
-evaluated before the switch.
+The `_r` and `_v` forms switch the bank around a direct call, marshalling the
+real signature. The caller must be in the fixed region, or the switch would
+unmap it (link fails). Up to eight arguments are evaluated before the switch.
 
-## Rules
+### Rules
 
 **`banked_call` takes `void(void)` only.** For arguments or a return value, use
 `banked_call_r` or `banked_call_v`.
@@ -75,23 +77,22 @@ static int16_t *const buffer = (int16_t *)0x2100;
 **Attic RAM is for tables and logic.** It is about ten times slower than chip
 RAM, out of reach of VIC-IV and audio DMA, and absent on Nexys A7 boards.
 
-## Interrupts
+### Interrupts
 
 Bank switching leaves the interrupt flag alone, so an interrupt can arrive at
 any point, including with a bank mapped. Two rules follow:
 
-- **Handlers live in the fixed region.** That is the default placement, so
-  simply never give a handler `CODE_BANK()`.
+- **Handlers live in the fixed region.** That is the default; never give a
+  handler `CODE_BANK()`.
 - **Handlers must not touch the window.** A handler runs with whichever bank
   the interrupted code had mapped and cannot find out which.
 
 Neither is checked. Breaking them reads whichever bank was live, which looks
 like intermittent corruption.
 
-## Changing the bank layout
+### Changing the bank layout
 
-Define these the same in every file: with `-D`, or in a header passed with
-`-include`.
+Define uniformly in every file via `-D` or a header (`-include`).
 
 | Macro | Effect |
 |---|---|
@@ -111,7 +112,7 @@ smallest bank mapped.
 `<mapper.h>` checks each address at compile time; the converter rejects
 overlapping banks and files that disagree.
 
-## Loading banks
+### Loading banks
 
 Startup loads every non-empty bank before constructors run. Choose another
 loader with a macro, defined the same in every file.
@@ -121,10 +122,10 @@ loader with a macro, defined the same in every file.
 | `mega65-banked` | D81, through KERNAL LOAD | SD card: `MAPPER_LOADER_SD` |
 | `mega65-banked-nokernal` | SD card, through Hyppo | D81 through the F011: `MAPPER_LOADER_FLOPPY` |
 
-A load that fails calls `__bank_load_failed(bank)`, which turns the border red
-and stops. Define it to report the failure yourself.
+A failed load calls `__bank_load_failed(bank)`, which halts with the border red.
+Override it to report the failure.
 
-## Converting
+### Converting
 
 `prg-to-mega65.py` turns the linked image into the files that ship, reading
 the platform and loader from the image itself. `--report` adds a table of how

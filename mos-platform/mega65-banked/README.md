@@ -8,7 +8,7 @@ Use `mega65-banked-nokernal` instead if the program needs neither BASIC nor the
 KERNAL.
 
 Using banks, the API, and the rules both banked platforms share are in
-[BANKING.md](../mega65-common/BANKING.md).
+[mega65-common/README.md](../mega65-common/README.md#banking).
 
 ## Memory map
 

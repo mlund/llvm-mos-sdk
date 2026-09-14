@@ -6,7 +6,7 @@ startup, off the SD card through Hyppo or off a D81 through the F011.
 Use `mega65-banked` instead if the program needs BASIC or the KERNAL.
 
 Using banks, the API, and the rules both banked platforms share are in
-[BANKING.md](../mega65-common/BANKING.md).
+[mega65-common/README.md](../mega65-common/README.md#banking).
 
 ## Memory map
 
@@ -39,41 +39,37 @@ linker put it. About 19.5 KB of the fixed region is left after the runtime.
 Bank 0 is the window unmapped, so `.bank_0` content ships inside the main
 program rather than a bank file.
 
-Chip RAM is all of `$00000-$5FFFF`: full speed, and fetched from directly by
-VIC-IV, so any of banks 0-12 can hold a screen, a charset or sprite data.
-Banks 3-7 sit where the C65 ROMs would be, including the character generator
-at `$2D000`; startup lifts the write protection there. Bring your own charset,
-as there is no longer one to fall back on.
+Chip RAM is all of `$00000-$5FFFF`: full speed, and fetched directly by
+VIC-IV, so any of banks 0-12 can hold a screen, charset or sprite data.
+Banks 3-7 sit where the C65 ROMs would be (character generator at `$2D000`);
+startup lifts the write protection. Bring your own charset; there is no ROM.
 
 ## Rules
 
-**No KERNAL.** The `cbm_k_*` and `mega65_k_*` wrappers link but jump into RAM.
-The `mega65_h_*` Hyppo wrappers are the ones that work.
+**No KERNAL.** `cbm_k_*` and `mega65_k_*` jump into RAM; only `mega65_h_*` work.
 
-**Nothing writes to the screen for you.** There is no `CHROUT`, no character
-ROM and no BASIC. A program brings its own charset, or draws without one.
+**No automatic screen output.** No `CHROUT`, no character ROM, no BASIC. Bring a
+charset or draw directly.
 
-**Files come off the card or the D81; only the card takes writes.** Read the
-card with `mega65_h_setname` and `mega65_h_loadfile`, or
-`mega65_h_loadfile_attic` above `$8000000`, and the D81 in drive 8 with
-`mega65_d81_load(name, address)`. Write with `mega65_h_mkfile` then
-`mega65_h_writefile`: `mkfile` takes 8.3 names only and allocates contiguously,
-so create a save file at full size once and rewrite it in place.
+**Files from the card or D81; only the card takes writes.** Read the card with
+`mega65_h_setname`/`mega65_h_loadfile`, or `mega65_h_loadfile_attic` above
+`$8000000`, and the D81 with `mega65_d81_load()`. Write with `mega65_h_mkfile`
+then `mega65_h_writefile`: `mkfile` takes 8.3 names only and allocates
+contiguously, so create a save file at full size once, then rewrite it in place.
 
 **Hyppo needs a page below `$7F00`** for a filename, which is why
 `__mega65_h_name_buf` sits at `$0200` and cannot move into the fixed region.
 
-**Hyppo traps need the MEGA65 I/O personality.** Startup unlocks it; code that
-switches `$D02F` back for VIC-II graphics must unlock it again before the next
-`mega65_h_*` call, or the trap write lands in a SID mirror and the call
-reports a success that never happened.
+**Hyppo traps need MEGA65 I/O.** Startup unlocks it. Code switching `$D02F` for
+VIC-II graphics must unlock it again before the next `mega65_h_*` call, or trap
+writes hit the SID mirror and report success falsely.
 
 **Hyppo clears `$D030` bit 0** on every file call, moving colour RAM away from
 `$DC00` if that is where it was.
 
-**Interrupts start disabled** and the vectors at `$FFFA`/`$FFFE` point at an
-`RTI`. A program that wants them writes its own handler address there and
-clears the flag. See `examples/mega65-banked-nokernal/banked-irq.cc`.
+**Interrupts start disabled.** Vectors at `$FFFA`/`$FFFE` point to `RTI`. To use
+them, write a handler address there and clear the flag. See
+`examples/mega65-banked-nokernal/banked-irq.cc`.
 
 ## Building
 

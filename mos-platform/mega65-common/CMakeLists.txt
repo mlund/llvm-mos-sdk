@@ -19,7 +19,7 @@ TYPE INCLUDE)
 install(FILES _name-buf.ld _ram-banked.ld TYPE LIB)
 install(PROGRAMS d81.py prg-to-mega65.py TYPE BIN)
 install(FILES bank_image.py TYPE BIN)
-install(FILES BANKING.md DESTINATION mos-platform/mega65-common)
+install(FILES README.md DESTINATION mos-platform/mega65-common)
 
 # Both the plain and the D81-banked platform emit the BASIC stub that makes
 # the image RUNnable, so the object lives here rather than in either.

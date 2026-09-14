@@ -9,17 +9,17 @@
 /**
  * @brief Default physical base of each bank, overridden by MAPPER_BANK_n.
  *
- * A bank is 24 KB -- the MAP window at $2000-$7FFF -- not one of the 64 KB
- * "banks" of the MEGA65 memory map.
+ * A bank is 24 KB (the MAP window $2000-$7FFF), not the 64 KB MEGA65 memory
+ * map banks.
  *
  * Banks 1-12 are full speed and reachable by VIC-IV, which fetches anything
  * below $60000. Banks 3-7 lie where the C65 ROMs would be; startup lifts the
  * write protection over that region, which also costs the character generator
  * at $2D000, so a program that wants a charset brings its own.
  *
- * Banks 13-15 are attic RAM (HyperRAM at $8000000+): roughly ten times slower,
- * out of reach of VIC-IV and audio DMA, and absent on boards without HyperRAM.
- * Good for large tables and code off the hot path.
+ * Banks 13-15 are attic RAM (HyperRAM at $8000000+, ~10x slower, out of reach
+ * of VIC-IV/audio DMA, absent on boards without HyperRAM): use for tables and
+ * code off the hot path.
  */
 #define _MAPPER_DEFAULT_BANK_1  _MAPPER_UL(0x12000)
 #define _MAPPER_DEFAULT_BANK_2  _MAPPER_UL(0x18000)
@@ -43,7 +43,7 @@
 #include <_mapper.h>
 
 /**
- * @brief Place uninitialised data in $0300-$1FFF, outside the bank window.
+ * @brief Place uninitialised data outside the bank window ($0300-$1FFF).
  *
  * The one region Hyppo can be handed a pointer into, since it only accepts a
  * staging page below $7F00.

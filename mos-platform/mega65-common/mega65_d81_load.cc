@@ -25,9 +25,9 @@ constexpr unsigned char TYPE_MASK = 0x07; // 0 is DEL
 unsigned char buffer[512];
 unsigned char cached_track, cached_sector, cached_side;
 
-// The 256 bytes of a logical sector (track from 1, sector 0-39), or nullptr
-// on a controller error. A file's consecutive logical sectors share one
-// physical sector, so each is read once.
+// Returns 256 bytes of a logical sector (track from 1, sector 0-39), or
+// nullptr on error. Caches to avoid re-reading (two logical sectors per
+// physical sector).
 unsigned char *read_logical(unsigned char track, unsigned char sector) {
   unsigned char phys = (sector >> 1) + 1, side = 0;
   if (phys > 10) {
