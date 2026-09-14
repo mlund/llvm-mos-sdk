@@ -45,7 +45,7 @@ CODE_BANK(1) static void wait_in_bank(void) {
 int main(void) {
   idx = 1;
 
-  IRQ_VECTOR = (uint16_t)(uintptr_t) & on_raster;
+  IRQ_VECTOR = (uint16_t)(uintptr_t)&on_raster;
   VICII.ctrl1 &= 0x7f; // raster compare is 9 bits; keep the line below 256
   VICII.rasterline = 100;
   VICII.irr = 0x0f; // drop anything pending before unmasking

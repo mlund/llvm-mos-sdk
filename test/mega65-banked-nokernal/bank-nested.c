@@ -13,7 +13,8 @@
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
 
-// In .bss, which is never remapped, so it reads the same whichever bank is live.
+// In .bss, which is never remapped, so it reads the same whichever bank is
+// live.
 static volatile uint8_t depth[5];
 
 CODE_BANK(2) static void inner(void) { depth[2] = get_bank(); }

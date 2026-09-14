@@ -71,8 +71,7 @@ void to_cbm_name(const char *name, uint8_t *out) {
 }
 
 // The first track and sector of the named file, walking the directory chain.
-bool find_file(const uint8_t *want, uint8_t &track,
-               uint8_t &sector) {
+bool find_file(const uint8_t *want, uint8_t &track, uint8_t &sector) {
   uint8_t t = DIR_TRACK, s = FIRST_DIR_SECTOR;
   while (t) {
     uint8_t *dir = read_logical(t, s);

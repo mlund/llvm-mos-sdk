@@ -207,7 +207,6 @@ extern const uint8_t __bank_addr_page[];
     set_bank(__banked_prev);                                                   \
   })
 
-
 /**
  * @brief Where each bank lives, and how big it is.
  *

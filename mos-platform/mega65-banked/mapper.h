@@ -62,7 +62,7 @@
 #define _MAPPER_PLATFORM_CHECK(n)                                              \
   _MAPPER_ASSERT((BANK_PHYS_BASE_##n & 0xFF00) != 0,                           \
                  "MAPPER_BANK_" #n " must not have a $00 high byte");          \
-  _MAPPER_ASSERT(BANK_PHYS_BASE_##n + BANK_SIZE_##n <= 0x20000ul ||                 \
+  _MAPPER_ASSERT(BANK_PHYS_BASE_##n + BANK_SIZE_##n <= 0x20000ul ||            \
                      BANK_PHYS_BASE_##n >= 0x40000ul,                          \
                  "MAPPER_BANK_" #n " must avoid the ROMs at $20000-$3FFFF");
 

@@ -106,9 +106,8 @@ static void setup_vic() {
 
 // DMA palette data from bank 5 to VIC-IV palette registers ($FFD3100).
 static void setup_palette() {
-  const auto copy =
-      make_dma_copy(in_bank_5(fcm_palette_data), 0xFFD3100,
-                    sizeof(fcm_palette_data));
+  const auto copy = make_dma_copy(in_bank_5(fcm_palette_data), 0xFFD3100,
+                                  sizeof(fcm_palette_data));
   trigger_dma(copy);
 }
 
