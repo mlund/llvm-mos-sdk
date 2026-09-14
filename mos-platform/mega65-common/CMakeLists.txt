@@ -30,7 +30,6 @@ add_platform_library(mega65-common-c
   bank-load-failed.c
   bank-sizes.s
   banked-call.s
-  d81-load.cc
   mapper.c
   mapper.s
   cbm_k_cint.c
@@ -73,6 +72,7 @@ add_platform_library(mega65-common-c
   mega65_h_read_freeze_region_list.c
   mega65_h_get_freeze_slot_count.c
   mega65_h_writefile.c
+  mega65_d81_load.cc
   mega65_h_getversion.c
   mega65_h_geterrorcode.c
 )
