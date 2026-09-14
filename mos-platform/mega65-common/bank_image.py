@@ -14,6 +14,8 @@ import subprocess
 from pathlib import Path
 
 BANKS = 15
+# A file's layout record: 16 bases, window KB, bank 1-15 KB, loader.
+RECORD = "<33I"
 
 # Regions no bank may overlap, beyond chip RAM's end and attic's bounds.
 RESERVED = {
@@ -64,15 +66,17 @@ def section(elf, name):
 def layouts(elf):
     """The distinct layouts the program's files recorded.
 
-    Each is 16 bases, the window in KB, then banks 1-15 in KB.
+    Each is 16 bases, the window in KB, banks 1-15 in KB, then the loader.
     """
     data = section(elf, ".mapper_layout")
-    return {struct.unpack_from("<32I", data, i) for i in range(0, len(data) // 128 * 128, 128)}
+    size = struct.calcsize(RECORD)
+    starts = range(0, len(data) // size * size, size)
+    return {struct.unpack_from(RECORD, data, i) for i in starts}
 
 
 def split_layout(record):
     """(bases, sizes in bytes), both indexed by bank; bank 0 is the window."""
-    return record[:16], [kb * 1024 for kb in record[16:]]
+    return record[:16], [kb * 1024 for kb in record[16:32]]
 
 
 def layout_problems(bases, kernal, sizes):
@@ -83,6 +87,9 @@ def layout_problems(bases, kernal, sizes):
         base, end = bases[n], bases[n] + sizes[n]
         if base & 0xFF:
             problems.append(f"bank {n} at ${base:07X} is not page-aligned")
+        if base >> 20 != (end - 1) >> 20:
+            problems.append(
+                f"bank {n} at ${base:07X} crosses a megabyte boundary")
         if not (end <= 0x60000 or (0x8000000 <= base and end <= 0x8800000)):
             problems.append(f"bank {n} at ${base:07X} is outside chip and attic RAM")
         for what, (start, stop) in reserved.items():
@@ -105,3 +112,12 @@ def check_layout(elf, kernal):
         return []
     bases, sizes = split_layout(next(iter(found)))
     return layout_problems(bases, kernal, sizes)
+
+
+LOADER_HYPPO, LOADER_FLOPPY, LOADER_KERNAL = 0, 1, 2
+
+
+def loader(elf):
+    """The loader the program's files recorded, or None without one record."""
+    found = layouts(elf)
+    return next(iter(found))[32] if len(found) == 1 else None

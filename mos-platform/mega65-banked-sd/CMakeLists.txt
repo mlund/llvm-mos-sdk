@@ -38,8 +38,12 @@ target_link_libraries(mega65-banked-sd-load-banks PRIVATE common-asminc)
 add_platform_library(mega65-banked-sd-c
   ../common/c/char-conv.c
   bank-layout.c
+  load-banks-floppy.cc
+  load-banks-hyppo.c
 )
 target_compile_options(mega65-banked-sd-c PUBLIC -mcpu=mos45gs02)
 target_include_directories(mega65-banked-sd-c BEFORE PUBLIC .
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mega65-common)
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mega65-common
+  ${CMAKE_CURRENT_SOURCE_DIR}/../c64
+  ${CMAKE_CURRENT_SOURCE_DIR}/../commodore)
 target_link_libraries(mega65-banked-sd-c PRIVATE common-asminc)

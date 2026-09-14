@@ -3,49 +3,10 @@
 // See https://github.com/llvm-mos/llvm-mos-sdk/blob/main/LICENSE for license
 // information.
 
-// CRT init: load every non-empty bank off the SD card.
-//
-// Runs at .init.250, after .data and .bss are in place and before
-// constructors, which may already call into a bank.
-
-// Addresses come from the tables the program's own files emit, so a layout it
-// overrides is the one loaded.
-#define __MAPPER_NO_TABLES
-#include <mapper.h>
-#include <mega65.h>
-
-extern const unsigned char __bank_used[15];
-extern const unsigned char __bank_megabyte[16];
-extern const unsigned char __bank_addr_mid[16];
-extern const unsigned char __bank_addr_page[16];
+// CRT init: load every non-empty bank, after .data and .bss are in place and
+// before constructors, which may already call into one. __load_banks is the SD
+// card's (load-banks-hyppo.c) unless the program chose another loader; each is
+// a library member, so the choice is not left to link order.
 
 asm(".section .init.250,\"ax\",@progbits\n"
     "jsr __load_banks\n");
-
-__attribute__((weak)) void __load_banks(void) {
-  char name[] = "BANK0.BIN";
-
-  for (unsigned char i = 0; i < 15; ++i) {
-    unsigned char bank = i + 1;
-    unsigned char megabyte;
-    unsigned long addr;
-
-    if (!__bank_used[i])
-      continue;
-    // Attic RAM, megabyte bit 7, takes its own trap and an offset into attic:
-    // loadfile forces the top address byte to zero and still reports success.
-    megabyte = __bank_megabyte[bank];
-    addr = (unsigned long)(megabyte & 0x7F) << 20 |
-           (unsigned long)(__bank_addr_mid[bank] & 0x0F) << 16 |
-           (unsigned)__bank_addr_page[bank] << 8;
-
-    // Hyppo upper-cases the name it is asked for but not the one on the card,
-    // so a lower-case file can never be found.
-    name[4] = bank <= 9 ? '0' + bank : 'A' + (bank - 10);
-    if (mega65_h_setname(name))
-      __bank_load_failed(bank);
-
-    if ((megabyte & 0x80) ? mega65_h_loadfile_attic(addr) : mega65_h_loadfile(addr))
-      __bank_load_failed(bank);
-  }
-}

@@ -42,6 +42,28 @@ function(add_mega65_banked_sd_test name)
   set_tests_properties(test-${name} PROPERTIES TIMEOUT 30)
 endfunction()
 
+# Like add_mega65_banked_sd_test, for MAPPER_LOADER_FLOPPY: the converter
+# writes the banks to a D81, mounted as drive 8, and no card is served.
+function(add_mega65_banked_sd_floppy_test name)
+  if(NOT XMEGA65_COMMAND OR NOT PYTHON3_COMMAND)
+    return()
+  endif()
+  add_executable(${name}.prg ${name}.c)
+  add_custom_command(TARGET ${name}.prg POST_BUILD
+    COMMAND ${PYTHON3_COMMAND} ${PRG_TO_SD_SCRIPT}
+      $<TARGET_FILE:${name}.prg>
+      $<TARGET_FILE_DIR:${name}.prg>/${name}_sd
+      ${name}
+    COMMENT "Building D81 for ${name}")
+  string(TOUPPER ${name} upper)
+  add_test(NAME test-${name} COMMAND
+    ${XMEGA65_COMMAND} -headless -sleepless -testing -fastboot
+    -8 $<TARGET_FILE_DIR:${name}.prg>/${name}_sd/${upper}.D81
+    -prg $<TARGET_FILE_DIR:${name}.prg>/${name}_sd/${upper}.PRG
+    -prgmode 65 -prgtest "SYS8192")
+  set_tests_properties(test-${name} PROPERTIES TIMEOUT 60)
+endfunction()
+
 # Asserts a byte budget on the linked image, which is how many bank slots the
 # link reserved without reading the linker script.
 function(add_mega65_banked_sd_size_test name max)
@@ -72,6 +94,7 @@ add_mega65_banked_sd_test(sd-load-banks)
 add_mega65_banked_sd_test(bank-moved)
 add_mega65_banked_sd_test(bank-window-16)
 add_mega65_banked_sd_test(bank-tail)
+add_mega65_banked_sd_floppy_test(floppy-load-banks)
 
 # One bank slot plus the window and the fixed region, and nothing for the
 # fourteen banks this program does not declare.

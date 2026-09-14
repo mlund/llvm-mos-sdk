@@ -38,6 +38,7 @@
 #define _MAPPER_DEFAULT_BANK_15 _MAPPER_UL(0x800C000)
 
 #define _MAPPER_PLATFORM_CHECK(n)
+#define _MAPPER_DEFAULT_LOADER 0
 
 #include <_mapper.h>
 

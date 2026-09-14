@@ -52,9 +52,9 @@ enum
     : uint8_t
 #endif
 {
-  /// Use 11 byte F011A DMA list format [no value]
+  /// Use 11 byte F018A DMA list format [no value]
   ENABLE_F018A_OPT = 0x0a,
-  /// Use 12 byte F011B DMA list format [no value]
+  /// Use 12 byte F018B DMA list format [no value]
   ENABLE_F018B_OPT = 0x0b,
   /// Source address bits 20 – 27 [value follows]
   SRC_ADDR_BITS_OPT = 0x80,

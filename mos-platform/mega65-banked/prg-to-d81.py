@@ -53,6 +53,9 @@ def main(argv=None):
     problems = bank_image.check_layout(elf, kernal=True)
     if problems:
         raise SystemExit("prg-to-d81.py: " + "; ".join(problems))
+    if bank_image.loader(elf) not in (None, bank_image.LOADER_KERNAL):
+        raise SystemExit(
+            "prg-to-d81.py: built for mega65-banked-sd; use prg-to-sd.py")
     ram_fixed = sym.get("__ram_fixed_size", 0)
     if not ram_fixed:
         raise SystemExit(f"prg-to-d81.py: __ram_fixed_size not found in {elf}")

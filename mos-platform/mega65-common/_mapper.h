@@ -179,6 +179,9 @@ void __bank_load_failed(unsigned char bank);
  * MAPPER_WINDOW_KB (24, 16 or 8) sizes the window. MAPPER_BANK_n_KB makes bank
  * n smaller than that; BANK_SIZE_n is the result in bytes.
  *
+ * MAPPER_LOADER_FLOPPY loads the banks off the mounted D81 through the F011,
+ * where the platform has no KERNAL; the converter then writes a D81.
+ *
  * Each file including <mapper.h> emits the tables the bank switch and the
  * loaders read, as identical weak definitions, and records the layout it saw;
  * the converter rejects a program whose files disagree.
@@ -193,6 +196,12 @@ void __bank_load_failed(unsigned char bank);
 
 #ifndef MAPPER_WINDOW_KB
 #define MAPPER_WINDOW_KB 24
+#endif
+
+#ifdef MAPPER_LOADER_FLOPPY
+#define _MAPPER_LOADER_ID 1
+#else
+#define _MAPPER_LOADER_ID _MAPPER_DEFAULT_LOADER
 #endif
 
 #define BANK_PHYS_BASE_0 _MAPPER_UL(0x02000)
@@ -402,6 +411,9 @@ _MAPPER_ASSERT(_MAPPER_VALID_KB(MAPPER_WINDOW_KB),
                      (BANK_PHYS_BASE_##n >= 0x8000000ul &&                     \
                       BANK_PHYS_BASE_##n + BANK_SIZE_##n <= 0x8800000ul),      \
                  "MAPPER_BANK_" #n " must lie below $60000 or in attic RAM");  \
+  _MAPPER_ASSERT(BANK_PHYS_BASE_##n >> 20 ==                                   \
+                     (BANK_PHYS_BASE_##n + BANK_SIZE_##n - 1) >> 20,           \
+                 "MAPPER_BANK_" #n " must not cross a megabyte boundary");     \
   _MAPPER_PLATFORM_CHECK(n)
 _MAPPER_CHECK(1)
 _MAPPER_CHECK(2)
@@ -499,8 +511,20 @@ _MAPPER_MARKER(__bank_15_marker, ".mapper_bank_15", _MAPPER_KB_15)
 }
 #endif
 
+#ifdef MAPPER_LOADER_FLOPPY
+#ifdef __cplusplus
+extern "C" {
+#endif
+void __load_banks_floppy(void);
+__attribute__((weak, section(".bank_0")))
+void __load_banks(void) { __load_banks_floppy(); }
+#ifdef __cplusplus
+}
+#endif
+#endif
+
 __attribute__((used, section(".mapper_layout")))
-static const unsigned long __mapper_layout[32] = {
+static const unsigned long __mapper_layout[33] = {
     BANK_PHYS_BASE_0, BANK_PHYS_BASE_1, BANK_PHYS_BASE_2, BANK_PHYS_BASE_3,
     BANK_PHYS_BASE_4, BANK_PHYS_BASE_5, BANK_PHYS_BASE_6, BANK_PHYS_BASE_7,
     BANK_PHYS_BASE_8, BANK_PHYS_BASE_9, BANK_PHYS_BASE_10, BANK_PHYS_BASE_11,
@@ -508,7 +532,8 @@ static const unsigned long __mapper_layout[32] = {
     MAPPER_WINDOW_KB, _MAPPER_KB_1, _MAPPER_KB_2, _MAPPER_KB_3,
     _MAPPER_KB_4, _MAPPER_KB_5, _MAPPER_KB_6, _MAPPER_KB_7,
     _MAPPER_KB_8, _MAPPER_KB_9, _MAPPER_KB_10, _MAPPER_KB_11,
-    _MAPPER_KB_12, _MAPPER_KB_13, _MAPPER_KB_14, _MAPPER_KB_15};
+    _MAPPER_KB_12, _MAPPER_KB_13, _MAPPER_KB_14, _MAPPER_KB_15,
+    _MAPPER_LOADER_ID};
 #endif /* __MAPPER_NO_TABLES */
 
 #endif /* __ASSEMBLER__ */

@@ -197,3 +197,10 @@ uninitialised data there, readable with bank 0 or a smallest bank mapped.
 
 `<mapper.h>` checks each address at compile time; the converter rejects
 overlapping banks and files that disagree.
+
+## Loading banks from a D81
+
+Define `MAPPER_LOADER_FLOPPY`, the same in every file, to load banks off the D81
+mounted as drive 8, through the F011, rather than off the card. `prg-to-sd.py`
+then writes the banks into `NAME.D81` beside `NAME.PRG`. Tested on mounted
+images in xemu; a real drive is untested.

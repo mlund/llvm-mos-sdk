@@ -21,6 +21,7 @@ _HERE = Path(__file__).resolve().parent
 sys.path[:0] = [str(_HERE)] + [str(p.parent) for p in _HERE.parent.glob("*/bank_image.py")]
 
 import bank_image  # noqa: E402
+import d81  # noqa: E402
 
 
 def bank_rows(size, banks=bank_image.BANKS):
@@ -86,6 +87,10 @@ def main():
     problems = bank_image.check_layout(elf, kernal=False)
     if problems:
         raise SystemExit("prg-to-sd.py: " + "; ".join(problems))
+    loader = bank_image.loader(elf)
+    if loader == bank_image.LOADER_KERNAL:
+        raise SystemExit(
+            "prg-to-sd.py: built for mega65-banked; use prg-to-d81.py")
     ram_fixed = size.get("__ram_fixed_size", 0)
     if not ram_fixed:
         raise SystemExit(f"prg-to-sd.py: __ram_fixed_size not found in {elf}")
@@ -111,10 +116,17 @@ def main():
 
     emit(f"{a.basename}.prg", image[:main_size])
 
-    # Raw, no PRG header: Hyppo loadfile places the whole file at the address
-    # it is given.
-    for i, data in bank_image.banks(image, size, main_size):
-        emit(f"BANK{i:X}.BIN", data)
+    # Raw, no PRG header: both loaders place the whole file at the bank's base.
+    if loader == bank_image.LOADER_FLOPPY:
+        disk = d81.D81(a.basename[:16], "01")
+        for i, data in bank_image.banks(image, size, main_size):
+            disk.add_file(f"BANK{i:X}", data)
+        name = card_name(f"{a.basename}.d81")
+        written.add(name)
+        disk.save(str(outdir / name))
+    else:
+        for i, data in bank_image.banks(image, size, main_size):
+            emit(f"BANK{i:X}.BIN", data)
 
     for asset in a.asset:
         src = Path(asset)

@@ -51,6 +51,11 @@
                      BANK_PHYS_BASE_##n >= 0x40000ul,                          \
                  "MAPPER_BANK_" #n " must avoid the ROMs at $20000-$3FFFF");
 
+#ifdef MAPPER_LOADER_FLOPPY
+#error "MAPPER_LOADER_FLOPPY needs mega65-banked-sd"
+#endif
+#define _MAPPER_DEFAULT_LOADER 2
+
 #include <_mapper.h>
 
 /**
