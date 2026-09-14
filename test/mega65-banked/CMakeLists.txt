@@ -21,7 +21,7 @@ function(add_mega65_banked_test name)
   endif()
   add_executable(${name}.prg ${source_dir}/${name}.c)
   add_custom_command(TARGET ${name}.prg POST_BUILD
-    COMMAND ${PYTHON3_COMMAND} ${PRG_TO_D81_SCRIPT}
+    COMMAND ${PYTHON3_COMMAND} ${PRG_TO_MEGA65_SCRIPT}
       $<TARGET_FILE:${name}.prg>
       $<TARGET_FILE_DIR:${name}.prg>
       ${name}
@@ -50,13 +50,13 @@ function(add_mega65_banked_bload_test name)
   add_executable(${name}.prg ${source_dir}/${name}.c)
 
   add_custom_command(TARGET ${name}.prg POST_BUILD
-    COMMAND ${PYTHON3_COMMAND} ${PRG_TO_D81_SCRIPT}
+    COMMAND ${PYTHON3_COMMAND} ${PRG_TO_MEGA65_SCRIPT}
       $<TARGET_FILE:${name}.prg>
       $<TARGET_FILE_DIR:${name}.prg>
       ${name}
     COMMENT "Splitting PRG and creating D81 for ${name}")
 
-  # Hyppo loads raw images, so strip the PRG header prg-to-d81.py prepends.
+  # Hyppo loads raw images, so strip the PRG header the converter prepends.
   add_custom_command(TARGET ${name}.prg POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory
       $<TARGET_FILE_DIR:${name}.prg>/${name}_hdos
@@ -88,7 +88,7 @@ function(add_mega65_banked_dump_test name)
   endif()
   add_executable(${name}.prg ${name}.c)
   add_custom_command(TARGET ${name}.prg POST_BUILD
-    COMMAND ${PYTHON3_COMMAND} ${PRG_TO_D81_SCRIPT}
+    COMMAND ${PYTHON3_COMMAND} ${PRG_TO_MEGA65_SCRIPT}
       $<TARGET_FILE:${name}.prg>
       $<TARGET_FILE_DIR:${name}.prg>
       ${name}

@@ -30,7 +30,7 @@ MAPPER_BANK_COUNT(1);
 #define MARK 0x5A
 #define BANK 1
 
-// Gives prg-to-d81.py a bank file to put on the disk, which is then what the
+// Gives the converter a bank file to put on the disk, which is then what the
 // KERNAL call below loads.
 RODATA_BANK(1) const uint8_t payload[16] = {0xB1};
 

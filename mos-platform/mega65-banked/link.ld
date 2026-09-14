@@ -112,6 +112,7 @@ SECTIONS {
  * .bss/.noinit, which the CRT zeroes or leaves alone, so shipping the rest
  * would be padding the loader reads off the disk and then overwrites. */
 __ram_fixed_size = LOADADDR(.data) + SIZEOF(.data) - ORIGIN(ram_fixed);
+__ram_fixed_start = ORIGIN(ram_fixed);
 
 /* BASIC ROM covers $A000-$BFFF until __load_banks maps it out. */
 ASSERT(_fini <= 0xA000 && ADDR(.kernal_load) + SIZEOF(.kernal_load) <= 0xA000,

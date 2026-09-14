@@ -17,7 +17,7 @@ install(FILES
 TYPE INCLUDE)
 
 install(FILES _name-buf.ld _ram-banked.ld TYPE LIB)
-install(PROGRAMS d81.py TYPE BIN)
+install(PROGRAMS d81.py prg-to-mega65.py TYPE BIN)
 install(FILES bank_image.py TYPE BIN)
 
 # Both the plain and the D81-banked platform emit the BASIC stub that makes

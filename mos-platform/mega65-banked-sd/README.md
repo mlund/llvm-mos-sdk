@@ -161,7 +161,7 @@ clears the flag. See `examples/mega65-banked-sd/banked-irq.cc`.
 
 ```sh
 mos-mega65-banked-sd-clang -Os -o game.prg game.c
-python3 prg-to-sd.py game.prg game_sd game --asset tiles.bin
+python3 prg-to-mega65.py game.prg game_sd game --asset tiles.bin
 ```
 
 This gives `game_sd/` holding `GAME.PRG`, `BANK1.BIN`…, and `TILES.BIN`. Copy
@@ -201,6 +201,6 @@ overlapping banks and files that disagree.
 ## Loading banks from a D81
 
 Define `MAPPER_LOADER_FLOPPY`, the same in every file, to load banks off the D81
-mounted as drive 8, through the F011, rather than off the card. `prg-to-sd.py`
-then writes the banks into `NAME.D81` beside `NAME.PRG`. Tested on mounted
-images in xemu; a real drive is untested.
+mounted as drive 8, through the F011. `prg-to-mega65.py` then writes the banks
+into `NAME.D81` beside `NAME.PRG`. Tested on mounted images in xemu; a real
+drive is untested.

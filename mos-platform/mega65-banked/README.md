@@ -164,7 +164,7 @@ See `examples/mega65-banked/banked-irq.cc`.
 
 ```sh
 mos-mega65-banked-clang -Os -o game.prg game.c
-python3 prg-to-d81.py game.prg . game
+python3 prg-to-mega65.py game.prg . game
 ```
 
 This writes `game-main.prg`, one file per non-empty bank, and `game.d81` with

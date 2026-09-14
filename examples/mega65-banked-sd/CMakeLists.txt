@@ -12,7 +12,8 @@ function(add_banked_sd_example name source)
     list(APPEND asset_flags --asset ${CMAKE_CURRENT_SOURCE_DIR}/${asset})
   endforeach()
   add_custom_command(TARGET ${name}.prg POST_BUILD
-    COMMAND ${PYTHON3_COMMAND} ${PLATFORM_SOURCE_DIR}/prg-to-sd.py
+    COMMAND ${PYTHON3_COMMAND}
+      ${PLATFORM_SOURCE_DIR}/../mega65-common/prg-to-mega65.py
       $<TARGET_FILE:${name}.prg>
       $<TARGET_FILE_DIR:${name}.prg>/${name}_sd
       ${name}

@@ -4,7 +4,7 @@
  * ends in $2000 and bank symbols resolve into the $2000-$7FFF window whatever
  * bank they belong to. The high bits only have to be unique.
  *
- * Slot length is __bank_window_size, below; the converters read it and
+ * Slot length is __bank_window_size, below; the converter reads it and
  * __bank_N_size out of the ELF.
  */
 

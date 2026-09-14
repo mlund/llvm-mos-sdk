@@ -22,7 +22,7 @@ function(add_mega65_banked_sd_test name)
   endif()
   add_executable(${name}.prg ${name}.c)
   add_custom_command(TARGET ${name}.prg POST_BUILD
-    COMMAND ${PYTHON3_COMMAND} ${PRG_TO_SD_SCRIPT}
+    COMMAND ${PYTHON3_COMMAND} ${PRG_TO_MEGA65_SCRIPT}
       $<TARGET_FILE:${name}.prg>
       $<TARGET_FILE_DIR:${name}.prg>/${name}_sd
       ${name}
@@ -50,7 +50,7 @@ function(add_mega65_banked_sd_floppy_test name)
   endif()
   add_executable(${name}.prg ${name}.c)
   add_custom_command(TARGET ${name}.prg POST_BUILD
-    COMMAND ${PYTHON3_COMMAND} ${PRG_TO_SD_SCRIPT}
+    COMMAND ${PYTHON3_COMMAND} ${PRG_TO_MEGA65_SCRIPT}
       $<TARGET_FILE:${name}.prg>
       $<TARGET_FILE_DIR:${name}.prg>/${name}_sd
       ${name}

@@ -6,7 +6,6 @@ endif()
 
 install(FILES mapper.h TYPE INCLUDE)
 install(FILES README.md DESTINATION mos-platform/mega65-banked-sd)
-install(PROGRAMS prg-to-sd.py TYPE BIN)
 
 # copy-data because .data lives in ram_high but loads from ram_fixed, which no
 # other platform needs and so the parent crt0 does not carry.

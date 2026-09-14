@@ -64,6 +64,7 @@ add_test_target(atari8-cart-std)
 # Registered whether or not xemu is present: each suite skips its own emulator
 # tests, leaving the layout and image checks, which need only python3 and are
 # the ones a build without an emulator can still get wrong.
+set(mega65_common ${CMAKE_SOURCE_DIR}/mos-platform/mega65-common)
 add_test_target(mega65
   -DXMEGA65_COMMAND=${XMEGA65_COMMAND}
   -DPYTHON3_COMMAND=${PYTHON3_COMMAND}
@@ -71,11 +72,11 @@ add_test_target(mega65
 add_test_target(mega65-banked
   -DXMEGA65_COMMAND=${XMEGA65_COMMAND}
   -DPYTHON3_COMMAND=${PYTHON3_COMMAND}
-  -DPRG_TO_D81_SCRIPT=${CMAKE_SOURCE_DIR}/mos-platform/mega65-banked/prg-to-d81.py
+  -DPRG_TO_MEGA65_SCRIPT=${mega65_common}/prg-to-mega65.py
   -DDUMPCHECK_SCRIPT=${CMAKE_CURRENT_SOURCE_DIR}/mega65-common/dumpcheck.py
   -DSIZECHECK_SCRIPT=${CMAKE_CURRENT_SOURCE_DIR}/mega65-common/sizecheck.py)
 add_test_target(mega65-banked-sd
   -DXMEGA65_COMMAND=${XMEGA65_COMMAND}
   -DPYTHON3_COMMAND=${PYTHON3_COMMAND}
-  -DPRG_TO_SD_SCRIPT=${CMAKE_SOURCE_DIR}/mos-platform/mega65-banked-sd/prg-to-sd.py
+  -DPRG_TO_MEGA65_SCRIPT=${mega65_common}/prg-to-mega65.py
   -DSIZECHECK_SCRIPT=${CMAKE_CURRENT_SOURCE_DIR}/mega65-common/sizecheck.py)

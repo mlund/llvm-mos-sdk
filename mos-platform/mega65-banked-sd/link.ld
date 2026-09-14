@@ -88,6 +88,7 @@ ASSERT(ADDR(.bank_0) + SIZEOF(.bank_0) <= __window_tail_start,
 
 /* Bytes of ram_fixed that carry content; the rest is soft stack. */
 __ram_fixed_size = LOADADDR(.data) + SIZEOF(.data) - ORIGIN(ram_fixed);
+__ram_fixed_start = ORIGIN(ram_fixed);
 
 /* Soft stack grows down from below the vectors, through ram_high, so it
  * competes with .bss rather than with code. */

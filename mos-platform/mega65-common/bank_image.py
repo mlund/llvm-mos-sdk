@@ -2,7 +2,8 @@
 # Licensed under the Apache License, Version 2.0 with LLVM Exceptions.
 # See https://github.com/llvm-mos/llvm-mos-sdk/blob/main/LICENSE for license
 # information.
-"""The half of the banked MEGA65 converters that does not depend on the output.
+"""Helpers for prg-to-mega65.py, which converts a banked MEGA65 image into an
+SD card directory or a D81.
 
 Sizes come from the ELF rather than being restated: getting them out of step
 slices at the wrong offset and the banks load as garbage.
@@ -46,6 +47,27 @@ def banks(image, sym, main_size):
             yield i, image[start : start + used]
         if i <= count:
             start += sym.get(f"__bank_{i}_length", window)
+
+
+def bank_rows(sym, banks=BANKS):
+    """(bank, used, free) for each bank the link put something in.
+
+    A slot is the bank's own length, so free is what is left before the next
+    thing added to that bank stops linking.
+    """
+    window = sym["__bank_window_size"]
+    for i in range(1, banks + 1):
+        used = sym.get(f"__bank_{i}_size", 0)
+        if used:
+            yield i, used, sym.get(f"__bank_{i}_length", window) - used
+
+
+def print_report(sym):
+    """How full each bank is, while there is still room to act on it."""
+    print("bank     used     free   fill")
+    for bank, used, free in bank_rows(sym):
+        pct = 100 * used // (used + free)
+        print(f"{bank:4d} {used:8d} {free:8d}   {pct:3d}%")
 
 
 def section(elf, name):
