@@ -13,7 +13,7 @@ README gives its memory map, bank addresses and its own rules.
 #define MAPPER_BANK_COUNT 2    // highest bank used
 #include <mapper.h>
 
-RODATA_BANK(1) const unsigned char sine[256] = { ... };
+RODATA_BANK(1) const uint8_t sine[256] = { ... };
 
 CODE_BANK(1) void animate(void) { ... }
 

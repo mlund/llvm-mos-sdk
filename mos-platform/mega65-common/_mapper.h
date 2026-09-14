@@ -59,6 +59,8 @@
 
 #ifndef __ASSEMBLER__
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -81,13 +83,13 @@ extern "C" {
  * __call_indir. It is sound only because callback(2) restores the call edge
  * that leaf severs, so LLVM still sees the indirect target when it lays out
  * static stack frames. Do not drop either attribute. */
-__attribute__((leaf, callback(2))) void banked_call(char bank_id,
+__attribute__((leaf, callback(2))) void banked_call(uint8_t bank_id,
                                                     void (*method)(void));
 
 /**
  * @brief Get the currently mapped bank number.
  */
-__attribute__((leaf)) char get_bank(void);
+__attribute__((leaf)) uint8_t get_bank(void);
 
 /**
  * @brief Put the hardware map back in step with get_bank().
@@ -107,10 +109,10 @@ __attribute__((leaf)) void resync_bank(void);
  *                which covers $0000-$7FFF and so could move zero page out
  *                from under the compiler.
  */
-__attribute__((leaf)) void set_bank(char bank_id);
+__attribute__((leaf)) void set_bank(uint8_t bank_id);
 
 /* The switch banked_call_r and banked_call_v use; see there. */
-__attribute__((leaf)) char __banked_call_enter(char bank_id);
+__attribute__((leaf)) uint8_t __banked_call_enter(uint8_t bank_id);
 
 /**
  * @brief Called when startup cannot load a bank the program declared.
@@ -118,14 +120,14 @@ __attribute__((leaf)) char __banked_call_enter(char bank_id);
  * Weak: define it to handle the failure. The default halts with a red border,
  * since the bank would read back as zeroes. Returning goes on to the next bank.
  */
-void __bank_load_failed(unsigned char bank);
+void __bank_load_failed(uint8_t bank);
 
 /* What the loaders read: the tables below, and bank-sizes.s with bank n at
  * bit n % 8 of byte n / 8. */
-extern const unsigned char __bank_used[4];
-extern const unsigned char __bank_megabyte[];
-extern const unsigned char __bank_addr_mid[];
-extern const unsigned char __bank_addr_page[];
+extern const uint8_t __bank_used[4];
+extern const uint8_t __bank_megabyte[];
+extern const uint8_t __bank_addr_mid[];
+extern const uint8_t __bank_addr_page[];
 
 #ifdef __cplusplus
 }
@@ -191,7 +193,7 @@ extern const unsigned char __bank_addr_page[];
 #define banked_call_r(bank, fn, ...)                                           \
   ({                                                                           \
     _BANKED_TEMPS(__VA_ARGS__)                                                 \
-    char __banked_prev = __banked_call_enter(bank);                            \
+    uint8_t __banked_prev = __banked_call_enter(bank);                         \
     __auto_type __banked_result = (fn)(_BANKED_ARGS(__VA_ARGS__));             \
     set_bank(__banked_prev);                                                   \
     __banked_result;                                                           \
@@ -200,7 +202,7 @@ extern const unsigned char __bank_addr_page[];
 #define banked_call_v(bank, fn, ...)                                           \
   ({                                                                           \
     _BANKED_TEMPS(__VA_ARGS__)                                                 \
-    char __banked_prev = __banked_call_enter(bank);                            \
+    uint8_t __banked_prev = __banked_call_enter(bank);                         \
     (fn)(_BANKED_ARGS(__VA_ARGS__));                                           \
     set_bank(__banked_prev);                                                   \
   })
@@ -677,14 +679,14 @@ _MAPPER_CHECK(31)
 
 #define _MAPPER_OFF(n)                                                         \
   (((BANK_PHYS_BASE_##n & 0xFFFFFul) - 0x2000ul) & 0xFFFFFul)
-#define _MAPPER_OFFSET_LO(n) (unsigned char)(_MAPPER_OFF(n) >> 8)
+#define _MAPPER_OFFSET_LO(n) (uint8_t)(_MAPPER_OFF(n) >> 8)
 /* MAPLO selects 8 KB blocks from $2000: 1-3, 1-2 or just 1. */
 #define _MAPPER_SELECT(kb) ((kb) == 24 ? 0xE0 : (kb) == 16 ? 0x60 : 0x20)
 #define _MAPPER_MAPLO_SEL(n)                                                   \
-  (unsigned char)(n ? _MAPPER_SELECT(_MAPPER_KB_##n) | _MAPPER_OFF(n) >> 16 : 0)
-#define _MAPPER_MEGABYTE(n) (unsigned char)(BANK_PHYS_BASE_##n >> 20)
-#define _MAPPER_ADDR_MID(n) (unsigned char)(BANK_PHYS_BASE_##n >> 16)
-#define _MAPPER_ADDR_PAGE(n) (unsigned char)(BANK_PHYS_BASE_##n >> 8)
+  (uint8_t)(n ? _MAPPER_SELECT(_MAPPER_KB_##n) | _MAPPER_OFF(n) >> 16 : 0)
+#define _MAPPER_MEGABYTE(n) (uint8_t)(BANK_PHYS_BASE_##n >> 20)
+#define _MAPPER_ADDR_MID(n) (uint8_t)(BANK_PHYS_BASE_##n >> 16)
+#define _MAPPER_ADDR_PAGE(n) (uint8_t)(BANK_PHYS_BASE_##n >> 8)
 #define _MAPPER_TABLE                                                          \
   __attribute__((weak, section(".rodata.bank_tables")))
 
@@ -730,20 +732,20 @@ _MAPPER_CHECK(31)
 #define _MAPPER_ALIGN(kb) ((kb) == 24 ? 8 : (kb) / 4)
 #define _MAPPER_MARKER(name, sect, kb)                                         \
   __attribute__((weak, used, section(sect), aligned(_MAPPER_ALIGN(kb))))       \
-  _MAPPER_EXTERN const unsigned char name = 0;
+  _MAPPER_EXTERN const uint8_t name = 0;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-_MAPPER_TABLE _MAPPER_EXTERN const unsigned char __bank_offset_lo[] = {
+_MAPPER_TABLE _MAPPER_EXTERN const uint8_t __bank_offset_lo[] = {
     _MAPPER_ROWS(_MAPPER_COUNT, _MAPPER_OFFSET_LO)};
-_MAPPER_TABLE _MAPPER_EXTERN const unsigned char __bank_maplo_sel[] = {
+_MAPPER_TABLE _MAPPER_EXTERN const uint8_t __bank_maplo_sel[] = {
     _MAPPER_ROWS(_MAPPER_COUNT, _MAPPER_MAPLO_SEL)};
-_MAPPER_TABLE _MAPPER_EXTERN const unsigned char __bank_megabyte[] = {
+_MAPPER_TABLE _MAPPER_EXTERN const uint8_t __bank_megabyte[] = {
     _MAPPER_ROWS(_MAPPER_COUNT, _MAPPER_MEGABYTE)};
-_MAPPER_TABLE _MAPPER_EXTERN const unsigned char __bank_addr_mid[] = {
+_MAPPER_TABLE _MAPPER_EXTERN const uint8_t __bank_addr_mid[] = {
     _MAPPER_ROWS(_MAPPER_COUNT, _MAPPER_ADDR_MID)};
-_MAPPER_TABLE _MAPPER_EXTERN const unsigned char __bank_addr_page[] = {
+_MAPPER_TABLE _MAPPER_EXTERN const uint8_t __bank_addr_page[] = {
     _MAPPER_ROWS(_MAPPER_COUNT, _MAPPER_ADDR_PAGE)};
 _MAPPER_MARKER(__bank_window_marker, ".mapper_window", MAPPER_WINDOW_KB)
 _MAPPER_MARKER(__bank_1_marker, ".mapper_bank_1", _MAPPER_KB_1)
@@ -816,7 +818,7 @@ void __load_banks(void) { _MAPPER_LOADER_FN(); }
 #endif
 
 __attribute__((used, section(".mapper_layout")))
-static const unsigned long __mapper_layout[66] = {
+static const uint32_t __mapper_layout[66] = {
     BANK_PHYS_BASE_0, BANK_PHYS_BASE_1, BANK_PHYS_BASE_2, BANK_PHYS_BASE_3,
     BANK_PHYS_BASE_4, BANK_PHYS_BASE_5, BANK_PHYS_BASE_6, BANK_PHYS_BASE_7,
     BANK_PHYS_BASE_8, BANK_PHYS_BASE_9, BANK_PHYS_BASE_10, BANK_PHYS_BASE_11,

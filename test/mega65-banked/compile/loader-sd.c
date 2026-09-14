@@ -5,6 +5,6 @@
 
 #include <mapper.h>
 
-RODATA_BANK(1) static const unsigned char table[4] = {1, 2, 3, 4};
+RODATA_BANK(1) static const uint8_t table[4] = {1, 2, 3, 4};
 
 int main(void) { return 0; }

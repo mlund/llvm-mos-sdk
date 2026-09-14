@@ -13,10 +13,10 @@
 // it. mega65_d81_load() is fixed code, callable at any time.
 __attribute__((noinline, section(".bank_0")))
 void __load_banks_floppy(void) {
-  for (unsigned char bank = 1; bank < 32; ++bank) {
+  for (uint8_t bank = 1; bank < 32; ++bank) {
     char name[7] = "BANK";
     char *p = name + 4;
-    unsigned char digit = bank & 15;
+    uint8_t digit = bank & 15;
     if (!(__bank_used[bank >> 3] & 1 << (bank & 7)))
       continue;
     if (bank >= 16)

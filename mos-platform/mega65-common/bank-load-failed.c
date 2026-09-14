@@ -8,7 +8,7 @@
 
 // The border is the only output that needs no setup, and returning would run
 // a program whose code is silently absent.
-__attribute__((weak)) void __bank_load_failed(unsigned char bank) {
+__attribute__((weak)) void __bank_load_failed(uint8_t bank) {
   (void)bank;
   VICII.bordercolor = 2;
   for (;;)

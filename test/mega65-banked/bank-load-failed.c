@@ -15,7 +15,7 @@
 RODATA_BANK(1) static const uint8_t first[16] = {1};
 RODATA_BANK(2) static const uint8_t second[16] = {2};
 
-void __bank_load_failed(unsigned char bank) {
+void __bank_load_failed(uint8_t bank) {
   // ROMC is off again, so the hook may lie anywhere in the fixed region.
   if (*(volatile uint8_t *)0xD030 & 0x20)
     xemu_exit(201);

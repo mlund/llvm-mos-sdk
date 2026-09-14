@@ -15,21 +15,21 @@
 // In .bank_0: it runs only at startup, with bank 0 mapped, so without the
 // KERNAL the window holds it and the fixed region stays free.
 __attribute__((section(".bank_0"))) void __load_banks_hyppo(void) {
-  for (unsigned char bank = 1; bank < 32; ++bank) {
+  for (uint8_t bank = 1; bank < 32; ++bank) {
     char name[11] = "BANK";
     char *p = name + 4;
-    unsigned char digit = bank & 15;
-    unsigned char megabyte;
-    unsigned long addr;
+    uint8_t digit = bank & 15;
+    uint8_t megabyte;
+    uint32_t addr;
 
     if (!(__bank_used[bank >> 3] & 1 << (bank & 7)))
       continue;
     // Attic RAM, megabyte bit 7, takes its own trap and an offset into attic:
     // loadfile forces the top address byte to zero and still reports success.
     megabyte = __bank_megabyte[bank];
-    addr = (unsigned long)(megabyte & 0x7F) << 20 |
-           (unsigned long)(__bank_addr_mid[bank] & 0x0F) << 16 |
-           (unsigned)__bank_addr_page[bank] << 8;
+    addr = (uint32_t)(megabyte & 0x7F) << 20 |
+           (uint32_t)(__bank_addr_mid[bank] & 0x0F) << 16 |
+           (uint16_t)__bank_addr_page[bank] << 8;
 
     // BANK1-BANKF, then BANK10-BANK1F. Hyppo upper-cases the name it is asked
     // for but not the one on the card, so a lower-case file is never found.
