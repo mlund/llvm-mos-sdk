@@ -4,8 +4,9 @@
 // information.
 
 // mega65_d81_load: a file off the mounted D81, through the F011, with no ROM
-// and no Hyppo. DMA lands each sector at the destination's 28-bit address, so
-// nothing is ever mapped.
+// and no Hyppo. The directory and the sector links are read in place in the
+// controller's buffer, and DMA lands each sector at the destination's 28-bit
+// address, so nothing is mapped and no copy of a sector is kept.
 
 #include <dma.hpp>
 #include <mega65.h>
@@ -21,14 +22,13 @@ constexpr uint8_t NAME_PAD = 0xA0;
 constexpr uint8_t CLOSED = 0x80;
 constexpr uint8_t TYPE_MASK = 0x07; // 0 is DEL
 
-// One 512-byte physical sector: two 256-byte CBM logical sectors.
-uint8_t buffer[512];
+// The physical sector in the controller's buffer. It holds two logical
+// sectors, so a file's consecutive sectors come off the disk once.
 uint8_t cached_track, cached_sector, cached_side;
 
-// Returns 256 bytes of a logical sector (track from 1, sector 0-39), or
-// nullptr on error. Caches to avoid re-reading (two logical sectors per
-// physical sector).
-uint8_t *read_logical(uint8_t track, uint8_t sector) {
+// Where a logical sector (track from 1, sector 0-39) lies in the controller's
+// buffer, reading it off the disk if need be; 0 on a controller error.
+uint32_t read_logical(uint8_t track, uint8_t sector) {
   uint8_t phys = (sector >> 1) + 1, side = 0;
   if (phys > 10) {
     phys -= 10;
@@ -44,15 +44,13 @@ uint8_t *read_logical(uint8_t track, uint8_t sector) {
       ;
     if (F011.status1 & (F011_RNF_MASK | F011_CRC_MASK)) {
       cached_track = 0xFF;
-      return nullptr;
+      return 0;
     }
-    mega65::dma::trigger_dma(mega65::dma::make_dma_copy(
-        SECTOR_BUFFER, (uint16_t)buffer, sizeof buffer));
     cached_track = track - 1;
     cached_sector = phys;
     cached_side = side;
   }
-  return buffer + (sector & 1 ? 256 : 0);
+  return SECTOR_BUFFER + (sector & 1 ? 256 : 0);
 }
 
 // A name as d81.py stores it: PETSCII upper case, $A0-padded to 16.
@@ -74,24 +72,25 @@ void to_cbm_name(const char *name, uint8_t *out) {
 bool find_file(const uint8_t *want, uint8_t &track, uint8_t &sector) {
   uint8_t t = DIR_TRACK, s = FIRST_DIR_SECTOR;
   while (t) {
-    uint8_t *dir = read_logical(t, s);
+    uint32_t dir = read_logical(t, s);
     if (!dir)
       return false;
     for (uint8_t i = 0; i < DIR_ENTRIES; ++i) {
-      const uint8_t *entry = dir + 2 + i * 32;
-      if (!(entry[0] & CLOSED) || !(entry[0] & TYPE_MASK))
+      uint32_t entry = dir + 2 + i * 32;
+      uint8_t type = mega65_peek_far(entry);
+      if (!(type & CLOSED) || !(type & TYPE_MASK))
         continue;
       uint8_t j = 0;
-      while (j < NAME_LEN && entry[3 + j] == want[j])
+      while (j < NAME_LEN && mega65_peek_far(entry + 3 + j) == want[j])
         ++j;
       if (j == NAME_LEN) {
-        track = entry[1];
-        sector = entry[2];
+        track = mega65_peek_far(entry + 1);
+        sector = mega65_peek_far(entry + 2);
         return true;
       }
     }
-    t = dir[0];
-    s = dir[1];
+    t = mega65_peek_far(dir);
+    s = mega65_peek_far(dir + 1);
   }
   return false;
 }
@@ -101,13 +100,14 @@ bool find_file(const uint8_t *want, uint8_t &track, uint8_t &sector) {
 uint32_t load_chain(uint8_t track, uint8_t sector, uint32_t dest) {
   uint32_t total = 0;
   for (;;) {
-    uint8_t *block = read_logical(track, sector);
+    uint32_t block = read_logical(track, sector);
     if (!block)
       return 0;
-    uint8_t next_track = block[0], next_sector = block[1];
+    uint8_t next_track = mega65_peek_far(block);
+    uint8_t next_sector = mega65_peek_far(block + 1);
     uint8_t count = next_track ? 254 : next_sector - 1;
-    mega65::dma::trigger_dma(mega65::dma::make_dma_copy(
-        SECTOR_BUFFER + (uint16_t)(block - buffer) + 2, dest + total, count));
+    mega65::dma::trigger_dma(
+        mega65::dma::make_dma_copy(block + 2, dest + total, count));
     total += count;
     if (!next_track)
       return total;
