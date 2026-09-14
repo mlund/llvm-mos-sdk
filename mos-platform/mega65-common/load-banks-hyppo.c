@@ -11,10 +11,6 @@
 
 // Addresses come from the tables the program's own files emit, so a layout it
 // overrides is the one loaded.
-extern const unsigned char __bank_used[15];
-extern const unsigned char __bank_megabyte[16];
-extern const unsigned char __bank_addr_mid[16];
-extern const unsigned char __bank_addr_page[16];
 
 // In .bank_0: it runs only at startup, with bank 0 mapped, so without the
 // KERNAL the window holds it and the fixed region stays free.

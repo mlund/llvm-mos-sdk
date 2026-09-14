@@ -38,7 +38,8 @@ __set_bank_asm:
     pha
 
     lda __bank_megabyte,x
-    ldy #$00                ; MAPHI megabyte: chip RAM on both platforms
+    ldy #$00                ; MAPHI megabyte, and MAPHI offset for the
+                            ; second MAP: chip RAM on both platforms
     ldx #$0f
     ldz #$0f
     map
@@ -46,7 +47,6 @@ __set_bank_asm:
     pla
     tax
     pla                     ; A = MAPLO offset low byte
-    ldy #$00
     ldz #__bank_maphi_sel
     map
     eom

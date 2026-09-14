@@ -123,6 +123,12 @@ __attribute__((leaf)) char __banked_call_enter(char bank_id);
  */
 void __bank_load_failed(unsigned char bank);
 
+/* What the loaders read: from the tables below and bank-sizes.s. */
+extern const unsigned char __bank_used[15];
+extern const unsigned char __bank_megabyte[16];
+extern const unsigned char __bank_addr_mid[16];
+extern const unsigned char __bank_addr_page[16];
+
 #ifdef __cplusplus
 }
 #endif
@@ -468,10 +474,9 @@ _MAPPER_CHECK(13)
 _MAPPER_CHECK(14)
 _MAPPER_CHECK(15)
 
-#ifndef __MAPPER_NO_TABLES
 #define _MAPPER_OFF(n)                                                         \
   (((BANK_PHYS_BASE_##n & 0xFFFFFul) - 0x2000ul) & 0xFFFFFul)
-#define _MAPPER_OFFSET_LO(n) (unsigned char)(n ? _MAPPER_OFF(n) >> 8 : 0)
+#define _MAPPER_OFFSET_LO(n) (unsigned char)(_MAPPER_OFF(n) >> 8)
 /* MAPLO selects 8 KB blocks from $2000: 1-3, 1-2 or just 1. */
 #define _MAPPER_SELECT(kb) ((kb) == 24 ? 0xE0 : (kb) == 16 ? 0x60 : 0x20)
 #define _MAPPER_MAPLO_SEL(n)                                                   \
@@ -548,8 +553,9 @@ _MAPPER_MARKER(__bank_15_marker, ".mapper_bank_15", _MAPPER_KB_15)
 }
 #endif
 
-#if defined(MAPPER_LOADER_SD) || defined(MAPPER_LOADER_FLOPPY)
-#ifdef MAPPER_LOADER_SD
+/* KERNAL LOAD, loader 2, is a library member of its own. */
+#if _MAPPER_LOADER_ID != 2
+#if _MAPPER_LOADER_ID == 0
 #define _MAPPER_LOADER_FN __load_banks_hyppo
 #else
 #define _MAPPER_LOADER_FN __load_banks_floppy
@@ -576,7 +582,6 @@ static const unsigned long __mapper_layout[33] = {
     _MAPPER_KB_8, _MAPPER_KB_9, _MAPPER_KB_10, _MAPPER_KB_11,
     _MAPPER_KB_12, _MAPPER_KB_13, _MAPPER_KB_14, _MAPPER_KB_15,
     _MAPPER_LOADER_ID};
-#endif /* __MAPPER_NO_TABLES */
 
 #endif /* __ASSEMBLER__ */
 #endif /* _MAPPER_DEFAULT_BANK_1 */

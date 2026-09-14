@@ -38,12 +38,11 @@ def check(prg):
     elf = Path(str(prg) + ".elf")
     image = Path(prg).read_bytes()
     load = int.from_bytes(image[:2], "little")
-    kernal = load == 0x2001
     found = bank_image.layouts(elf)
     if len(found) != 1:
         return [f"{prg}: {len(found)} distinct layouts recorded, expected 1"]
     bases, sizes = bank_image.split_layout(next(iter(found)))
-    problems = [f"{prg}: {p}" for p in bank_image.layout_problems(bases, kernal, sizes)]
+    problems = [f"{prg}: {p}" for p in bank_image.layout_problems(bases, sizes)]
     out = subprocess.run(["nm", str(elf)], capture_output=True, text=True).stdout
     addr = {m[2]: int(m[0], 16) for m in re.findall(r"^([0-9a-fA-F]+) (\w) (\S+)$", out, re.M)}
     for name, want in expected(bases, sizes).items():

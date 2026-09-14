@@ -14,10 +14,11 @@ merge_libraries(mega65-banked-crt0
 )
 
 add_platform_library(mega65-banked-c
-  bank-layout.c
+  ../mega65-common/bank-layout.c
   load-banks-kernal.S
 )
 target_compile_options(mega65-banked-c PUBLIC -mcpu=mos45gs02)
 target_link_libraries(mega65-banked-c PRIVATE common-asminc)
 target_include_directories(mega65-banked-c BEFORE PUBLIC .
-  ${CMAKE_CURRENT_SOURCE_DIR}/../mega65-common)
+  ${CMAKE_CURRENT_SOURCE_DIR}/../mega65-common
+  ${CMAKE_CURRENT_SOURCE_DIR}/../commodore)

@@ -24,7 +24,6 @@ RESERVED = {
     "the C65 DOS work area": (0x10000, 0x12000),
     "the colour RAM window": (0x1F800, 0x20000),
 }
-KERNAL_RESERVED = {"the write-protected C65 ROMs": (0x20000, 0x40000)}
 
 
 def symbols(elf):
@@ -49,14 +48,14 @@ def banks(image, sym, main_size):
             start += sym.get(f"__bank_{i}_length", window)
 
 
-def bank_rows(sym, banks=BANKS):
+def bank_rows(sym):
     """(bank, used, free) for each bank the link put something in.
 
     A slot is the bank's own length, so free is what is left before the next
     thing added to that bank stops linking.
     """
     window = sym["__bank_window_size"]
-    for i in range(1, banks + 1):
+    for i in range(1, BANKS + 1):
         used = sym.get(f"__bank_{i}_size", 0)
         if used:
             yield i, used, sym.get(f"__bank_{i}_length", window) - used
@@ -101,45 +100,37 @@ def split_layout(record):
     return record[:16], [kb * 1024 for kb in record[16:32]]
 
 
-def layout_problems(bases, kernal, sizes):
-    """Why a layout cannot work, or [] if it can."""
+def layout_problems(bases, sizes, count=BANKS):
+    """Why the first count banks cannot work, or [] if they can.
+
+    <mapper.h> checks each bank on its own at compile time; this checks what
+    needs every bank at once, and regions it does not know.
+    """
     problems = []
-    reserved = dict(RESERVED, **(KERNAL_RESERVED if kernal else {}))
-    for n in range(1, BANKS + 1):
+    for n in range(1, count + 1):
         base, end = bases[n], bases[n] + sizes[n]
-        if base & 0xFF:
-            problems.append(f"bank {n} at ${base:07X} is not page-aligned")
-        if base >> 20 != (end - 1) >> 20:
-            problems.append(
-                f"bank {n} at ${base:07X} crosses a megabyte boundary")
-        if not (end <= 0x60000 or (0x8000000 <= base and end <= 0x8800000)):
-            problems.append(f"bank {n} at ${base:07X} is outside chip and attic RAM")
-        for what, (start, stop) in reserved.items():
+        for what, (start, stop) in RESERVED.items():
             if base < stop and end > start:
                 problems.append(f"bank {n} at ${base:07X} overlaps {what}")
-        if kernal and not base & 0xFF00:
-            problems.append(f"bank {n} at ${base:07X} has a $00 high byte, which KERNAL LOAD corrupts")
-        for m in range(n + 1, BANKS + 1):
+        for m in range(n + 1, count + 1):
             if base < bases[m] + sizes[m] and bases[m] < end:
                 problems.append(f"banks {n} and {m} overlap")
     return problems
 
 
-def check_layout(elf, kernal):
+def check_layout(found, count=BANKS):
     """Problems with the layout the program's files recorded."""
-    found = layouts(elf)
     if len(found) > 1:
         return ["files disagree on the bank layout; define MAPPER_BANK_n the same in every file"]
     if not found:
         return []
     bases, sizes = split_layout(next(iter(found)))
-    return layout_problems(bases, kernal, sizes)
+    return layout_problems(bases, sizes, count)
 
 
 LOADER_HYPPO, LOADER_FLOPPY, LOADER_KERNAL = 0, 1, 2
 
 
-def loader(elf):
+def loader(found):
     """The loader the program's files recorded, or None without one record."""
-    found = layouts(elf)
     return next(iter(found))[32] if len(found) == 1 else None

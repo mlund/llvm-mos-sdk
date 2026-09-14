@@ -6,16 +6,8 @@
 // Bank loader for MAPPER_LOADER_FLOPPY: every non-empty bank off the mounted
 // D81, as BANK1-BANKF, with mega65_d81_load().
 
-#define __MAPPER_NO_TABLES
-#include <mapper.h>
+#include "_mapper.h"
 #include <mega65.h>
-
-extern const unsigned char __bank_used[15];
-extern const unsigned char __bank_megabyte[16];
-extern const unsigned char __bank_addr_mid[16];
-extern const unsigned char __bank_addr_page[16];
-
-void __load_banks_floppy(void);
 
 // In .bank_0: it runs only at startup, with bank 0 mapped, so the window holds
 // it. mega65_d81_load() is fixed code, callable at any time.

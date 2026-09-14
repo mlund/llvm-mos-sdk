@@ -31,10 +31,6 @@ KERNAL_LOAD_ADDRESS = 0x2001
 # KERNAL LOAD with SA=0 discards this header and uses our address.
 PRG_HEADER = b"\x00\x20"
 
-# Banks 1-9 take a decimal digit, 10-15 a hex letter, matching the filename
-# load-banks-kernal.S builds.
-SUFFIXES = "123456789abcdef"
-
 # Hyppo takes names up to 63 characters, and FAT rejects these outright.
 NAME_MAX = 63
 FORBIDDEN = set('"*/:<>?\\|')
@@ -67,7 +63,7 @@ def write_kernal(a, outdir, image, sym, main_size):
     (outdir / f"{a.basename}-main.prg").write_bytes(main_prg)
     disk = main_disk(a, main_prg)
     for i, data in bank_image.banks(image, sym, main_size):
-        suffix = SUFFIXES[i - 1]
+        suffix = f"{i:x}"  # as load-banks-kernal.S names it
         bank = PRG_HEADER + data
         (outdir / f"{a.basename}-BANK{suffix.upper()}").write_bytes(bank)
         disk.add_file(f"bank{suffix}", bank)
@@ -109,7 +105,8 @@ def write_card(a, outdir, image, sym, main_size, kernal, floppy):
             emit(src.name, src.read_bytes())
     if disk:
         name = card_name(f"{a.basename}.d81")
-        written.add(name)
+        if name in written:
+            fail(f"{name} written twice")
         disk.save(str(outdir / name))
 
 
@@ -135,16 +132,14 @@ def main():
     load = int.from_bytes(image[:2], "little")
     kernal = load == KERNAL_LOAD_ADDRESS
 
-    problems = bank_image.check_layout(elf, kernal)
+    found = bank_image.layouts(elf)
+    problems = bank_image.check_layout(
+        found, sym.get("__bank_count", bank_image.BANKS))
     if problems:
         fail("; ".join(problems))
-    loader = bank_image.loader(elf)
+    loader = bank_image.loader(found)
     if loader is None:
         loader = bank_image.LOADER_KERNAL if kernal else bank_image.LOADER_HYPPO
-    # Only mega65-banked has KERNAL LOAD, and only the other the F011 loader.
-    if loader == (bank_image.LOADER_FLOPPY if kernal
-                  else bank_image.LOADER_KERNAL):
-        fail("the image's platform and its recorded loader disagree")
     for name in ("__ram_fixed_start", "__ram_fixed_size", "__bank_window_size"):
         if not sym.get(name):
             fail(f"{name} not found in {elf}")

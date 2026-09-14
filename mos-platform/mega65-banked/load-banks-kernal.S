@@ -10,11 +10,7 @@
 ; out, so each load maps it back in. Everything this reads is read before then,
 ; and the code itself lies below $C000 in .text.kernal_load.
 
-SETBNK = $FF6B
-SETLFS = $FFBA
-SETNAM = $FFBD
-KLOAD  = $FFD5
-CLRCHN = $FFCC
+#include <cbm_kernal.inc>
 
 VIC_KEY   = $D02F
 VIC_CTRLA = $D030
@@ -27,7 +23,6 @@ __load_banks:
     ldx #0
 .Lnext:
     phx
-    txa
     jsr load_bank
     plx
     inx
@@ -35,10 +30,9 @@ __load_banks:
     bne .Lnext
     rts
 
-; Loads bank A+1 if the link put anything in it. Clobbers A, X, Y and flags;
-; returns Z = 0.
+; Loads bank X+1 if the link put anything in it. Clobbers A, X, Y and flags;
+; leaves the Z register 0.
 load_bank:
-    tax
     lda __bank_used,x
     beq .Lskip
     phx
@@ -91,7 +85,7 @@ load_bank:
     tay                         ; address[15:8]
     lda #0                      ; load, not verify
     tax                         ; address[7:0]
-    jsr KLOAD
+    jsr LOAD
     php                         ; C set: failed
 
     ; Or CHROUT stays on the disk, and a program that never calls SETBNK
@@ -109,7 +103,7 @@ load_bank:
     ldz #$0f
     map
     ldx #$00
-    ldz #$83
+    ldz #__bank_maphi_sel
     map
     eom
     ldz #$00
