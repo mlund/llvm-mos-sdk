@@ -66,7 +66,7 @@ def main(argv=None):
     prg_name = "autoboot.c65" if not a.no_autoboot else disk_name.lower()
     disk.add_file(prg_name, main_prg.read_bytes())
 
-    for i, data in bank_image.banks(image, sym, main_size, sym["__bank_window_size"]):
+    for i, data in bank_image.banks(image, sym, main_size):
         suffix = SUFFIXES[i - 1]
         bank = outdir / f"{a.basename}-BANK{suffix.upper()}"
         bank.write_bytes(PRG_HEADER + data)

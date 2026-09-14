@@ -183,6 +183,10 @@ mos-mega65-banked-clang -DMAPPER_BANK_2=0x8040800 -Os -o game.prg game.c
 clears the freed top of the window before your code runs, so the soft stack
 moves there and leaves the fixed region to code and data.
 
+`MAPPER_BANK_n_KB` makes one bank smaller than the window. While it is mapped,
+the rest of the window is the window's own RAM: `WINDOW_TAIL` places
+uninitialised data there, readable with bank 0 or a smallest bank mapped.
+
 `<mapper.h>` checks each address at compile time; the converter rejects
 overlapping banks and files that disagree. A bank's address high byte must not be `$00`, and the C65 ROMs at
 `$20000-$3FFFF` stay write-protected.

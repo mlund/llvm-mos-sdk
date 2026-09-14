@@ -30,17 +30,20 @@ def symbols(elf):
     return {m[1]: int(m[0], 16) for m in re.findall(r"^([0-9a-fA-F]+) A (\S+)$", out, re.M)}
 
 
-def banks(image, sym, main_size, slot):
+def banks(image, sym, main_size):
     """(bank, bytes) for each bank the link put something in.
 
     Only the used part of a slot is returned, so three banks do not carry
-    twelve empty ones.
+    twelve empty ones. Each slot is its bank's own length.
     """
+    start = main_size
+    window, count = sym["__bank_window_size"], sym.get("__bank_count", BANKS)
     for i in range(1, BANKS + 1):
         used = sym.get(f"__bank_{i}_size", 0)
         if used:
-            start = main_size + (i - 1) * slot
             yield i, image[start : start + used]
+        if i <= count:
+            start += sym.get(f"__bank_{i}_length", window)
 
 
 def section(elf, name):
@@ -59,17 +62,25 @@ def section(elf, name):
 
 
 def layouts(elf):
-    """The distinct layouts the program's files recorded: 16 bases, then KB."""
+    """The distinct layouts the program's files recorded.
+
+    Each is 16 bases, the window in KB, then banks 1-15 in KB.
+    """
     data = section(elf, ".mapper_layout")
-    return {struct.unpack_from("<17I", data, i) for i in range(0, len(data) // 68 * 68, 68)}
+    return {struct.unpack_from("<32I", data, i) for i in range(0, len(data) // 128 * 128, 128)}
 
 
-def layout_problems(bases, kernal, window):
+def split_layout(record):
+    """(bases, sizes in bytes), both indexed by bank; bank 0 is the window."""
+    return record[:16], [kb * 1024 for kb in record[16:]]
+
+
+def layout_problems(bases, kernal, sizes):
     """Why a layout cannot work, or [] if it can."""
     problems = []
     reserved = dict(RESERVED, **(KERNAL_RESERVED if kernal else {}))
     for n in range(1, BANKS + 1):
-        base, end = bases[n], bases[n] + window
+        base, end = bases[n], bases[n] + sizes[n]
         if base & 0xFF:
             problems.append(f"bank {n} at ${base:07X} is not page-aligned")
         if not (end <= 0x60000 or (0x8000000 <= base and end <= 0x8800000)):
@@ -80,7 +91,7 @@ def layout_problems(bases, kernal, window):
         if kernal and not base & 0xFF00:
             problems.append(f"bank {n} at ${base:07X} has a $00 high byte, which KERNAL LOAD corrupts")
         for m in range(n + 1, BANKS + 1):
-            if base < bases[m] + window and bases[m] < end:
+            if base < bases[m] + sizes[m] and bases[m] < end:
                 problems.append(f"banks {n} and {m} overlap")
     return problems
 
@@ -92,5 +103,5 @@ def check_layout(elf, kernal):
         return ["files disagree on the bank layout; define MAPPER_BANK_n the same in every file"]
     if not found:
         return []
-    *bases, kb = next(iter(found))
-    return layout_problems(bases, kernal, kb * 1024)
+    bases, sizes = split_layout(next(iter(found)))
+    return layout_problems(bases, kernal, sizes)

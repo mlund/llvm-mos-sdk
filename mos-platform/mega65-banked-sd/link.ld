@@ -82,6 +82,10 @@ SECTIONS {
     INCLUDE c.ld
 }
 
+/* Bank 0 fills the window itself, so it must stop where WINDOW_TAIL starts. */
+ASSERT(ADDR(.bank_0) + SIZEOF(.bank_0) <= __window_tail_start,
+       "mega65-banked-sd: bank 0 overlaps WINDOW_TAIL")
+
 /* Bytes of ram_fixed that carry content; the rest is soft stack. */
 __ram_fixed_size = LOADADDR(.data) + SIZEOF(.data) - ORIGIN(ram_fixed);
 

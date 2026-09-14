@@ -26,21 +26,21 @@ import bank_image  # noqa: E402
 def bank_rows(size, banks=bank_image.BANKS):
     """(bank, used, free) for each bank the link put something in.
 
-    A slot is the window's length, so free is what is left before the next
+    A slot is the bank's own length, so free is what is left before the next
     thing added to that bank stops linking.
     """
     window = size["__bank_window_size"]
     for i in range(1, banks + 1):
         used = size.get(f"__bank_{i}_size", 0)
         if used:
-            yield i, used, window - used
+            yield i, used, size.get(f"__bank_{i}_length", window) - used
 
 
 def print_report(size):
     """How full each bank is, while there is still room to act on it."""
     print("bank     used     free   fill")
     for bank, used, free in bank_rows(size):
-        pct = 100 * used // size["__bank_window_size"]
+        pct = 100 * used // (used + free)
         print(f"{bank:4d} {used:8d} {free:8d}   {pct:3d}%")
 
 
@@ -113,7 +113,7 @@ def main():
 
     # Raw, no PRG header: Hyppo loadfile places the whole file at the address
     # it is given.
-    for i, data in bank_image.banks(image, size, main_size, window):
+    for i, data in bank_image.banks(image, size, main_size):
         emit(f"BANK{i:X}.BIN", data)
 
     for asset in a.asset:

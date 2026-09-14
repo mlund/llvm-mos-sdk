@@ -168,7 +168,7 @@ void __bank_load_failed(unsigned char bank);
 
 
 /**
- * @brief Where each bank lives.
+ * @brief Where each bank lives, and how big it is.
  *
  * BANK_PHYS_BASE_n is MAPPER_BANK_n where the program defines it, else the
  * platform default. Define overrides the same way in every file, before
@@ -176,7 +176,8 @@ void __bank_load_failed(unsigned char bank);
  *
  *     -DMAPPER_BANK_13=0x8010000
  *
- * MAPPER_WINDOW_KB (24, 16 or 8) sizes the window, and with it every bank.
+ * MAPPER_WINDOW_KB (24, 16 or 8) sizes the window. MAPPER_BANK_n_KB makes bank
+ * n smaller than that; BANK_SIZE_n is the result in bytes.
  *
  * Each file including <mapper.h> emits the tables the bank switch and the
  * loaders read, as identical weak definitions, and records the layout it saw;
@@ -193,86 +194,188 @@ void __bank_load_failed(unsigned char bank);
 #ifndef MAPPER_WINDOW_KB
 #define MAPPER_WINDOW_KB 24
 #endif
-#define _MAPPER_WINDOW (MAPPER_WINDOW_KB * _MAPPER_UL(1024))
 
 #define BANK_PHYS_BASE_0 _MAPPER_UL(0x02000)
+#define _MAPPER_KB_0 MAPPER_WINDOW_KB
 #ifdef MAPPER_BANK_1
 #define BANK_PHYS_BASE_1 (MAPPER_BANK_1)
 #else
 #define BANK_PHYS_BASE_1 _MAPPER_DEFAULT_BANK_1
+#endif
+#ifdef MAPPER_BANK_1_KB
+#define _MAPPER_KB_1 (MAPPER_BANK_1_KB)
+#else
+#define _MAPPER_KB_1 MAPPER_WINDOW_KB
 #endif
 #ifdef MAPPER_BANK_2
 #define BANK_PHYS_BASE_2 (MAPPER_BANK_2)
 #else
 #define BANK_PHYS_BASE_2 _MAPPER_DEFAULT_BANK_2
 #endif
+#ifdef MAPPER_BANK_2_KB
+#define _MAPPER_KB_2 (MAPPER_BANK_2_KB)
+#else
+#define _MAPPER_KB_2 MAPPER_WINDOW_KB
+#endif
 #ifdef MAPPER_BANK_3
 #define BANK_PHYS_BASE_3 (MAPPER_BANK_3)
 #else
 #define BANK_PHYS_BASE_3 _MAPPER_DEFAULT_BANK_3
+#endif
+#ifdef MAPPER_BANK_3_KB
+#define _MAPPER_KB_3 (MAPPER_BANK_3_KB)
+#else
+#define _MAPPER_KB_3 MAPPER_WINDOW_KB
 #endif
 #ifdef MAPPER_BANK_4
 #define BANK_PHYS_BASE_4 (MAPPER_BANK_4)
 #else
 #define BANK_PHYS_BASE_4 _MAPPER_DEFAULT_BANK_4
 #endif
+#ifdef MAPPER_BANK_4_KB
+#define _MAPPER_KB_4 (MAPPER_BANK_4_KB)
+#else
+#define _MAPPER_KB_4 MAPPER_WINDOW_KB
+#endif
 #ifdef MAPPER_BANK_5
 #define BANK_PHYS_BASE_5 (MAPPER_BANK_5)
 #else
 #define BANK_PHYS_BASE_5 _MAPPER_DEFAULT_BANK_5
+#endif
+#ifdef MAPPER_BANK_5_KB
+#define _MAPPER_KB_5 (MAPPER_BANK_5_KB)
+#else
+#define _MAPPER_KB_5 MAPPER_WINDOW_KB
 #endif
 #ifdef MAPPER_BANK_6
 #define BANK_PHYS_BASE_6 (MAPPER_BANK_6)
 #else
 #define BANK_PHYS_BASE_6 _MAPPER_DEFAULT_BANK_6
 #endif
+#ifdef MAPPER_BANK_6_KB
+#define _MAPPER_KB_6 (MAPPER_BANK_6_KB)
+#else
+#define _MAPPER_KB_6 MAPPER_WINDOW_KB
+#endif
 #ifdef MAPPER_BANK_7
 #define BANK_PHYS_BASE_7 (MAPPER_BANK_7)
 #else
 #define BANK_PHYS_BASE_7 _MAPPER_DEFAULT_BANK_7
+#endif
+#ifdef MAPPER_BANK_7_KB
+#define _MAPPER_KB_7 (MAPPER_BANK_7_KB)
+#else
+#define _MAPPER_KB_7 MAPPER_WINDOW_KB
 #endif
 #ifdef MAPPER_BANK_8
 #define BANK_PHYS_BASE_8 (MAPPER_BANK_8)
 #else
 #define BANK_PHYS_BASE_8 _MAPPER_DEFAULT_BANK_8
 #endif
+#ifdef MAPPER_BANK_8_KB
+#define _MAPPER_KB_8 (MAPPER_BANK_8_KB)
+#else
+#define _MAPPER_KB_8 MAPPER_WINDOW_KB
+#endif
 #ifdef MAPPER_BANK_9
 #define BANK_PHYS_BASE_9 (MAPPER_BANK_9)
 #else
 #define BANK_PHYS_BASE_9 _MAPPER_DEFAULT_BANK_9
+#endif
+#ifdef MAPPER_BANK_9_KB
+#define _MAPPER_KB_9 (MAPPER_BANK_9_KB)
+#else
+#define _MAPPER_KB_9 MAPPER_WINDOW_KB
 #endif
 #ifdef MAPPER_BANK_10
 #define BANK_PHYS_BASE_10 (MAPPER_BANK_10)
 #else
 #define BANK_PHYS_BASE_10 _MAPPER_DEFAULT_BANK_10
 #endif
+#ifdef MAPPER_BANK_10_KB
+#define _MAPPER_KB_10 (MAPPER_BANK_10_KB)
+#else
+#define _MAPPER_KB_10 MAPPER_WINDOW_KB
+#endif
 #ifdef MAPPER_BANK_11
 #define BANK_PHYS_BASE_11 (MAPPER_BANK_11)
 #else
 #define BANK_PHYS_BASE_11 _MAPPER_DEFAULT_BANK_11
+#endif
+#ifdef MAPPER_BANK_11_KB
+#define _MAPPER_KB_11 (MAPPER_BANK_11_KB)
+#else
+#define _MAPPER_KB_11 MAPPER_WINDOW_KB
 #endif
 #ifdef MAPPER_BANK_12
 #define BANK_PHYS_BASE_12 (MAPPER_BANK_12)
 #else
 #define BANK_PHYS_BASE_12 _MAPPER_DEFAULT_BANK_12
 #endif
+#ifdef MAPPER_BANK_12_KB
+#define _MAPPER_KB_12 (MAPPER_BANK_12_KB)
+#else
+#define _MAPPER_KB_12 MAPPER_WINDOW_KB
+#endif
 #ifdef MAPPER_BANK_13
 #define BANK_PHYS_BASE_13 (MAPPER_BANK_13)
 #else
 #define BANK_PHYS_BASE_13 _MAPPER_DEFAULT_BANK_13
+#endif
+#ifdef MAPPER_BANK_13_KB
+#define _MAPPER_KB_13 (MAPPER_BANK_13_KB)
+#else
+#define _MAPPER_KB_13 MAPPER_WINDOW_KB
 #endif
 #ifdef MAPPER_BANK_14
 #define BANK_PHYS_BASE_14 (MAPPER_BANK_14)
 #else
 #define BANK_PHYS_BASE_14 _MAPPER_DEFAULT_BANK_14
 #endif
+#ifdef MAPPER_BANK_14_KB
+#define _MAPPER_KB_14 (MAPPER_BANK_14_KB)
+#else
+#define _MAPPER_KB_14 MAPPER_WINDOW_KB
+#endif
 #ifdef MAPPER_BANK_15
 #define BANK_PHYS_BASE_15 (MAPPER_BANK_15)
 #else
 #define BANK_PHYS_BASE_15 _MAPPER_DEFAULT_BANK_15
 #endif
+#ifdef MAPPER_BANK_15_KB
+#define _MAPPER_KB_15 (MAPPER_BANK_15_KB)
+#else
+#define _MAPPER_KB_15 MAPPER_WINDOW_KB
+#endif
+
+#define BANK_SIZE_0 (_MAPPER_KB_0 * _MAPPER_UL(1024))
+#define BANK_SIZE_1 (_MAPPER_KB_1 * _MAPPER_UL(1024))
+#define BANK_SIZE_2 (_MAPPER_KB_2 * _MAPPER_UL(1024))
+#define BANK_SIZE_3 (_MAPPER_KB_3 * _MAPPER_UL(1024))
+#define BANK_SIZE_4 (_MAPPER_KB_4 * _MAPPER_UL(1024))
+#define BANK_SIZE_5 (_MAPPER_KB_5 * _MAPPER_UL(1024))
+#define BANK_SIZE_6 (_MAPPER_KB_6 * _MAPPER_UL(1024))
+#define BANK_SIZE_7 (_MAPPER_KB_7 * _MAPPER_UL(1024))
+#define BANK_SIZE_8 (_MAPPER_KB_8 * _MAPPER_UL(1024))
+#define BANK_SIZE_9 (_MAPPER_KB_9 * _MAPPER_UL(1024))
+#define BANK_SIZE_10 (_MAPPER_KB_10 * _MAPPER_UL(1024))
+#define BANK_SIZE_11 (_MAPPER_KB_11 * _MAPPER_UL(1024))
+#define BANK_SIZE_12 (_MAPPER_KB_12 * _MAPPER_UL(1024))
+#define BANK_SIZE_13 (_MAPPER_KB_13 * _MAPPER_UL(1024))
+#define BANK_SIZE_14 (_MAPPER_KB_14 * _MAPPER_UL(1024))
+#define BANK_SIZE_15 (_MAPPER_KB_15 * _MAPPER_UL(1024))
 
 #ifndef __ASSEMBLER__
+
+/**
+ * @brief Place uninitialised data at the top of the window, above the smallest
+ * bank.
+ *
+ * Those bytes are the window's own RAM: readable while bank 0 or a smallest
+ * bank is mapped, and covered by any larger bank. Without a bank smaller than
+ * MAPPER_WINDOW_KB there is no room, and using it fails to link.
+ */
+#define WINDOW_TAIL __attribute__((section(".window_tail")))
 
 #ifdef __cplusplus
 #define _MAPPER_ASSERT(c, m) static_assert(c, m)
@@ -282,14 +385,22 @@ void __bank_load_failed(unsigned char bank);
 #define _MAPPER_EXTERN
 #endif
 
-/* MAP offsets are page-granular, and a window must fit in chip RAM, which
- * ends at $60000, or in attic RAM. */
+#define _MAPPER_VALID_KB(kb) ((kb) == 24 || (kb) == 16 || (kb) == 8)
+_MAPPER_ASSERT(_MAPPER_VALID_KB(MAPPER_WINDOW_KB),
+               "MAPPER_WINDOW_KB must be 24, 16 or 8");
+
+/* MAP offsets are page-granular, and a bank must fit in chip RAM, which ends
+ * at $60000, or in attic RAM. */
 #define _MAPPER_CHECK(n)                                                       \
+  _MAPPER_ASSERT(_MAPPER_VALID_KB(_MAPPER_KB_##n) &&                           \
+                     _MAPPER_KB_##n <= MAPPER_WINDOW_KB,                       \
+                 "MAPPER_BANK_" #n "_KB must be 24, 16 or 8, and at most "     \
+                 "MAPPER_WINDOW_KB");                                          \
   _MAPPER_ASSERT((BANK_PHYS_BASE_##n & 0xFF) == 0,                             \
                  "MAPPER_BANK_" #n " must be page-aligned");                   \
-  _MAPPER_ASSERT(BANK_PHYS_BASE_##n + _MAPPER_WINDOW <= 0x60000ul ||                 \
+  _MAPPER_ASSERT(BANK_PHYS_BASE_##n + BANK_SIZE_##n <= 0x60000ul ||            \
                      (BANK_PHYS_BASE_##n >= 0x8000000ul &&                     \
-                      BANK_PHYS_BASE_##n + _MAPPER_WINDOW <= 0x8800000ul),           \
+                      BANK_PHYS_BASE_##n + BANK_SIZE_##n <= 0x8800000ul),      \
                  "MAPPER_BANK_" #n " must lie below $60000 or in attic RAM");  \
   _MAPPER_PLATFORM_CHECK(n)
 _MAPPER_CHECK(1)
@@ -307,54 +418,97 @@ _MAPPER_CHECK(12)
 _MAPPER_CHECK(13)
 _MAPPER_CHECK(14)
 _MAPPER_CHECK(15)
-_MAPPER_ASSERT(MAPPER_WINDOW_KB == 24 || MAPPER_WINDOW_KB == 16 ||
-                   MAPPER_WINDOW_KB == 8,
-               "MAPPER_WINDOW_KB must be 24, 16 or 8");
 
 #ifndef __MAPPER_NO_TABLES
-#define _MAPPER_OFF(n) (((BANK_PHYS_BASE_##n & 0xFFFFFul) - 0x2000ul) & 0xFFFFFul)
+#define _MAPPER_OFF(n)                                                         \
+  (((BANK_PHYS_BASE_##n & 0xFFFFFul) - 0x2000ul) & 0xFFFFFul)
 #define _MAPPER_OFFSET_LO(n) (unsigned char)(n ? _MAPPER_OFF(n) >> 8 : 0)
 /* MAPLO selects 8 KB blocks from $2000: 1-3, 1-2 or just 1. */
-#define _MAPPER_SELECT                                                         \
-  (MAPPER_WINDOW_KB == 24 ? 0xE0 : MAPPER_WINDOW_KB == 16 ? 0x60 : 0x20)
-#define _MAPPER_MAPLO_SEL(n) (unsigned char)(n ? _MAPPER_SELECT | _MAPPER_OFF(n) >> 16 : 0)
+#define _MAPPER_SELECT(kb) ((kb) == 24 ? 0xE0 : (kb) == 16 ? 0x60 : 0x20)
+#define _MAPPER_MAPLO_SEL(n)                                                   \
+  (unsigned char)(n ? _MAPPER_SELECT(_MAPPER_KB_##n) | _MAPPER_OFF(n) >> 16 : 0)
 #define _MAPPER_MEGABYTE(n) (unsigned char)(BANK_PHYS_BASE_##n >> 20)
 #define _MAPPER_ADDR_MID(n) (unsigned char)(BANK_PHYS_BASE_##n >> 16)
 #define _MAPPER_ADDR_PAGE(n) (unsigned char)(BANK_PHYS_BASE_##n >> 8)
-#define _MAPPER_TABLE __attribute__((weak, used, section(".rodata.bank_tables")))
+#define _MAPPER_TABLE                                                          \
+  __attribute__((weak, used, section(".rodata.bank_tables")))
+
+/* The linker reads each size off a marker's alignment (8 KB as 2, 16 KB as 4,
+ * 24 KB as 8), the one section property that combines alike with LTO and
+ * without. */
+#define _MAPPER_ALIGN(kb) ((kb) == 24 ? 8 : (kb) / 4)
+#define _MAPPER_MARKER(name, sect, kb)                                         \
+  __attribute__((weak, used, section(sect), aligned(_MAPPER_ALIGN(kb))))       \
+  _MAPPER_EXTERN const unsigned char name = 0;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-_MAPPER_TABLE _MAPPER_EXTERN const unsigned char __bank_offset_lo[16] =
-    {_MAPPER_OFFSET_LO(0), _MAPPER_OFFSET_LO(1), _MAPPER_OFFSET_LO(2), _MAPPER_OFFSET_LO(3), _MAPPER_OFFSET_LO(4), _MAPPER_OFFSET_LO(5), _MAPPER_OFFSET_LO(6), _MAPPER_OFFSET_LO(7), _MAPPER_OFFSET_LO(8), _MAPPER_OFFSET_LO(9), _MAPPER_OFFSET_LO(10), _MAPPER_OFFSET_LO(11), _MAPPER_OFFSET_LO(12), _MAPPER_OFFSET_LO(13), _MAPPER_OFFSET_LO(14), _MAPPER_OFFSET_LO(15)};
-_MAPPER_TABLE _MAPPER_EXTERN const unsigned char __bank_maplo_sel[16] =
-    {_MAPPER_MAPLO_SEL(0), _MAPPER_MAPLO_SEL(1), _MAPPER_MAPLO_SEL(2), _MAPPER_MAPLO_SEL(3), _MAPPER_MAPLO_SEL(4), _MAPPER_MAPLO_SEL(5), _MAPPER_MAPLO_SEL(6), _MAPPER_MAPLO_SEL(7), _MAPPER_MAPLO_SEL(8), _MAPPER_MAPLO_SEL(9), _MAPPER_MAPLO_SEL(10), _MAPPER_MAPLO_SEL(11), _MAPPER_MAPLO_SEL(12), _MAPPER_MAPLO_SEL(13), _MAPPER_MAPLO_SEL(14), _MAPPER_MAPLO_SEL(15)};
-_MAPPER_TABLE _MAPPER_EXTERN const unsigned char __bank_megabyte[16] =
-    {_MAPPER_MEGABYTE(0), _MAPPER_MEGABYTE(1), _MAPPER_MEGABYTE(2), _MAPPER_MEGABYTE(3), _MAPPER_MEGABYTE(4), _MAPPER_MEGABYTE(5), _MAPPER_MEGABYTE(6), _MAPPER_MEGABYTE(7), _MAPPER_MEGABYTE(8), _MAPPER_MEGABYTE(9), _MAPPER_MEGABYTE(10), _MAPPER_MEGABYTE(11), _MAPPER_MEGABYTE(12), _MAPPER_MEGABYTE(13), _MAPPER_MEGABYTE(14), _MAPPER_MEGABYTE(15)};
-_MAPPER_TABLE _MAPPER_EXTERN const unsigned char __bank_addr_mid[16] =
-    {_MAPPER_ADDR_MID(0), _MAPPER_ADDR_MID(1), _MAPPER_ADDR_MID(2), _MAPPER_ADDR_MID(3), _MAPPER_ADDR_MID(4), _MAPPER_ADDR_MID(5), _MAPPER_ADDR_MID(6), _MAPPER_ADDR_MID(7), _MAPPER_ADDR_MID(8), _MAPPER_ADDR_MID(9), _MAPPER_ADDR_MID(10), _MAPPER_ADDR_MID(11), _MAPPER_ADDR_MID(12), _MAPPER_ADDR_MID(13), _MAPPER_ADDR_MID(14), _MAPPER_ADDR_MID(15)};
-_MAPPER_TABLE _MAPPER_EXTERN const unsigned char __bank_addr_page[16] =
-    {_MAPPER_ADDR_PAGE(0), _MAPPER_ADDR_PAGE(1), _MAPPER_ADDR_PAGE(2), _MAPPER_ADDR_PAGE(3), _MAPPER_ADDR_PAGE(4), _MAPPER_ADDR_PAGE(5), _MAPPER_ADDR_PAGE(6), _MAPPER_ADDR_PAGE(7), _MAPPER_ADDR_PAGE(8), _MAPPER_ADDR_PAGE(9), _MAPPER_ADDR_PAGE(10), _MAPPER_ADDR_PAGE(11), _MAPPER_ADDR_PAGE(12), _MAPPER_ADDR_PAGE(13), _MAPPER_ADDR_PAGE(14), _MAPPER_ADDR_PAGE(15)};
-#ifdef __cplusplus
-}
-#endif
-
-/* The linker reads the window size off this marker's alignment, the one section
- * property that combines alike with LTO and without. */
-#ifdef __cplusplus
-extern "C" {
-#endif
-__attribute__((weak, used, section(".mapper_window"),
-               aligned(MAPPER_WINDOW_KB == 24 ? 8 : MAPPER_WINDOW_KB / 4)))
-_MAPPER_EXTERN const unsigned char __bank_window_marker = 0;
+_MAPPER_TABLE _MAPPER_EXTERN const unsigned char __bank_offset_lo[16] = {
+    _MAPPER_OFFSET_LO(0), _MAPPER_OFFSET_LO(1), _MAPPER_OFFSET_LO(2),
+    _MAPPER_OFFSET_LO(3), _MAPPER_OFFSET_LO(4), _MAPPER_OFFSET_LO(5),
+    _MAPPER_OFFSET_LO(6), _MAPPER_OFFSET_LO(7), _MAPPER_OFFSET_LO(8),
+    _MAPPER_OFFSET_LO(9), _MAPPER_OFFSET_LO(10), _MAPPER_OFFSET_LO(11),
+    _MAPPER_OFFSET_LO(12), _MAPPER_OFFSET_LO(13), _MAPPER_OFFSET_LO(14),
+    _MAPPER_OFFSET_LO(15)};
+_MAPPER_TABLE _MAPPER_EXTERN const unsigned char __bank_maplo_sel[16] = {
+    _MAPPER_MAPLO_SEL(0), _MAPPER_MAPLO_SEL(1), _MAPPER_MAPLO_SEL(2),
+    _MAPPER_MAPLO_SEL(3), _MAPPER_MAPLO_SEL(4), _MAPPER_MAPLO_SEL(5),
+    _MAPPER_MAPLO_SEL(6), _MAPPER_MAPLO_SEL(7), _MAPPER_MAPLO_SEL(8),
+    _MAPPER_MAPLO_SEL(9), _MAPPER_MAPLO_SEL(10), _MAPPER_MAPLO_SEL(11),
+    _MAPPER_MAPLO_SEL(12), _MAPPER_MAPLO_SEL(13), _MAPPER_MAPLO_SEL(14),
+    _MAPPER_MAPLO_SEL(15)};
+_MAPPER_TABLE _MAPPER_EXTERN const unsigned char __bank_megabyte[16] = {
+    _MAPPER_MEGABYTE(0), _MAPPER_MEGABYTE(1), _MAPPER_MEGABYTE(2),
+    _MAPPER_MEGABYTE(3), _MAPPER_MEGABYTE(4), _MAPPER_MEGABYTE(5),
+    _MAPPER_MEGABYTE(6), _MAPPER_MEGABYTE(7), _MAPPER_MEGABYTE(8),
+    _MAPPER_MEGABYTE(9), _MAPPER_MEGABYTE(10), _MAPPER_MEGABYTE(11),
+    _MAPPER_MEGABYTE(12), _MAPPER_MEGABYTE(13), _MAPPER_MEGABYTE(14),
+    _MAPPER_MEGABYTE(15)};
+_MAPPER_TABLE _MAPPER_EXTERN const unsigned char __bank_addr_mid[16] = {
+    _MAPPER_ADDR_MID(0), _MAPPER_ADDR_MID(1), _MAPPER_ADDR_MID(2),
+    _MAPPER_ADDR_MID(3), _MAPPER_ADDR_MID(4), _MAPPER_ADDR_MID(5),
+    _MAPPER_ADDR_MID(6), _MAPPER_ADDR_MID(7), _MAPPER_ADDR_MID(8),
+    _MAPPER_ADDR_MID(9), _MAPPER_ADDR_MID(10), _MAPPER_ADDR_MID(11),
+    _MAPPER_ADDR_MID(12), _MAPPER_ADDR_MID(13), _MAPPER_ADDR_MID(14),
+    _MAPPER_ADDR_MID(15)};
+_MAPPER_TABLE _MAPPER_EXTERN const unsigned char __bank_addr_page[16] = {
+    _MAPPER_ADDR_PAGE(0), _MAPPER_ADDR_PAGE(1), _MAPPER_ADDR_PAGE(2),
+    _MAPPER_ADDR_PAGE(3), _MAPPER_ADDR_PAGE(4), _MAPPER_ADDR_PAGE(5),
+    _MAPPER_ADDR_PAGE(6), _MAPPER_ADDR_PAGE(7), _MAPPER_ADDR_PAGE(8),
+    _MAPPER_ADDR_PAGE(9), _MAPPER_ADDR_PAGE(10), _MAPPER_ADDR_PAGE(11),
+    _MAPPER_ADDR_PAGE(12), _MAPPER_ADDR_PAGE(13), _MAPPER_ADDR_PAGE(14),
+    _MAPPER_ADDR_PAGE(15)};
+_MAPPER_MARKER(__bank_window_marker, ".mapper_window", MAPPER_WINDOW_KB)
+_MAPPER_MARKER(__bank_1_marker, ".mapper_bank_1", _MAPPER_KB_1)
+_MAPPER_MARKER(__bank_2_marker, ".mapper_bank_2", _MAPPER_KB_2)
+_MAPPER_MARKER(__bank_3_marker, ".mapper_bank_3", _MAPPER_KB_3)
+_MAPPER_MARKER(__bank_4_marker, ".mapper_bank_4", _MAPPER_KB_4)
+_MAPPER_MARKER(__bank_5_marker, ".mapper_bank_5", _MAPPER_KB_5)
+_MAPPER_MARKER(__bank_6_marker, ".mapper_bank_6", _MAPPER_KB_6)
+_MAPPER_MARKER(__bank_7_marker, ".mapper_bank_7", _MAPPER_KB_7)
+_MAPPER_MARKER(__bank_8_marker, ".mapper_bank_8", _MAPPER_KB_8)
+_MAPPER_MARKER(__bank_9_marker, ".mapper_bank_9", _MAPPER_KB_9)
+_MAPPER_MARKER(__bank_10_marker, ".mapper_bank_10", _MAPPER_KB_10)
+_MAPPER_MARKER(__bank_11_marker, ".mapper_bank_11", _MAPPER_KB_11)
+_MAPPER_MARKER(__bank_12_marker, ".mapper_bank_12", _MAPPER_KB_12)
+_MAPPER_MARKER(__bank_13_marker, ".mapper_bank_13", _MAPPER_KB_13)
+_MAPPER_MARKER(__bank_14_marker, ".mapper_bank_14", _MAPPER_KB_14)
+_MAPPER_MARKER(__bank_15_marker, ".mapper_bank_15", _MAPPER_KB_15)
 #ifdef __cplusplus
 }
 #endif
 
 __attribute__((used, section(".mapper_layout")))
-static const unsigned long __mapper_layout[17] = {
-    BANK_PHYS_BASE_0, BANK_PHYS_BASE_1, BANK_PHYS_BASE_2, BANK_PHYS_BASE_3, BANK_PHYS_BASE_4, BANK_PHYS_BASE_5, BANK_PHYS_BASE_6, BANK_PHYS_BASE_7, BANK_PHYS_BASE_8, BANK_PHYS_BASE_9, BANK_PHYS_BASE_10, BANK_PHYS_BASE_11, BANK_PHYS_BASE_12, BANK_PHYS_BASE_13, BANK_PHYS_BASE_14, BANK_PHYS_BASE_15, MAPPER_WINDOW_KB};
+static const unsigned long __mapper_layout[32] = {
+    BANK_PHYS_BASE_0, BANK_PHYS_BASE_1, BANK_PHYS_BASE_2, BANK_PHYS_BASE_3,
+    BANK_PHYS_BASE_4, BANK_PHYS_BASE_5, BANK_PHYS_BASE_6, BANK_PHYS_BASE_7,
+    BANK_PHYS_BASE_8, BANK_PHYS_BASE_9, BANK_PHYS_BASE_10, BANK_PHYS_BASE_11,
+    BANK_PHYS_BASE_12, BANK_PHYS_BASE_13, BANK_PHYS_BASE_14, BANK_PHYS_BASE_15,
+    MAPPER_WINDOW_KB, _MAPPER_KB_1, _MAPPER_KB_2, _MAPPER_KB_3,
+    _MAPPER_KB_4, _MAPPER_KB_5, _MAPPER_KB_6, _MAPPER_KB_7,
+    _MAPPER_KB_8, _MAPPER_KB_9, _MAPPER_KB_10, _MAPPER_KB_11,
+    _MAPPER_KB_12, _MAPPER_KB_13, _MAPPER_KB_14, _MAPPER_KB_15};
 #endif /* __MAPPER_NO_TABLES */
 
 #endif /* __ASSEMBLER__ */

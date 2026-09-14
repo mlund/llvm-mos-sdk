@@ -71,6 +71,7 @@ add_mega65_banked_sd_test(bank-load-failed REMOVE BANK2.BIN)
 add_mega65_banked_sd_test(sd-load-banks)
 add_mega65_banked_sd_test(bank-moved)
 add_mega65_banked_sd_test(bank-window-16)
+add_mega65_banked_sd_test(bank-tail)
 
 # One bank slot plus the window and the fixed region, and nothing for the
 # fourteen banks this program does not declare.

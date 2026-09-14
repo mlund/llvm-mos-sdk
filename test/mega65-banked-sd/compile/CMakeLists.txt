@@ -4,3 +4,4 @@ set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL ON)
 
 add_compile_test(bank-fits)
 add_compile_test(bank-fits-16)
+add_compile_test(bank-tail-fits)

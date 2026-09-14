@@ -191,5 +191,9 @@ mos-mega65-banked-sd-clang -DMAPPER_BANK_2=0x8012000 -Os -o game.prg game.c
 `MAPPER_WINDOW_KB` set to 16 or 8 shrinks every bank to that size and moves the
 fixed region down to meet the window: 28 KB or 36 KB of it.
 
+`MAPPER_BANK_n_KB` makes one bank smaller than the window. While it is mapped,
+the rest of the window is the window's own RAM: `WINDOW_TAIL` places
+uninitialised data there, readable with bank 0 or a smallest bank mapped.
+
 `<mapper.h>` checks each address at compile time; the converter rejects
 overlapping banks and files that disagree.
