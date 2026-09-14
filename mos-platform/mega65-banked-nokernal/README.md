@@ -3,8 +3,11 @@
 A banked MEGA65 target with BASIC and the KERNAL mapped out. Banks and assets
 are plain files on the SD card, loaded through Hyppo.
 
-Use `mega65-banked` instead if the program must load from a D81 image or call
-the KERNAL.
+Use `mega65-banked` instead if the program must load from a D81 image through
+the KERNAL or call the KERNAL.
+
+Using banks, the API, and the rules both banked platforms share are in
+[BANKING.md](../mega65-common/BANKING.md).
 
 ## Memory map
 
@@ -43,76 +46,7 @@ Banks 3-7 sit where the C65 ROMs would be, including the character generator
 at `$2D000`; startup lifts the write protection there. Bring your own charset,
 as there is no longer one to fall back on.
 
-Attic RAM is about ten times slower, out of reach of VIC-IV and audio DMA,
-and absent on boards without it. Use it for tables and logic, not graphics or
-audio.
-
-## Using banks
-
-```c
-#include <mapper.h>
-
-MAPPER_BANK_COUNT(2);          // highest bank used
-
-RODATA_BANK(1) const unsigned char sine[256] = { ... };
-
-CODE_BANK(1) void animate(void) { ... }
-
-int main(void) {
-  banked_call(1, animate);
-}
-```
-
-`MAPPER_BANK_COUNT(n)` keeps banks above `n` out of the image. Without it all
-15 are reserved, nearly all of it empty space read off the card at boot.
-
-`CODE_BANK` supplies `noinline`, without which a function may be inlined back
-into the fixed region leaving the bank empty. `RODATA_BANK` supplies `used`
-and `retain`, without which unreferenced data is discarded.
-
-Keep a table in the same bank as the code reading it, so one call covers both.
-
-### API
-
-| Function | Purpose |
-|---|---|
-| `banked_call(bank, fn)` | Map `bank`, call `fn`, restore the previous bank |
-| `banked_call_r(bank, fn, ...)` | As above, with arguments and a return value |
-| `banked_call_v(bank, fn, ...)` | As above, for `void` functions |
-| `get_bank()` | The currently mapped bank |
-| `set_bank(bank)` | Map a bank directly; prefer `banked_call` |
-
-`bank` is masked to its low four bits, so 0x11 selects bank 1.
-
-```c
-int n = banked_call_r(1, measure, text, len);
-banked_call_v(1, draw, x, y);
-```
-
-The `_r` and `_v` forms switch the bank around a direct call, so the compiler
-marshals the real signature. The caller must be in the fixed region: from a
-bank the switch would unmap it, and the link fails. Up to eight arguments are
-evaluated before the switch.
-
 ## Rules
-
-**Bank data is readable only while its bank is mapped.** Anything shared or
-long-lived belongs in the fixed region.
-
-**Everything not given a bank goes in the 20 KB fixed region** — code, string
-literals, static variables, the soft stack. This is the usual limit a program
-hits first.
-
-**A bank may call another bank.** `banked_call` is in the fixed region, so the
-caller's bank is back before control returns to it.
-
-**Do not pass `-T`.** A supplementary linker script suppresses the platform's
-`OUTPUT_FORMAT`, producing an ELF instead of the flat image the split needs.
-For large buffers, use a fixed address instead:
-
-```c
-static int16_t *const buffer = (int16_t *)0x2100;
-```
 
 **No KERNAL.** The `cbm_k_*` and `mega65_k_*` wrappers link but jump into RAM.
 The `mega65_h_*` Hyppo wrappers are the ones that work.
@@ -137,20 +71,7 @@ reports a success that never happened.
 **Hyppo clears `$D030` bit 0** on every file call, moving colour RAM away from
 `$DC00` if that is where it was.
 
-## Interrupts
-
-Bank switching leaves the interrupt flag alone, so an interrupt can arrive at
-any point, including with a bank mapped. Two rules follow:
-
-- **Handlers live in the fixed region.** That is the default placement, so
-  simply never give a handler `CODE_BANK()`.
-- **Handlers must not touch `$2000-$7FFF`.** A handler runs with whichever
-  bank the interrupted code had mapped and cannot find out which.
-
-Neither is checked. Breaking them reads whichever bank was live, which looks
-like intermittent corruption.
-
-Interrupts start disabled and the vectors at `$FFFA`/`$FFFE` point at an
+**Interrupts start disabled** and the vectors at `$FFFA`/`$FFFE` point at an
 `RTI`. A program that wants them writes its own handler address there and
 clears the flag. See `examples/mega65-banked-nokernal/banked-irq.cc`.
 
@@ -165,35 +86,18 @@ This gives `game_sd/` holding `GAME.PRG`, `BANK1.BIN`…, and `TILES.BIN`. Copy
 the directory onto the card and start `GAME.PRG`; startup loads the banks
 before `main`.
 
-`--report` adds a table of how full each bank is:
-
-```
-bank     used     free   fill
-   1    18402     6174    74%
-   2       44    24532     0%
-```
-
 Names are upper-cased because Hyppo upper-cases the name it is asked for but
 not the one on the card, so a lower-case file can never be found.
 
 ## Changing the bank layout
 
-Define `MAPPER_BANK_n` to move bank *n*, the same in every file: with `-D`, or
-in a header passed with `-include`.
-
 ```sh
-mos-mega65-banked-nokernal-clang -DMAPPER_BANK_2=0x8012000 -Os -o game.prg game.c
+mos-mega65-banked-nokernal-clang -DMAPPER_BANK_2=0x8012000 \
+  -Os -o game.prg game.c
 ```
 
-`MAPPER_WINDOW_KB` set to 16 or 8 shrinks every bank to that size and moves the
-fixed region down to meet the window: 28 KB or 36 KB of it.
-
-`MAPPER_BANK_n_KB` makes one bank smaller than the window. While it is mapped,
-the rest of the window is the window's own RAM: `WINDOW_TAIL` places
-uninitialised data there, readable with bank 0 or a smallest bank mapped.
-
-`<mapper.h>` checks each address at compile time; the converter rejects
-overlapping banks and files that disagree.
+A 16 or 8 KB window moves the fixed region down to meet it: 28 KB or 36 KB of
+it.
 
 ## Loading banks from a D81
 

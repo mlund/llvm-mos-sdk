@@ -7,6 +7,9 @@ than 64 KB. Banks are separate files on a D81 image, loaded at startup, so the
 Use `mega65-banked-nokernal` instead if the program needs neither BASIC nor the
 KERNAL and can load from the SD card.
 
+Using banks, the API, and the rules both banked platforms share are in
+[BANKING.md](../mega65-common/BANKING.md).
+
 ## Memory map
 
 | Range | Contents |
@@ -40,74 +43,7 @@ there loses those bytes on the next disk call.
 Banks 3-15 sit `$800` into a 64 KB page, so KERNAL LOAD never sees a zero
 address high byte, which makes it corrupt the destination.
 
-Attic RAM is about ten times slower, out of reach of VIC-IV and audio DMA,
-and absent on Nexys A7 boards. Use it for tables and logic, not graphics or
-audio.
-
-## Using banks
-
-```c
-#include <mapper.h>
-
-MAPPER_BANK_COUNT(2);          // highest bank used
-
-RODATA_BANK(1) const uint8_t table[256] = { ... };
-
-CODE_BANK(1) void compute(void) { result = table[index]; }
-
-int main(void) {
-  banked_call(1, compute);
-}
-```
-
-`MAPPER_BANK_COUNT(n)` keeps banks above `n` out of the image. Without it all
-15 are reserved, around 414 KB of mostly empty space read off the disk at boot.
-
-`CODE_BANK` supplies `noinline`, without which a function may be inlined back
-into the fixed region leaving the bank empty. `RODATA_BANK` supplies `used`
-and `retain`, without which unreferenced data is discarded.
-
-Keep a table in the same bank as the code reading it, so one call covers both.
-
-### API
-
-| Function | Purpose |
-|---|---|
-| `banked_call(bank, fn)` | Map `bank`, call `fn`, restore the previous bank |
-| `banked_call_r(bank, fn, ...)` | As above, with arguments and a return value |
-| `banked_call_v(bank, fn, ...)` | As above, for `void` functions |
-| `get_bank()` | The currently mapped bank |
-| `set_bank(bank)` | Map a bank directly; prefer `banked_call` |
-
-`bank` is masked to its low four bits, so 0x11 selects bank 1.
-
-The `_r` and `_v` forms switch the bank around a direct call, so the compiler
-marshals the real signature. The caller must be in the fixed region: from a
-bank the switch would unmap it, and the link fails. Up to eight arguments are
-evaluated before the switch.
-
 ## Rules
-
-**`banked_call` takes `void(void)` only.** For arguments or a return value, use
-`banked_call_r` or `banked_call_v`.
-
-**Bank data is readable only while its bank is mapped.** Anything shared or
-long-lived belongs in the fixed region.
-
-**Everything not given a bank goes in the 20 KB fixed region** — code, string
-literals, static variables, the soft stack. This is the usual limit a program
-hits first.
-
-**A bank may call another bank.** `banked_call` is in the fixed region, so the
-caller's bank is back before control returns to it.
-
-**Do not pass `-T`.** A supplementary linker script suppresses the platform's
-`OUTPUT_FORMAT`, producing an ELF instead of the flat image the disk build
-needs. For large buffers, use a fixed address instead:
-
-```c
-static int16_t *const buffer = (int16_t *)0x2100;
-```
 
 **The C65 ROM clears `$200E-$7FFF` before your code runs.** Only the BASIC
 header at `$2001-$200D` survives. The fixed region is untouched.
@@ -152,20 +88,7 @@ VICIV.sdbdrwd_msb &= ~VIC4_HOTREG_MASK;
 
 `VICIV.ctrla`, which carries the ROM banking bits, is not one of them.
 
-## Interrupts
-
-Bank switching leaves the interrupt flag alone, so an interrupt can arrive at
-any point, including with a bank mapped. Two rules follow:
-
-- **Handlers live in the fixed region.** That is the default placement, so
-  simply never give a handler `CODE_BANK()`.
-- **Handlers must not touch `$2000-$7FFF`.** A handler runs with whichever
-  bank the interrupted code had mapped and cannot find out which.
-
-Neither is checked. Breaking them reads whichever bank was live, which looks
-like intermittent corruption.
-
-See `examples/mega65-banked/banked-irq.cc`.
+An interrupt handler beside banked code: `examples/mega65-banked/banked-irq.cc`.
 
 ## Building
 
@@ -179,21 +102,12 @@ the main program as `AUTOBOOT.C65`. Run the disk image, not the `.prg`.
 
 ## Changing the bank layout
 
-Define `MAPPER_BANK_n` to move bank *n*, the same in every file: with `-D`, or
-in a header passed with `-include`.
-
 ```sh
 mos-mega65-banked-clang -DMAPPER_BANK_2=0x8040800 -Os -o game.prg game.c
 ```
 
-`MAPPER_WINDOW_KB` set to 16 or 8 shrinks every bank to that size. Autoboot
-clears the freed top of the window before your code runs, so the soft stack
-moves there and leaves the fixed region to code and data.
+A 16 or 8 KB window moves the soft stack into the freed top, which autoboot
+has already cleared, and leaves the fixed region to code and data.
 
-`MAPPER_BANK_n_KB` makes one bank smaller than the window. While it is mapped,
-the rest of the window is the window's own RAM: `WINDOW_TAIL` places
-uninitialised data there, readable with bank 0 or a smallest bank mapped.
-
-`<mapper.h>` checks each address at compile time; the converter rejects
-overlapping banks and files that disagree. A bank's address high byte must not be `$00`, and the C65 ROMs at
+A bank's address high byte must not be `$00`, and the C65 ROMs at
 `$20000-$3FFFF` stay write-protected.
