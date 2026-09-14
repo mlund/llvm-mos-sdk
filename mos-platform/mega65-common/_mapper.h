@@ -161,27 +161,30 @@ extern const unsigned char __bank_addr_page[16];
 #define _BANKED_CAT(a, b) _BANKED_CAT_(a, b)
 #define _BANKED_CAT_(a, b) a##b
 #define _BANKED_T0()
-#define _BANKED_T1(a) _BANKED_T0() __auto_type _a1 = (a);
-#define _BANKED_T2(a, b) _BANKED_T1(a) __auto_type _a2 = (b);
-#define _BANKED_T3(a, b, c) _BANKED_T2(a, b) __auto_type _a3 = (c);
-#define _BANKED_T4(a, b, c, d) _BANKED_T3(a, b, c) __auto_type _a4 = (d);
-#define _BANKED_T5(a, b, c, d, e) _BANKED_T4(a, b, c, d) __auto_type _a5 = (e);
+#define _BANKED_T1(a) _BANKED_T0() __auto_type __banked_a1 = (a);
+#define _BANKED_T2(a, b) _BANKED_T1(a) __auto_type __banked_a2 = (b);
+#define _BANKED_T3(a, b, c) _BANKED_T2(a, b) __auto_type __banked_a3 = (c);
+#define _BANKED_T4(a, b, c, d)                                                 \
+  _BANKED_T3(a, b, c) __auto_type __banked_a4 = (d);
+#define _BANKED_T5(a, b, c, d, e)                                              \
+  _BANKED_T4(a, b, c, d) __auto_type __banked_a5 = (e);
 #define _BANKED_T6(a, b, c, d, e, f)                                           \
-  _BANKED_T5(a, b, c, d, e) __auto_type _a6 = (f);
+  _BANKED_T5(a, b, c, d, e) __auto_type __banked_a6 = (f);
 #define _BANKED_T7(a, b, c, d, e, f, g)                                        \
-  _BANKED_T6(a, b, c, d, e, f) __auto_type _a7 = (g);
+  _BANKED_T6(a, b, c, d, e, f) __auto_type __banked_a7 = (g);
 #define _BANKED_T8(a, b, c, d, e, f, g, h)                                     \
-  _BANKED_T7(a, b, c, d, e, f, g) __auto_type _a8 = (h);
+  _BANKED_T7(a, b, c, d, e, f, g) __auto_type __banked_a8 = (h);
 #define _BANKED_A0()
-#define _BANKED_A1(a) _a1
-#define _BANKED_A2(a, b) _a1, _a2
-#define _BANKED_A3(a, b, c) _a1, _a2, _a3
-#define _BANKED_A4(a, b, c, d) _a1, _a2, _a3, _a4
-#define _BANKED_A5(a, b, c, d, e) _a1, _a2, _a3, _a4, _a5
-#define _BANKED_A6(a, b, c, d, e, f) _a1, _a2, _a3, _a4, _a5, _a6
-#define _BANKED_A7(a, b, c, d, e, f, g) _a1, _a2, _a3, _a4, _a5, _a6, _a7
+#define _BANKED_A1(a) __banked_a1
+#define _BANKED_A2(a, b) _BANKED_A1(a), __banked_a2
+#define _BANKED_A3(a, b, c) _BANKED_A2(a, b), __banked_a3
+#define _BANKED_A4(a, b, c, d) _BANKED_A3(a, b, c), __banked_a4
+#define _BANKED_A5(a, b, c, d, e) _BANKED_A4(a, b, c, d), __banked_a5
+#define _BANKED_A6(a, b, c, d, e, f) _BANKED_A5(a, b, c, d, e), __banked_a6
+#define _BANKED_A7(a, b, c, d, e, f, g)                                        \
+  _BANKED_A6(a, b, c, d, e, f), __banked_a7
 #define _BANKED_A8(a, b, c, d, e, f, g, h)                                     \
-  _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8
+  _BANKED_A7(a, b, c, d, e, f, g), __banked_a8
 #define _BANKED_TEMPS(...)                                                     \
   _BANKED_CAT(_BANKED_T, _BANKED_NARGS(__VA_ARGS__))(__VA_ARGS__)
 #define _BANKED_ARGS(...)                                                      \
@@ -190,18 +193,18 @@ extern const unsigned char __bank_addr_page[16];
 #define banked_call_r(bank, fn, ...)                                           \
   ({                                                                           \
     _BANKED_TEMPS(__VA_ARGS__)                                                 \
-    char _prev_bank = __banked_call_enter(bank);                               \
-    __auto_type _result = (fn)(_BANKED_ARGS(__VA_ARGS__));                     \
-    set_bank(_prev_bank);                                                      \
-    _result;                                                                   \
+    char __banked_prev = __banked_call_enter(bank);                            \
+    __auto_type __banked_result = (fn)(_BANKED_ARGS(__VA_ARGS__));             \
+    set_bank(__banked_prev);                                                   \
+    __banked_result;                                                           \
   })
 
 #define banked_call_v(bank, fn, ...)                                           \
   ({                                                                           \
     _BANKED_TEMPS(__VA_ARGS__)                                                 \
-    char _prev_bank = __banked_call_enter(bank);                               \
+    char __banked_prev = __banked_call_enter(bank);                            \
     (fn)(_BANKED_ARGS(__VA_ARGS__));                                           \
-    set_bank(_prev_bank);                                                      \
+    set_bank(__banked_prev);                                                   \
   })
 
 

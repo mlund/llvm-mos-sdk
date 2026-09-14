@@ -1,4 +1,4 @@
-platform(mega65-banked-nokernal COMPLETE HOSTED PARENT mega65-common)
+platform(mega65-banked-nokernal COMPLETE PARENT mega65-common)
 
 if(NOT CMAKE_CROSSCOMPILING)
   return()

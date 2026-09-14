@@ -24,12 +24,15 @@
 ; untouched, so nothing has to be restored. The MEGA65 Book calls MAP
 ; "similar to SEI", which is wrong here: following it and re-asserting SEI
 ; after EOM would leave interrupts off for good.
+.zeropage _BANK_SHADOW
+
 .section .text.__set_bank_asm,"ax",@progbits
 .globl __set_bank_asm
 __set_bank_asm:
     and #$0f                ; ids past 15 would index off the end of the
                             ; tables and hand junk to MAP, which covers
                             ; $0000-$7FFF and so could move zero page
+    sta _BANK_SHADOW        ; the bank mapped, so get_bank() agrees with MAP
     tax
 
     lda __bank_offset_lo,x

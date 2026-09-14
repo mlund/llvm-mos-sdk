@@ -139,8 +139,9 @@ add_mega65_banked_test(banked-dma-loop)
 add_mega65_banked_sd_test(sd-load-banks)
 add_mega65_banked_no_bank2_test(bank-load-failed)
 # An out-of-range bank id is masked to its low four bits: set_bank(0x11)
-# maps bank 1, rather than indexing past the MAP tables into the MAP registers.
-add_mega65_banked_dump_test(bank-range FB=5A FC=A5)
+# maps bank 1, and get_bank() says so, rather than indexing past the MAP tables
+# into the MAP registers.
+add_mega65_banked_dump_test(bank-range FB=5A FC=01 FD=A5)
 # One declared bank: main image plus a single 24 KB slot, not fifteen -- and
 # the main image carries only the ram_fixed bytes actually used, not the whole
 # 20 KB region. Budget is 24575 (bank 0 window) + 24576 (one bank) + slack.

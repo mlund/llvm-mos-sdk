@@ -20,13 +20,11 @@ banked_call:
     lda _BANK_SHADOW
     pha                     ; on the hardware stack, so nesting is safe
     tya
-    sta _BANK_SHADOW
-    jsr __set_bank_asm
+    jsr __set_bank_asm      ; which updates the shadow
     lda __rc2               ; __call_indir wants the pointer in __rc18:__rc19
     sta __rc18
     lda __rc3
     sta __rc19
     jsr __call_indir
     pla
-    sta _BANK_SHADOW
     jmp __set_bank_asm

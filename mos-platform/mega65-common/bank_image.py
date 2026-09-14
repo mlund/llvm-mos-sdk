@@ -9,9 +9,7 @@ Sizes come from the ELF rather than being restated: getting them out of step
 slices at the wrong offset and the banks load as garbage.
 """
 
-import re
 import struct
-import subprocess
 from pathlib import Path
 
 BANKS = 15
@@ -28,8 +26,8 @@ RESERVED = {
 
 def symbols(elf):
     """The linker-defined absolute symbols, by name."""
-    out = subprocess.run(["nm", str(elf)], capture_output=True, text=True).stdout
-    return {m[1]: int(m[0], 16) for m in re.findall(r"^([0-9a-fA-F]+) A (\S+)$", out, re.M)}
+    table = symbol_table(elf)
+    return {name: value for name, (value, ndx) in table.items() if ndx == SHN_ABS}
 
 
 def banks(image, sym, main_size):
@@ -69,19 +67,51 @@ def print_report(sym):
         print(f"{bank:4d} {used:8d} {free:8d}   {pct:3d}%")
 
 
+# ELF32 constants: the symbol table's section type, and an absolute symbol.
+SHT_SYMTAB = 2
+SHN_ABS = 0xFFF1
+
+
+def _headers(data):
+    """An ELF32 image's section headers, and where its section names start."""
+    (shoff,) = struct.unpack_from("<I", data, 0x20)
+    shentsize, shnum, shstrndx = struct.unpack_from("<HHH", data, 0x2E)
+    headers = [struct.unpack_from("<10I", data, shoff + i * shentsize)
+               for i in range(shnum)]
+    return headers, headers[shstrndx][4]
+
+
+def _string(data, at):
+    return data[at : data.index(b"\0", at)].decode()
+
+
 def section(elf, name):
     """The bytes of an ELF32 section, or b"" if absent."""
     data = Path(elf).read_bytes()
-    (shoff,) = struct.unpack_from("<I", data, 0x20)
-    shentsize, shnum, shstrndx = struct.unpack_from("<HHH", data, 0x2E)
-    header = lambda i: struct.unpack_from("<10I", data, shoff + i * shentsize)
-    strings = header(shstrndx)[4]
-    for i in range(shnum):
-        h = header(i)
-        start = strings + h[0]
-        if data[start : data.index(b"\0", start)] == name.encode():
+    headers, names = _headers(data)
+    for h in headers:
+        if _string(data, names + h[0]) == name:
             return data[h[4] : h[4] + h[5]]
     return b""
+
+
+def symbol_table(elf):
+    """Every named symbol's (value, section index), by name.
+
+    Read here rather than through nm, which an LLVM-MOS install does not ship.
+    """
+    data = Path(elf).read_bytes()
+    headers, _ = _headers(data)
+    table = {}
+    for h in headers:
+        if h[1] != SHT_SYMTAB:
+            continue
+        strings = headers[h[6]][4]
+        for at in range(h[4], h[4] + h[5], 16):
+            name, value, _, _, _, ndx = struct.unpack_from("<IIIBBH", data, at)
+            if name:
+                table[_string(data, strings + name)] = (value, ndx)
+    return table
 
 
 def layouts(elf):

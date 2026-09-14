@@ -10,8 +10,6 @@ recomputes them independently from the recorded bases and compares bytes.
 Usage: check-bank-tables.py IMAGE.prg...  (each beside its .prg.elf)
 """
 
-import re
-import subprocess
 import sys
 from pathlib import Path
 
@@ -43,8 +41,7 @@ def check(prg):
         return [f"{prg}: {len(found)} distinct layouts recorded, expected 1"]
     bases, sizes = bank_image.split_layout(next(iter(found)))
     problems = [f"{prg}: {p}" for p in bank_image.layout_problems(bases, sizes)]
-    out = subprocess.run(["nm", str(elf)], capture_output=True, text=True).stdout
-    addr = {m[2]: int(m[0], 16) for m in re.findall(r"^([0-9a-fA-F]+) (\w) (\S+)$", out, re.M)}
+    addr = {name: value for name, (value, _) in bank_image.symbol_table(elf).items()}
     for name, want in expected(bases, sizes).items():
         if name not in addr:
             problems.append(f"{prg}: {name} not linked")

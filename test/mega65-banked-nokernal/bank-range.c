@@ -6,7 +6,7 @@
 // offset is not confined to the window.
 //
 // The contract is that the id is masked: set_bank(0x11) does what set_bank(1)
-// does. Masking rather than rejecting, because there is no error to return
+// does, and get_bank() then reports 1, through banked_call() too. Masking rather than rejecting, because there is no error to return
 // and a branch would cost more than the AND that avoids it.
 
 #include <mapper.h>
@@ -18,6 +18,9 @@ MAPPER_BANK_COUNT(1);
 // Past the boot code, so bank 0 can be written here too.
 #define WINDOW (*(volatile uint8_t *)0x3000)
 
+static volatile uint8_t seen;
+CODE_BANK(1) static void report(void) { seen = get_bank(); }
+
 int main(void) {
   set_bank(1);
   WINDOW = 0x5a;
@@ -28,9 +31,14 @@ int main(void) {
 
   set_bank(0x11);
   xemu_assert(WINDOW == 0x5a);
+  xemu_assert(get_bank() == 1);
 
   set_bank(0);
   xemu_assert(WINDOW == 0x00);
+
+  banked_call(0x11, report);
+  xemu_assert(seen == 1);
+  xemu_assert(get_bank() == 0);
 
   xemu_exit(0);
 }

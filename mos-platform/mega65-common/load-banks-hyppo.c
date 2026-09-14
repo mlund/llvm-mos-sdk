@@ -34,8 +34,10 @@ __attribute__((section(".bank_0"))) void __load_banks_hyppo(void) {
     // Hyppo upper-cases the name it is asked for but not the one on the card,
     // so a lower-case file can never be found.
     name[4] = bank <= 9 ? '0' + bank : 'A' + (bank - 10);
-    if (mega65_h_setname(name))
+    if (mega65_h_setname(name)) {
       __bank_load_failed(bank);
+      continue;
+    }
 
     if ((megabyte & 0x80) ? mega65_h_loadfile_attic(addr)
                           : mega65_h_loadfile(addr))

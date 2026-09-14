@@ -7,7 +7,8 @@
 // offset is not confined to the banked window.
 //
 // The contract this pins down is that the id is masked to its low four bits:
-// set_bank(0x11) does what set_bank(1) does.  Masking rather than rejecting,
+// set_bank(0x11) does what set_bank(1) does, and get_bank() then reports 1.
+// Masking rather than rejecting,
 // because there is no error to return and a branch would cost more than the
 // AND that avoids it.
 //
@@ -36,9 +37,10 @@ int main(void) {
   // The out-of-range id: low four bits select bank 1.
   set_bank(0x11);
   PROBE[0] = WINDOW;
+  PROBE[1] = get_bank();
 
   set_bank(0);
-  PROBE[1] = 0xA5;
+  PROBE[2] = 0xA5;
 
   xemu_exit(0);
 }
