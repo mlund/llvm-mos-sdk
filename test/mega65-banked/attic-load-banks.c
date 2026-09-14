@@ -1,7 +1,7 @@
 // Test CRT bank loader: verify that attic RAM bank data loaded from D81.
 //
 // Each attic bank section (.bank_8 through .bank_15) contains a known
-// 2-byte signature. The CRT init __load_banks (.init.150) loads BANK8-BANKF
+// 2-byte signature. The CRT init __load_banks (.init.250) loads BANK8-BANKF
 // from the D81 disk via KERNAL 28-bit SETBNK + LOAD. main() switches to
 // each bank and verifies the signature at virtual address $2000 (the banked
 // window start, mapped to attic RAM via MAP with megabyte byte $80).

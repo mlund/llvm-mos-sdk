@@ -211,8 +211,9 @@ void __bank_load_failed(unsigned char bank);
  * MAPPER_WINDOW_KB (24, 16 or 8) sizes the window. MAPPER_BANK_n_KB makes bank
  * n smaller than that; BANK_SIZE_n is the result in bytes.
  *
- * MAPPER_LOADER_FLOPPY loads the banks off the mounted D81 through the F011,
- * where the platform has no KERNAL; the converter then writes a D81.
+ * MAPPER_LOADER_SD loads the banks off the SD card through Hyppo, the default
+ * without the KERNAL. MAPPER_LOADER_FLOPPY, KERNAL-free only, loads them off
+ * the mounted D81 through the F011. The converter writes what the loader reads.
  *
  * Each file including <mapper.h> emits the tables the bank switch and the
  * loaders read, as identical weak definitions, and records the layout it saw;
@@ -230,7 +231,11 @@ void __bank_load_failed(unsigned char bank);
 #define MAPPER_WINDOW_KB 24
 #endif
 
-#ifdef MAPPER_LOADER_FLOPPY
+#if defined(MAPPER_LOADER_SD) && defined(MAPPER_LOADER_FLOPPY)
+#error "define one of MAPPER_LOADER_SD and MAPPER_LOADER_FLOPPY"
+#elif defined(MAPPER_LOADER_SD)
+#define _MAPPER_LOADER_ID 0
+#elif defined(MAPPER_LOADER_FLOPPY)
 #define _MAPPER_LOADER_ID 1
 #else
 #define _MAPPER_LOADER_ID _MAPPER_DEFAULT_LOADER
@@ -543,13 +548,18 @@ _MAPPER_MARKER(__bank_15_marker, ".mapper_bank_15", _MAPPER_KB_15)
 }
 #endif
 
-#ifdef MAPPER_LOADER_FLOPPY
+#if defined(MAPPER_LOADER_SD) || defined(MAPPER_LOADER_FLOPPY)
+#ifdef MAPPER_LOADER_SD
+#define _MAPPER_LOADER_FN __load_banks_hyppo
+#else
+#define _MAPPER_LOADER_FN __load_banks_floppy
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
-void __load_banks_floppy(void);
+void _MAPPER_LOADER_FN(void);
 __attribute__((weak, section(".bank_0")))
-void __load_banks(void) { __load_banks_floppy(); }
+void __load_banks(void) { _MAPPER_LOADER_FN(); }
 #ifdef __cplusplus
 }
 #endif

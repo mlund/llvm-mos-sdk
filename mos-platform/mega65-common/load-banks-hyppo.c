@@ -3,23 +3,22 @@
 // See https://github.com/llvm-mos/llvm-mos-sdk/blob/main/LICENSE for license
 // information.
 
-// The default bank loader: every non-empty bank off the SD card, through
-// Hyppo.
+// Bank loader for the SD card: every non-empty bank, as BANK1.BIN-BANKF.BIN,
+// through Hyppo.
+
+#include "_mapper.h"
+#include <mega65.h>
 
 // Addresses come from the tables the program's own files emit, so a layout it
 // overrides is the one loaded.
-#define __MAPPER_NO_TABLES
-#include <mapper.h>
-#include <mega65.h>
-
 extern const unsigned char __bank_used[15];
 extern const unsigned char __bank_megabyte[16];
 extern const unsigned char __bank_addr_mid[16];
 extern const unsigned char __bank_addr_page[16];
 
-// In .bank_0: it runs only at startup, with bank 0 mapped, so the window holds
-// it and the fixed region stays free.
-__attribute__((weak, section(".bank_0"))) void __load_banks(void) {
+// In .bank_0: it runs only at startup, with bank 0 mapped, so without the
+// KERNAL the window holds it and the fixed region stays free.
+__attribute__((section(".bank_0"))) void __load_banks_hyppo(void) {
   char name[] = "BANK0.BIN";
 
   for (unsigned char i = 0; i < 15; ++i) {

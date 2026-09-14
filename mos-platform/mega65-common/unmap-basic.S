@@ -1,5 +1,5 @@
 ; Switch out the BASIC ROM bank from $A000 to $BFFF.
-; This opens up 45KB of contiguous RAM from $2001-$CFFF.
+; This makes $A000-$CFFF RAM.
 ; KERNAL ROM at $E000-$FFFF and I/O at $D000-$DFFF are still mapped.
 
 

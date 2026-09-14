@@ -9,9 +9,11 @@ The linked image is a 2-byte load address, the window region, the used part of
 ram_fixed, then one slot per declared bank. What is written follows the loader
 the program's files recorded:
 
-  KERNAL LOAD (mega65-banked)   BASE.d81, autobooting, holding bank1-bankf
-  Hyppo (mega65-banked-nokernal)      OUTDIR as the SD card: BASE.PRG, BANKn.BIN
-  F011 (MAPPER_LOADER_FLOPPY)   BASE.PRG, and BASE.D81 holding BANKn and assets
+  mega65-banked                 BASE.d81, autobooting, holding bank1-bankf
+  mega65-banked, SD card        OUTDIR as the card: BASE.D81, autobooting, and
+                                BANKn.BIN
+  mega65-banked-nokernal        OUTDIR as the card: BASE.PRG, BANKn.BIN
+  mega65-banked-nokernal, F011  BASE.PRG, and BASE.D81 holding BANKn and assets
 """
 
 import argparse
@@ -30,7 +32,7 @@ KERNAL_LOAD_ADDRESS = 0x2001
 PRG_HEADER = b"\x00\x20"
 
 # Banks 1-9 take a decimal digit, 10-15 a hex letter, matching the filename
-# __do_kernal_load builds.
+# load-banks-kernal.S builds.
 SUFFIXES = "123456789abcdef"
 
 # Hyppo takes names up to 63 characters, and FAT rejects these outright.
@@ -50,14 +52,20 @@ def card_name(name):
     return name
 
 
-def write_kernal(a, outdir, image, sym, main_size):
-    """A bootable D81, and the files on it beside the image for inspection."""
-    main_prg = image[:main_size]
-    (outdir / f"{a.basename}-main.prg").write_bytes(main_prg)
+def main_disk(a, main_prg):
+    """A D81 that starts the program on reset, or with RUN"name"."""
     disk_name = (a.name or a.basename)[:16]
     disk = d81.D81(disk_name, "01")
     boot_name = disk_name.lower() if a.no_autoboot else "autoboot.c65"
     disk.add_file(boot_name, main_prg)
+    return disk
+
+
+def write_kernal(a, outdir, image, sym, main_size):
+    """A bootable D81, and the files on it beside the image for inspection."""
+    main_prg = image[:main_size]
+    (outdir / f"{a.basename}-main.prg").write_bytes(main_prg)
+    disk = main_disk(a, main_prg)
     for i, data in bank_image.banks(image, sym, main_size):
         suffix = SUFFIXES[i - 1]
         bank = PRG_HEADER + data
@@ -68,8 +76,9 @@ def write_kernal(a, outdir, image, sym, main_size):
     disk.save(str(outdir / f"{a.basename}.d81"))
 
 
-def write_card(a, outdir, image, sym, main_size, floppy):
-    """The SD card directory; for the F011 loader, banks go on a D81 in it."""
+def write_card(a, outdir, image, sym, main_size, kernal, floppy):
+    """The SD card directory, with a D81 in it for the KERNAL to start the
+    program from, or for the F011 loader to read the banks from."""
     written = set()
 
     def emit(name, data):
@@ -79,7 +88,11 @@ def write_card(a, outdir, image, sym, main_size, floppy):
         written.add(name)
         (outdir / name).write_bytes(data)
 
-    emit(f"{a.basename}.prg", image[:main_size])
+    disk = None
+    if kernal:
+        disk = main_disk(a, image[:main_size])
+    else:
+        emit(f"{a.basename}.prg", image[:main_size])
     # Raw, no PRG header: both loaders place the whole file at the bank's base.
     if floppy:
         disk = d81.D81((a.name or a.basename)[:16], "01")
@@ -88,15 +101,16 @@ def write_card(a, outdir, image, sym, main_size, floppy):
         # Assets go where the program can reach them without a ROM.
         for asset in a.asset:
             disk.add_file(Path(asset).stem, Path(asset).read_bytes())
-        name = card_name(f"{a.basename}.d81")
-        written.add(name)
-        disk.save(str(outdir / name))
     else:
         for i, data in bank_image.banks(image, sym, main_size):
             emit(f"BANK{i:X}.BIN", data)
         for asset in a.asset:
             src = Path(asset)
             emit(src.name, src.read_bytes())
+    if disk:
+        name = card_name(f"{a.basename}.d81")
+        written.add(name)
+        disk.save(str(outdir / name))
 
 
 def main():
@@ -127,7 +141,9 @@ def main():
     loader = bank_image.loader(elf)
     if loader is None:
         loader = bank_image.LOADER_KERNAL if kernal else bank_image.LOADER_HYPPO
-    if kernal != (loader == bank_image.LOADER_KERNAL):
+    # Only mega65-banked has KERNAL LOAD, and only the other the F011 loader.
+    if loader == (bank_image.LOADER_FLOPPY if kernal
+                  else bank_image.LOADER_KERNAL):
         fail("the image's platform and its recorded loader disagree")
     for name in ("__ram_fixed_start", "__ram_fixed_size", "__bank_window_size"):
         if not sym.get(name):
@@ -137,10 +153,10 @@ def main():
     if a.report:
         bank_image.print_report(sym)
     outdir.mkdir(parents=True, exist_ok=True)
-    if kernal:
+    if loader == bank_image.LOADER_KERNAL:
         write_kernal(a, outdir, image, sym, main_size)
     else:
-        write_card(a, outdir, image, sym, main_size,
+        write_card(a, outdir, image, sym, main_size, kernal,
                    loader == bank_image.LOADER_FLOPPY)
 
 

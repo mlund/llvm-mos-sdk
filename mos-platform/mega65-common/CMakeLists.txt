@@ -26,10 +26,16 @@ install(FILES BANKING.md DESTINATION mos-platform/mega65-common)
 add_platform_object_file(mega65-common-basic-header basic-header.o
   basic-header.S)
 
+add_platform_object_file(mega65-common-unmap-basic unmap-basic.o unmap-basic.S)
+
+# Both banked children load their banks from the same init stage.
+add_platform_object_file(mega65-common-load-banks load-banks.o load-banks.c)
+
 add_platform_library(mega65-common-c
   bank-load-failed.c
   bank-sizes.s
   banked-call.s
+  load-banks-hyppo.c
   mapper.c
   mapper.s
   cbm_k_cint.c

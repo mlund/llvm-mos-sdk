@@ -813,8 +813,7 @@ mega65_h_err mega65_h_loadfile_attic(uint32_t addr) __attribute__((leaf));
 // --- F011 file loading (no KERNAL, no Hyppo) ---
 
 /// Load a file from the D81 mounted as drive 8 into memory, through the F011.
-/// Needs neither the KERNAL nor Hyppo, only the MEGA65 I/O personality. Tested
-/// on mounted images; a real drive is untested.
+/// Needs neither the KERNAL nor Hyppo, only the MEGA65 I/O personality.
 ///
 /// @param name     File name, up to 16 characters; lower case is folded up
 /// @param address  28-bit destination, attic RAM included

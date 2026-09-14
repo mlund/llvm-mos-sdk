@@ -32,45 +32,44 @@ function(add_mega65_banked_test name)
   set_tests_properties(test-${name} PROPERTIES TIMEOUT 30)
 endfunction()
 
-# Loads banks through Hyppo rather than the KERNAL, so the bank files go on
-# the HDOS virtual SD card with their PRG headers stripped.
-function(add_mega65_banked_bload_test name)
-  set(source_dir ".")
-  if(ARGC GREATER 1)
-    set(source_dir ${ARGV1})
-  endif()
-  if(NOT XMEGA65_COMMAND)
+# For MAPPER_LOADER_SD: the converter writes the card directory, holding the
+# autobooting D81 and the bank files, and xemu serves it as the SD card.
+function(add_mega65_banked_sd_test name)
+  if(NOT XMEGA65_COMMAND OR NOT PYTHON3_COMMAND)
     return()
   endif()
-  if(NOT PYTHON3_COMMAND)
-    message(STATUS "python3 not found, skipping bload test: test-${name}")
-    return()
-  endif()
-
-  add_executable(${name}.prg ${source_dir}/${name}.c)
-
+  add_executable(${name}.prg ${name}.c)
   add_custom_command(TARGET ${name}.prg POST_BUILD
     COMMAND ${PYTHON3_COMMAND} ${PRG_TO_MEGA65_SCRIPT}
       $<TARGET_FILE:${name}.prg>
-      $<TARGET_FILE_DIR:${name}.prg>
+      $<TARGET_FILE_DIR:${name}.prg>/${name}_sd
       ${name}
-    COMMENT "Splitting PRG and creating D81 for ${name}")
-
-  # Hyppo loads raw images, so strip the PRG header the converter prepends.
-  add_custom_command(TARGET ${name}.prg POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory
-      $<TARGET_FILE_DIR:${name}.prg>/${name}_hdos
-    COMMAND dd if=$<TARGET_FILE_DIR:${name}.prg>/${name}-BANK1
-      of=$<TARGET_FILE_DIR:${name}.prg>/${name}_hdos/BANK1.BIN bs=1 skip=2
-    COMMAND dd if=$<TARGET_FILE_DIR:${name}.prg>/${name}-BANK2
-      of=$<TARGET_FILE_DIR:${name}.prg>/${name}_hdos/BANK2.BIN bs=1 skip=2
-    COMMENT "Creating HDOS directory with raw bank files for ${name}")
-
+    COMMENT "Building SD card directory for ${name}")
+  string(TOUPPER ${name} upper)
   add_test(NAME test-${name} COMMAND
     ${XMEGA65_COMMAND} -headless -sleepless -testing
-    -8 $<TARGET_FILE_DIR:${name}.prg>/${name}.d81
-    -hdosvirt -hdosdir $<TARGET_FILE_DIR:${name}.prg>/${name}_hdos)
+    -8 $<TARGET_FILE_DIR:${name}.prg>/${name}_sd/${upper}.D81
+    -hdosvirt -hdosdir $<TARGET_FILE_DIR:${name}.prg>/${name}_sd)
   set_tests_properties(test-${name} PROPERTIES TIMEOUT 60)
+endfunction()
+
+# Like add_mega65_banked_test, but the D81 is rebuilt from the files the
+# converter writes beside it, without bank 2.
+function(add_mega65_banked_no_bank2_test name)
+  if(NOT XMEGA65_COMMAND OR NOT PYTHON3_COMMAND)
+    return()
+  endif()
+  add_executable(${name}.prg ${name}.c)
+  set(dir $<TARGET_FILE_DIR:${name}.prg>)
+  add_custom_command(TARGET ${name}.prg POST_BUILD
+    COMMAND ${PYTHON3_COMMAND} ${PRG_TO_MEGA65_SCRIPT}
+      $<TARGET_FILE:${name}.prg> ${dir} ${name}
+    COMMAND ${PYTHON3_COMMAND} ${D81_SCRIPT} ${dir}/${name}.d81
+      ${dir}/${name}-main.prg=autoboot.c65 ${dir}/${name}-BANK1=bank1
+    COMMENT "Creating D81 without bank 2 for ${name}")
+  add_test(NAME test-${name} COMMAND
+    ${XMEGA65_COMMAND} -headless -sleepless -testing -8 ${dir}/${name}.d81)
+  set_tests_properties(test-${name} PROPERTIES TIMEOUT 30)
 endfunction()
 
 # Like add_mega65_banked_test, but saves main_ram on exit and asserts on bytes
@@ -137,7 +136,8 @@ add_mega65_banked_test(kernal-load-banks)
 add_mega65_banked_test(attic-load-banks)
 add_mega65_banked_test(banked-dma)
 add_mega65_banked_test(banked-dma-loop)
-add_mega65_banked_bload_test(hyppo-load-banks)
+add_mega65_banked_sd_test(sd-load-banks)
+add_mega65_banked_no_bank2_test(bank-load-failed)
 # An out-of-range bank id is masked to its low four bits: set_bank(0x11)
 # maps bank 1, rather than indexing past the MAP tables into the MAP registers.
 add_mega65_banked_dump_test(bank-range FB=5A FC=A5)

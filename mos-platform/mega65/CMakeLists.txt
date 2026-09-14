@@ -11,5 +11,3 @@ merge_libraries(mega65-crt0
   common-init-stack
   common-exit-loop
 )
-
-add_platform_object_file(mega65-unmap-basic unmap-basic.o unmap-basic.S)

@@ -1,11 +1,11 @@
 # mega65-banked
 
 A banked MEGA65 target with the KERNAL still available, for programs larger
-than 64 KB. Banks are separate files on a D81 image, loaded at startup, so the
-`.prg` alone will not run.
+than 64 KB. Banks are separate files loaded at startup, off a D81 image or the
+SD card, so the `.prg` alone will not run.
 
 Use `mega65-banked-nokernal` instead if the program needs neither BASIC nor the
-KERNAL and can load from the SD card.
+KERNAL.
 
 Using banks, the API, and the rules both banked platforms share are in
 [BANKING.md](../mega65-common/BANKING.md).
@@ -47,6 +47,10 @@ address high byte, which makes it corrupt the destination.
 
 **The C65 ROM clears `$200E-$7FFF` before your code runs.** Only the BASIC
 header at `$2001-$200D` survives. The fixed region is untouched.
+
+**Interrupts start disabled**, as on `mega65`. The KERNAL's keyboard scan and
+clock need them, so a program that uses either, or its own handler, clears the
+flag.
 
 **Re-unlock VIC-IV after disk I/O.** Any KERNAL disk operation resets
 `VICIV.key` to VIC-II mode, hiding the VIC-IV registers:
@@ -99,6 +103,17 @@ python3 prg-to-mega65.py game.prg . game
 
 This writes `game-main.prg`, one file per non-empty bank, and `game.d81` with
 the main program as `AUTOBOOT.C65`. Run the disk image, not the `.prg`.
+
+Define `MAPPER_LOADER_SD` in every file to load the banks off the SD card
+instead:
+
+```sh
+mos-mega65-banked-clang -DMAPPER_LOADER_SD -Os -o game.prg game.c
+python3 prg-to-mega65.py game.prg game_sd game
+```
+
+`game_sd/` holds `GAME.D81`, which autoboots the main program, and
+`BANK1.BIN`…. Copy it onto the card, mount `GAME.D81` and reset.
 
 ## Changing the bank layout
 

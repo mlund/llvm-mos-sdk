@@ -111,6 +111,19 @@ smallest bank mapped.
 `<mapper.h>` checks each address at compile time; the converter rejects
 overlapping banks and files that disagree.
 
+## Loading banks
+
+Startup loads every non-empty bank before constructors run. Choose another
+loader with a macro, defined the same in every file.
+
+| Platform | Default | Alternative |
+|---|---|---|
+| `mega65-banked` | D81, through KERNAL LOAD | SD card: `MAPPER_LOADER_SD` |
+| `mega65-banked-nokernal` | SD card, through Hyppo | D81 through the F011: `MAPPER_LOADER_FLOPPY` |
+
+A load that fails calls `__bank_load_failed(bank)`, which turns the border red
+and stops. Define it to report the failure yourself.
+
 ## Converting
 
 `prg-to-mega65.py` turns the linked image into the files that ship, reading

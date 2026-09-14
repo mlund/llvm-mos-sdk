@@ -1,7 +1,7 @@
 // Test CRT bank loader: verify that bank data loaded from D81 at startup.
 //
 // Each bank section contains a known 2-byte signature. The CRT init
-// __load_banks (.init.150) loads BANK1-BANK7 from the D81 disk via
+// __load_banks (.init.250) loads BANK1-BANK7 from the D81 disk via
 // KERNAL SETBNK + LOAD. main() switches to each bank and verifies the
 // signature is present at virtual address $2000 (the banked window start).
 //

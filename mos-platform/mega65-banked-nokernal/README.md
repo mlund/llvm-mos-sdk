@@ -1,10 +1,9 @@
 # mega65-banked-nokernal
 
-A banked MEGA65 target with BASIC and the KERNAL mapped out. Banks and assets
-are plain files on the SD card, loaded through Hyppo.
+A banked MEGA65 target with BASIC and the KERNAL mapped out. Banks load at
+startup, off the SD card through Hyppo or off a D81 through the F011.
 
-Use `mega65-banked` instead if the program must load from a D81 image through
-the KERNAL or call the KERNAL.
+Use `mega65-banked` instead if the program needs BASIC or the KERNAL.
 
 Using banks, the API, and the rules both banked platforms share are in
 [BANKING.md](../mega65-common/BANKING.md).
@@ -54,11 +53,12 @@ The `mega65_h_*` Hyppo wrappers are the ones that work.
 **Nothing writes to the screen for you.** There is no `CHROUT`, no character
 ROM and no BASIC. A program brings its own charset, or draws without one.
 
-**The card is the only storage, both ways.** Read with `mega65_h_setname` and
-`mega65_h_loadfile`, or `mega65_h_loadfile_attic` above `$8000000`; write with
-`mega65_h_mkfile` then `mega65_h_writefile`. `mkfile` takes 8.3 names only and
-allocates contiguously, so create a save file at full size once and rewrite it
-in place.
+**Files come off the card or the D81; only the card takes writes.** Read the
+card with `mega65_h_setname` and `mega65_h_loadfile`, or
+`mega65_h_loadfile_attic` above `$8000000`, and the D81 in drive 8 with
+`mega65_d81_load(name, address)`. Write with `mega65_h_mkfile` then
+`mega65_h_writefile`: `mkfile` takes 8.3 names only and allocates contiguously,
+so create a save file at full size once and rewrite it in place.
 
 **Hyppo needs a page below `$7F00`** for a filename, which is why
 `__mega65_h_name_buf` sits at `$0200` and cannot move into the fixed region.
@@ -89,6 +89,16 @@ before `main`.
 Names are upper-cased because Hyppo upper-cases the name it is asked for but
 not the one on the card, so a lower-case file can never be found.
 
+Define `MAPPER_LOADER_FLOPPY` in every file to load the banks off the D81 in
+drive 8 instead:
+
+```sh
+mos-mega65-banked-nokernal-clang -DMAPPER_LOADER_FLOPPY -Os -o game.prg game.c
+python3 prg-to-mega65.py game.prg out game --asset tiles.bin
+```
+
+`out/` holds `GAME.PRG`, and `GAME.D81` with the banks and `TILES` on it.
+
 ## Changing the bank layout
 
 ```sh
@@ -98,13 +108,3 @@ mos-mega65-banked-nokernal-clang -DMAPPER_BANK_2=0x8012000 \
 
 A 16 or 8 KB window moves the fixed region down to meet it: 28 KB or 36 KB of
 it.
-
-## Loading banks from a D81
-
-Define `MAPPER_LOADER_FLOPPY`, the same in every file, to load banks off the D81
-mounted as drive 8, through the F011. `prg-to-mega65.py` then writes the banks
-into `NAME.D81` beside `NAME.PRG`, with any `--asset` files. Tested on mounted
-images in xemu; a real drive is untested.
-
-`mega65_d81_load(name, address)` loads any other file off that disk the same
-way, into any 28-bit address, at any time.

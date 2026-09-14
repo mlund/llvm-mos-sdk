@@ -73,6 +73,7 @@ add_test_target(mega65-banked
   -DXMEGA65_COMMAND=${XMEGA65_COMMAND}
   -DPYTHON3_COMMAND=${PYTHON3_COMMAND}
   -DPRG_TO_MEGA65_SCRIPT=${mega65_common}/prg-to-mega65.py
+  -DD81_SCRIPT=${mega65_common}/d81.py
   -DDUMPCHECK_SCRIPT=${CMAKE_CURRENT_SOURCE_DIR}/mega65-common/dumpcheck.py
   -DSIZECHECK_SCRIPT=${CMAKE_CURRENT_SOURCE_DIR}/mega65-common/sizecheck.py)
 add_test_target(mega65-banked-nokernal

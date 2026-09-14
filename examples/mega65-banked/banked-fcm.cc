@@ -66,10 +66,6 @@ static constexpr uint16_t NUM_CELLS = CELL_COLS * CELL_ROWS;
 static constexpr uint8_t CHR16_BYTES_PER_CHAR = 2;
 
 static void setup_vic() {
-  // The CRT loader enables interrupts (CLI) before main(). Disable them
-  // to prevent the KERNAL IRQ handler from writing VIC registers mid-setup.
-  asm volatile("sei" ::: "p");
-
   // Unlock VIC-IV registers (knock sequence).
   VICIV.key = VIC4_KEY_VICIV_A;
   VICIV.key = VIC4_KEY_VICIV_B;

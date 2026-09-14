@@ -15,7 +15,7 @@
 // function pointer. Shared state in the fixed region is accessible from
 // any bank since $8000-$CFFF is never remapped.
 //
-// The CRT bank loader (.init.150) loads BANK1-BANK3 from the D81 disk
+// The CRT bank loader (.init.250) loads BANK1-BANK3 from the D81 disk
 // into physical RAM at startup. Build produces both a PRG and a D81.
 
 #include <array>

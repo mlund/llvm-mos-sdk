@@ -8,7 +8,7 @@
  *   $D000-$DFFF  I/O registers
  *   $E000-$FFFF  KERNAL ROM
  *
- * The CRT init clears ROMC ($D030 bit 5) after loading banks, making
+ * Startup clears ROMC ($D030 bit 5), making
  * $C000-$CFFF available as RAM instead of C65 Interface ROM.
  * KERNAL CHROUT/printf still work (40-column editor is in $E000-$FFFF).
  *
@@ -75,11 +75,8 @@ MEMORY {
 INCLUDE _ram-banked.ld
 
 INPUT(basic-header.o)
-/* No unmap-basic.o: it unmaps the ROMs at .init.010 and puts them back at
- * .fini.990, both of which fight load-banks.c, which needs BASIC ROM gone
- * only while it loads and clears ROMC itself once the banks are in. */
+INPUT(unmap-basic.o)
 INPUT(load-banks.o)
-INPUT(load-banks-kernal.o)
 
 /* All code and data defaults to the fixed bank. */
 REGION_ALIAS("c_readonly", ram_fixed)
@@ -88,9 +85,8 @@ REGION_ALIAS("c_writeable", ram_fixed)
 SECTIONS {
     .basic_header : { *(.basic_header) } >ram
 
-    /* KERNAL loader in ram_fixed, before .text so it lands at $8000-$9FFF.
-     * Must NOT be in ram ($2000-$7FFF) — the C65 ROM's autoboot/CLR wipes
-     * everything after the BASIC stub ($200E-$7FFF) before SYS runs. */
+    /* The KERNAL loader, which runs while ROM covers $C000: first in
+     * ram_fixed. Not in ram, which autoboot wipes after the BASIC stub. */
     .kernal_load : { *(.text.kernal_load) } >ram_fixed
 
     INCLUDE zp.ld
@@ -114,12 +110,11 @@ SECTIONS {
 __ram_fixed_size = LOADADDR(.data) + SIZEOF(.data) - ORIGIN(ram_fixed);
 __ram_fixed_start = ORIGIN(ram_fixed);
 
-/* BASIC ROM covers $A000-$BFFF until __load_banks maps it out. */
-ASSERT(_fini <= 0xA000 && ADDR(.kernal_load) + SIZEOF(.kernal_load) <= 0xA000,
-       "mega65-banked: startup code must stay below $A000")
-ASSERT(__load_banks >= ADDR(.kernal_load) &&
-       __load_banks < ADDR(.kernal_load) + SIZEOF(.kernal_load),
-       "mega65-banked: __load_banks must be in section .text.kernal_load")
+/* BASIC ROM covers $A000-$BFFF until unmap-basic.o runs and again after it
+ * restores the ROMs at exit. */
+ASSERT(_fini <= 0xA000, "mega65-banked: startup code must stay below $A000")
+ASSERT(ADDR(.kernal_load) + SIZEOF(.kernal_load) <= 0xC000,
+       "mega65-banked: the KERNAL loader must stay below $C000")
 
 /* Set initial soft stack address to start of I/O region. (It grows down.)
  * ROMC is cleared during CRT init, making $C000-$CFFF RAM. */
