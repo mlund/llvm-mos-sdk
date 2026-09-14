@@ -13,18 +13,28 @@
 // it. mega65_d81_load() is fixed code, callable at any time.
 __attribute__((noinline, section(".bank_0")))
 void __load_banks_floppy(void) {
+  char name[7];
+  uint8_t bit = 1;
+
+  name[0] = 'B';
+  name[1] = 'A';
+  name[2] = 'N';
+  name[3] = 'K';
   for (uint8_t bank = 1; bank < 32; ++bank) {
-    char name[7] = "BANK";
     char *p = name + 4;
     uint8_t digit = bank & 15;
-    if (!(__bank_used[bank >> 3] & 1 << (bank & 7)))
+    bit = (uint8_t)(bit << 1);
+    if (!bit)
+      bit = 1;
+    if (!(__bank_used[bank >> 3] & bit))
       continue;
     if (bank >= 16)
       *p++ = '1';
-    *p = digit < 10 ? '0' + digit : 'A' + (digit - 10);
+    *p++ = digit < 10 ? '0' + digit : 'A' + (digit - 10);
+    *p = 0;
     uint32_t base = (uint32_t)__bank_megabyte[bank] << 20 |
                     (uint32_t)(__bank_addr_mid[bank] & 0x0F) << 16 |
-                    (uint16_t)(__bank_addr_page[bank] << 8);
+                    (uint16_t)__bank_addr_page[bank] << 8;
     if (!mega65_d81_load(name, base))
       __bank_load_failed(bank);
   }

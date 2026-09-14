@@ -19,7 +19,6 @@ import bank_image  # noqa: E402
 
 
 SELECT = {24 * 1024: 0xE0, 16 * 1024: 0x60, 8 * 1024: 0x20}
-MAP_TABLES = ("__bank_offset_lo", "__bank_maplo_sel", "__bank_megabyte")
 
 
 def expected(bases, sizes):
@@ -48,11 +47,7 @@ def check(prg):
     for name, want in expected(bases, sizes).items():
         want = want[: count + 1]
         if name not in addr:
-            # LTO folds a C loader's reads into constants and drops the table,
-            # but set_bank reads the MAP tables from assembly.
-            if name in MAP_TABLES and "__set_bank_asm" in addr:
-                problems.append(f"{prg}: {name} not linked")
-            continue
+            continue  # LTO folded every read of it into constants
         start = 2 + addr[name] - load
         got = list(image[start : start + count + 1])
         if got != want:

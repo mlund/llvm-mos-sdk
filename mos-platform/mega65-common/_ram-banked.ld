@@ -153,56 +153,28 @@ __bank_29_size   = SIZEOF(.bank_29);
 __bank_30_size   = SIZEOF(.bank_30);
 __bank_31_size   = SIZEOF(.bank_31);
 
-/* And whether each holds anything, which is all a loader needs. */
-__bank_1_used    = SIZEOF(.bank_1) > 0 ? 1 : 0;
-__bank_2_used    = SIZEOF(.bank_2) > 0 ? 1 : 0;
-__bank_3_used    = SIZEOF(.bank_3) > 0 ? 1 : 0;
-__bank_4_used    = SIZEOF(.bank_4) > 0 ? 1 : 0;
-__bank_5_used    = SIZEOF(.bank_5) > 0 ? 1 : 0;
-__bank_6_used    = SIZEOF(.bank_6) > 0 ? 1 : 0;
-__bank_7_used    = SIZEOF(.bank_7) > 0 ? 1 : 0;
-__bank_8_used    = SIZEOF(.bank_8) > 0 ? 1 : 0;
-__bank_9_used    = SIZEOF(.bank_9) > 0 ? 1 : 0;
-__bank_10_used   = SIZEOF(.bank_10) > 0 ? 1 : 0;
-__bank_11_used   = SIZEOF(.bank_11) > 0 ? 1 : 0;
-__bank_12_used   = SIZEOF(.bank_12) > 0 ? 1 : 0;
-__bank_13_used   = SIZEOF(.bank_13) > 0 ? 1 : 0;
-__bank_14_used   = SIZEOF(.bank_14) > 0 ? 1 : 0;
-__bank_15_used   = SIZEOF(.bank_15) > 0 ? 1 : 0;
-__bank_16_used   = SIZEOF(.bank_16) > 0 ? 1 : 0;
-__bank_17_used   = SIZEOF(.bank_17) > 0 ? 1 : 0;
-__bank_18_used   = SIZEOF(.bank_18) > 0 ? 1 : 0;
-__bank_19_used   = SIZEOF(.bank_19) > 0 ? 1 : 0;
-__bank_20_used   = SIZEOF(.bank_20) > 0 ? 1 : 0;
-__bank_21_used   = SIZEOF(.bank_21) > 0 ? 1 : 0;
-__bank_22_used   = SIZEOF(.bank_22) > 0 ? 1 : 0;
-__bank_23_used   = SIZEOF(.bank_23) > 0 ? 1 : 0;
-__bank_24_used   = SIZEOF(.bank_24) > 0 ? 1 : 0;
-__bank_25_used   = SIZEOF(.bank_25) > 0 ? 1 : 0;
-__bank_26_used   = SIZEOF(.bank_26) > 0 ? 1 : 0;
-__bank_27_used   = SIZEOF(.bank_27) > 0 ? 1 : 0;
-__bank_28_used   = SIZEOF(.bank_28) > 0 ? 1 : 0;
-__bank_29_used   = SIZEOF(.bank_29) > 0 ? 1 : 0;
-__bank_30_used   = SIZEOF(.bank_30) > 0 ? 1 : 0;
-__bank_31_used   = SIZEOF(.bank_31) > 0 ? 1 : 0;
-
-/* As bank-sizes.s stores them: bank n at bit n % 8 of byte n / 8. */
+/* Which banks hold anything, which is all a loader needs, as bank-sizes.s
+ * stores it: bank n at bit n % 8 of byte n / 8. */
 __bank_used_0 =
-    (__bank_1_used << 1) | (__bank_2_used << 2) | (__bank_3_used << 3) |
-    (__bank_4_used << 4) | (__bank_5_used << 5) | (__bank_6_used << 6) |
-    (__bank_7_used << 7);
+    (SIZEOF(.bank_1) > 0) << 1 | (SIZEOF(.bank_2) > 0) << 2 |
+    (SIZEOF(.bank_3) > 0) << 3 | (SIZEOF(.bank_4) > 0) << 4 |
+    (SIZEOF(.bank_5) > 0) << 5 | (SIZEOF(.bank_6) > 0) << 6 |
+    (SIZEOF(.bank_7) > 0) << 7;
 __bank_used_1 =
-    (__bank_8_used << 0) | (__bank_9_used << 1) | (__bank_10_used << 2) |
-    (__bank_11_used << 3) | (__bank_12_used << 4) | (__bank_13_used << 5) |
-    (__bank_14_used << 6) | (__bank_15_used << 7);
+    (SIZEOF(.bank_8) > 0) << 0 | (SIZEOF(.bank_9) > 0) << 1 |
+    (SIZEOF(.bank_10) > 0) << 2 | (SIZEOF(.bank_11) > 0) << 3 |
+    (SIZEOF(.bank_12) > 0) << 4 | (SIZEOF(.bank_13) > 0) << 5 |
+    (SIZEOF(.bank_14) > 0) << 6 | (SIZEOF(.bank_15) > 0) << 7;
 __bank_used_2 =
-    (__bank_16_used << 0) | (__bank_17_used << 1) | (__bank_18_used << 2) |
-    (__bank_19_used << 3) | (__bank_20_used << 4) | (__bank_21_used << 5) |
-    (__bank_22_used << 6) | (__bank_23_used << 7);
+    (SIZEOF(.bank_16) > 0) << 0 | (SIZEOF(.bank_17) > 0) << 1 |
+    (SIZEOF(.bank_18) > 0) << 2 | (SIZEOF(.bank_19) > 0) << 3 |
+    (SIZEOF(.bank_20) > 0) << 4 | (SIZEOF(.bank_21) > 0) << 5 |
+    (SIZEOF(.bank_22) > 0) << 6 | (SIZEOF(.bank_23) > 0) << 7;
 __bank_used_3 =
-    (__bank_24_used << 0) | (__bank_25_used << 1) | (__bank_26_used << 2) |
-    (__bank_27_used << 3) | (__bank_28_used << 4) | (__bank_29_used << 5) |
-    (__bank_30_used << 6) | (__bank_31_used << 7);
+    (SIZEOF(.bank_24) > 0) << 0 | (SIZEOF(.bank_25) > 0) << 1 |
+    (SIZEOF(.bank_26) > 0) << 2 | (SIZEOF(.bank_27) > 0) << 3 |
+    (SIZEOF(.bank_28) > 0) << 4 | (SIZEOF(.bank_29) > 0) << 5 |
+    (SIZEOF(.bank_30) > 0) << 6 | (SIZEOF(.bank_31) > 0) << 7;
 
 SECTIONS {
   /* Per-file layout records and the size and count markers; not in the image. */

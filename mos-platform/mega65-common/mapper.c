@@ -5,20 +5,11 @@
 
 #include "_mapper.h"
 
-// Separate asm routine because MAP/EOM are 45GS02 instructions unavailable in C.
-void __set_bank_asm(uint8_t bank_id);
-
 // In ZP for fast access from the banked_call trampoline hot path.
 // Also referenced as .zeropage import in banked-call.s.
 __attribute__((section(".zp.bss"))) volatile uint8_t _BANK_SHADOW;
 
 __attribute__((leaf)) uint8_t get_bank(void) { return _BANK_SHADOW; }
-
-__attribute__((leaf)) void resync_bank(void) { __set_bank_asm(_BANK_SHADOW); }
-
-__attribute__((leaf)) void set_bank(uint8_t bank_id) {
-  __set_bank_asm(bank_id);
-}
 
 // banked_call_r and banked_call_v switch through this. In a section of its own,
 // so the linker refuses a caller in a bank, which the switch would unmap.

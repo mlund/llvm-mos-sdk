@@ -5,7 +5,7 @@
 
 .include "imag.inc"
 
-; __set_bank_asm — map a bank into $2000-$7FFF.
+; __set_bank_asm, also set_bank — map a bank into $2000-$7FFF.
 ;
 ; Input: A = bank_id; above MAPPER_BANK_COUNT maps bank 0
 ; Clobbers: A, X, Y, Z
@@ -27,12 +27,14 @@
 .zeropage _BANK_SHADOW
 
 .section .text.__set_bank_asm,"ax",@progbits
-.globl __set_bank_asm
+.globl __set_bank_asm, set_bank, __set_bank_in_range
 __set_bank_asm:
+set_bank:
     cmp #__bank_count+1     ; past MAPPER_BANK_COUNT the tables have ended,
-    bcc .Lin_range          ; and junk handed to MAP, which covers
+    bcc __set_bank_in_range ; and junk handed to MAP, which covers
     lda #0                  ; $0000-$7FFF, could move zero page: map bank 0
-.Lin_range:
+; For a bank already checked: banked_call's return and resync_bank.
+__set_bank_in_range:
     sta _BANK_SHADOW        ; the bank mapped, so get_bank() agrees with MAP
     tax
 
@@ -56,3 +58,9 @@ __set_bank_asm:
     eom
     ldz #$00                ; compiled code depends on Z = 0
     rts
+
+.section .text.resync_bank,"ax",@progbits
+.globl resync_bank
+resync_bank:
+    lda _BANK_SHADOW
+    jmp __set_bank_in_range

@@ -9,20 +9,26 @@
 #include "_mapper.h"
 #include <mega65.h>
 
-// Addresses come from the tables the program's own files emit, so a layout it
-// overrides is the one loaded.
-
 // In .bank_0: it runs only at startup, with bank 0 mapped, so without the
 // KERNAL the window holds it and the fixed region stays free.
 __attribute__((section(".bank_0"))) void __load_banks_hyppo(void) {
+  char name[11];
+  uint8_t bit = 1;
+
+  name[0] = 'B';
+  name[1] = 'A';
+  name[2] = 'N';
+  name[3] = 'K';
   for (uint8_t bank = 1; bank < 32; ++bank) {
-    char name[11] = "BANK";
     char *p = name + 4;
     uint8_t digit = bank & 15;
     uint8_t megabyte;
     uint32_t addr;
 
-    if (!(__bank_used[bank >> 3] & 1 << (bank & 7)))
+    bit = (uint8_t)(bit << 1);
+    if (!bit)
+      bit = 1;
+    if (!(__bank_used[bank >> 3] & bit))
       continue;
     // Attic RAM, megabyte bit 7, takes its own trap and an offset into attic:
     // loadfile forces the top address byte to zero and still reports success.
@@ -40,6 +46,7 @@ __attribute__((section(".bank_0"))) void __load_banks_hyppo(void) {
     p[1] = 'B';
     p[2] = 'I';
     p[3] = 'N';
+    p[4] = 0;
     if (mega65_h_setname(name)) {
       __bank_load_failed(bank);
       continue;

@@ -37,7 +37,7 @@ def banks(image, sym, main_size):
     twelve empty ones. Each slot is its bank's own length.
     """
     start = main_size
-    window, count = sym["__bank_window_size"], sym.get("__bank_count", BANKS)
+    window, count = sym["__bank_window_size"], sym["__bank_count"]
     for i in range(1, BANKS + 1):
         used = sym.get(f"__bank_{i}_size", 0)
         if used:
@@ -136,7 +136,7 @@ def layout_count(record):
     return record[65]
 
 
-def layout_problems(bases, sizes, count=BANKS):
+def layout_problems(bases, sizes, count):
     """Why the first count banks cannot work, or [] if they can.
 
     <mapper.h> checks each bank on its own at compile time; this checks what
@@ -154,14 +154,32 @@ def layout_problems(bases, sizes, count=BANKS):
     return problems
 
 
-def check_layout(found, count=BANKS):
+def _field_name(i):
+    """The macro behind field i of a layout record."""
+    if i < 32:
+        return f"MAPPER_BANK_{i}"
+    if i == 32:
+        return "MAPPER_WINDOW_KB"
+    if i < 64:
+        return f"MAPPER_BANK_{i - 32}_KB"
+    return ("MAPPER_LOADER_SD/FLOPPY", "MAPPER_BANK_COUNT")[i - 64]
+
+
+def check_layout(found):
     """Problems with the layout the program's files recorded."""
     if len(found) > 1:
-        return ["files disagree on the bank layout; define MAPPER_BANK_n the same in every file"]
+        names = [_field_name(i) for i, v in enumerate(zip(*found)) if len(set(v)) > 1]
+        return [f"files disagree on {', '.join(names)}; define it the same in every file"]
     if not found:
         return []
-    bases, sizes = split_layout(next(iter(found)))
-    return layout_problems(bases, sizes, count)
+    record = next(iter(found))
+    bases, sizes = split_layout(record)
+    return layout_problems(bases, sizes, layout_count(record))
+
+
+def bank_name(n):
+    """Bank n's file name, as the loaders build it."""
+    return f"BANK{n:X}"
 
 
 LOADER_HYPPO, LOADER_FLOPPY, LOADER_KERNAL = 0, 1, 2

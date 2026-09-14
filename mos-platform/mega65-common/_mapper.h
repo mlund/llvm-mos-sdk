@@ -122,7 +122,8 @@ __attribute__((leaf)) uint8_t __banked_call_enter(uint8_t bank_id);
  */
 void __bank_load_failed(uint8_t bank);
 
-/* What the loaders read: the tables below, and bank-sizes.s with bank n at
+/* What the loaders read: the tables below, emitted by the program's own files
+ * so a layout it overrides is the one loaded, and bank-sizes.s with bank n at
  * bit n % 8 of byte n / 8. */
 extern const uint8_t __bank_used[4];
 extern const uint8_t __bank_megabyte[];
@@ -816,23 +817,12 @@ void __load_banks(void) { _MAPPER_LOADER_FN(); }
 #endif
 #endif
 
+#define _MAPPER_BASE(n) BANK_PHYS_BASE_##n
+#define _MAPPER_KB(n) _MAPPER_KB_##n
 __attribute__((used, section(".mapper_layout")))
 static const uint32_t __mapper_layout[66] = {
-    BANK_PHYS_BASE_0, BANK_PHYS_BASE_1, BANK_PHYS_BASE_2, BANK_PHYS_BASE_3,
-    BANK_PHYS_BASE_4, BANK_PHYS_BASE_5, BANK_PHYS_BASE_6, BANK_PHYS_BASE_7,
-    BANK_PHYS_BASE_8, BANK_PHYS_BASE_9, BANK_PHYS_BASE_10, BANK_PHYS_BASE_11,
-    BANK_PHYS_BASE_12, BANK_PHYS_BASE_13, BANK_PHYS_BASE_14, BANK_PHYS_BASE_15,
-    BANK_PHYS_BASE_16, BANK_PHYS_BASE_17, BANK_PHYS_BASE_18, BANK_PHYS_BASE_19,
-    BANK_PHYS_BASE_20, BANK_PHYS_BASE_21, BANK_PHYS_BASE_22, BANK_PHYS_BASE_23,
-    BANK_PHYS_BASE_24, BANK_PHYS_BASE_25, BANK_PHYS_BASE_26, BANK_PHYS_BASE_27,
-    BANK_PHYS_BASE_28, BANK_PHYS_BASE_29, BANK_PHYS_BASE_30, BANK_PHYS_BASE_31,
-    MAPPER_WINDOW_KB, _MAPPER_KB_1, _MAPPER_KB_2, _MAPPER_KB_3, _MAPPER_KB_4,
-    _MAPPER_KB_5, _MAPPER_KB_6, _MAPPER_KB_7, _MAPPER_KB_8, _MAPPER_KB_9,
-    _MAPPER_KB_10, _MAPPER_KB_11, _MAPPER_KB_12, _MAPPER_KB_13, _MAPPER_KB_14,
-    _MAPPER_KB_15, _MAPPER_KB_16, _MAPPER_KB_17, _MAPPER_KB_18, _MAPPER_KB_19,
-    _MAPPER_KB_20, _MAPPER_KB_21, _MAPPER_KB_22, _MAPPER_KB_23, _MAPPER_KB_24,
-    _MAPPER_KB_25, _MAPPER_KB_26, _MAPPER_KB_27, _MAPPER_KB_28, _MAPPER_KB_29,
-    _MAPPER_KB_30, _MAPPER_KB_31, _MAPPER_LOADER_ID, _MAPPER_COUNT};
+    _MAPPER_ROWS(31, _MAPPER_BASE), _MAPPER_ROWS(31, _MAPPER_KB),
+    _MAPPER_LOADER_ID, _MAPPER_COUNT};
 
 #endif /* __ASSEMBLER__ */
 #endif /* _MAPPER_DEFAULT_BANK_1 */

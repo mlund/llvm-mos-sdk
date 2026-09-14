@@ -63,10 +63,10 @@ def write_kernal(a, outdir, image, sym, main_size):
     (outdir / f"{a.basename}-main.prg").write_bytes(main_prg)
     disk = main_disk(a, main_prg)
     for i, data in bank_image.banks(image, sym, main_size):
-        suffix = f"{i:x}"  # as load-banks-kernal.S names it
+        name = bank_image.bank_name(i)
         bank = PRG_HEADER + data
-        (outdir / f"{a.basename}-BANK{suffix.upper()}").write_bytes(bank)
-        disk.add_file(f"bank{suffix}", bank)
+        (outdir / f"{a.basename}-{name}").write_bytes(bank)
+        disk.add_file(name.lower(), bank)
     for asset in a.asset:
         disk.add_file(Path(asset).stem, Path(asset).read_bytes())
     disk.save(str(outdir / f"{a.basename}.d81"))
@@ -93,13 +93,13 @@ def write_card(a, outdir, image, sym, main_size, kernal, floppy):
     if floppy:
         disk = d81.D81((a.name or a.basename)[:16], "01")
         for i, data in bank_image.banks(image, sym, main_size):
-            disk.add_file(f"BANK{i:X}", data)
+            disk.add_file(bank_image.bank_name(i), data)
         # Assets go where the program can reach them without a ROM.
         for asset in a.asset:
             disk.add_file(Path(asset).stem, Path(asset).read_bytes())
     else:
         for i, data in bank_image.banks(image, sym, main_size):
-            emit(f"BANK{i:X}.BIN", data)
+            emit(f"{bank_image.bank_name(i)}.BIN", data)
         for asset in a.asset:
             src = Path(asset)
             emit(src.name, src.read_bytes())
@@ -133,15 +133,15 @@ def main():
     kernal = load == KERNAL_LOAD_ADDRESS
 
     found = bank_image.layouts(elf)
-    problems = bank_image.check_layout(
-        found, sym.get("__bank_count", bank_image.BANKS))
+    problems = bank_image.check_layout(found)
     if problems:
         fail("; ".join(problems))
     loader = bank_image.loader(found)
     if loader is None:
         loader = bank_image.LOADER_KERNAL if kernal else bank_image.LOADER_HYPPO
-    for name in ("__ram_fixed_start", "__ram_fixed_size", "__bank_window_size"):
-        if not sym.get(name):
+    for name in ("__ram_fixed_start", "__ram_fixed_size", "__bank_window_size",
+                 "__bank_count"):
+        if name not in sym:
             fail(f"{name} not found in {elf}")
     main_size = 2 + sym["__ram_fixed_start"] - load + sym["__ram_fixed_size"]
 

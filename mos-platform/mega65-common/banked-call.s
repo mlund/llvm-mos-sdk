@@ -27,4 +27,4 @@ banked_call:
     sta __rc19
     jsr __call_indir
     pla
-    jmp __set_bank_asm
+    jmp __set_bank_in_range ; checked on the way in
