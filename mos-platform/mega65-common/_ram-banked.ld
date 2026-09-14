@@ -4,8 +4,8 @@
  * ends in $2000 and bank symbols resolve into the $2000-$7FFF window whatever
  * bank they belong to. The high bits only have to be unique.
  *
- * Slot length is __bank_window_size, below; the converter reads it and
- * __bank_N_size out of the ELF.
+ * Each slot is as long as its bank, __bank_N_length below; the converter reads
+ * that and __bank_N_size out of the ELF.
  */
 
 __bank_1_lma   = 0x012000;
