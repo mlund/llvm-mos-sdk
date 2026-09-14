@@ -42,7 +42,7 @@ INCLUDE imag-regs.ld
 /* The zp region and -mlto-zp describe the same bytes to the linker and to the
  * compiler; nothing else makes them agree. */
 ASSERT(__basic_zp_end - (__rc31 + 1) == 222,
-       "mega65-banked-sd: zp region size must match -mlto-zp=222")
+       "mega65-banked-nokernal: zp region size must match -mlto-zp=222")
 
 /* Hyppo reads the filename by page number, and only accepts a page below
  * $7F00, so this cannot move into the fixed region. */
@@ -65,7 +65,7 @@ MEMORY {
 INCLUDE _ram-banked.ld
 
 INPUT(boot.o)
-INPUT(load-banks-sd.o)
+INPUT(load-banks.o)
 
 REGION_ALIAS("c_readonly", ram_fixed)
 REGION_ALIAS("c_writeable", ram_high)
@@ -84,7 +84,7 @@ SECTIONS {
 
 /* Bank 0 fills the window itself, so it must stop where WINDOW_TAIL starts. */
 ASSERT(ADDR(.bank_0) + SIZEOF(.bank_0) <= __window_tail_start,
-       "mega65-banked-sd: bank 0 overlaps WINDOW_TAIL")
+       "mega65-banked-nokernal: bank 0 overlaps WINDOW_TAIL")
 
 /* Bytes of ram_fixed that carry content; the rest is soft stack. */
 __ram_fixed_size = LOADADDR(.data) + SIZEOF(.data) - ORIGIN(ram_fixed);

@@ -4,7 +4,7 @@ A banked MEGA65 target with the KERNAL still available, for programs larger
 than 64 KB. Banks are separate files on a D81 image, loaded at startup, so the
 `.prg` alone will not run.
 
-Use `mega65-banked-sd` instead if the program needs neither BASIC nor the
+Use `mega65-banked-nokernal` instead if the program needs neither BASIC nor the
 KERNAL and can load from the SD card.
 
 ## Memory map

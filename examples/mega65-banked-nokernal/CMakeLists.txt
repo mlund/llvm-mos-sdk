@@ -1,6 +1,6 @@
 # Each example becomes a directory to copy onto the SD card: the main PRG, one
 # file per bank, and whatever ASSETS names.
-function(add_banked_sd_example name source)
+function(add_banked_nokernal_example name source)
   cmake_parse_arguments(arg "" "" "ASSETS" ${ARGN})
   add_executable(${name}.prg ${source} ${arg_UNPARSED_ARGUMENTS})
   install_example(${name}.prg)
@@ -22,9 +22,9 @@ function(add_banked_sd_example name source)
   install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${name}_sd DESTINATION bin)
 endfunction()
 
-add_banked_sd_example(banked-colors banked-colors.cc)
-add_banked_sd_example(banked-args banked-args.cc)
-add_banked_sd_example(banked-irq banked-irq.cc)
-add_banked_sd_example(sd-asset sd-asset.c ASSETS stripes.bin)
-add_banked_sd_example(floppy-colors floppy-colors.cc)
-add_banked_sd_example(big-fixed big-fixed.cc)
+add_banked_nokernal_example(banked-colors banked-colors.cc)
+add_banked_nokernal_example(banked-args banked-args.cc)
+add_banked_nokernal_example(banked-irq banked-irq.cc)
+add_banked_nokernal_example(sd-asset sd-asset.c ASSETS stripes.bin)
+add_banked_nokernal_example(floppy-colors floppy-colors.cc)
+add_banked_nokernal_example(big-fixed big-fixed.cc)

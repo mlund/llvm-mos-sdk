@@ -1,4 +1,4 @@
-# mega65-banked-sd
+# mega65-banked-nokernal
 
 A banked MEGA65 target with BASIC and the KERNAL mapped out. Banks and assets
 are plain files on the SD card, loaded through Hyppo.
@@ -152,12 +152,12 @@ like intermittent corruption.
 
 Interrupts start disabled and the vectors at `$FFFA`/`$FFFE` point at an
 `RTI`. A program that wants them writes its own handler address there and
-clears the flag. See `examples/mega65-banked-sd/banked-irq.cc`.
+clears the flag. See `examples/mega65-banked-nokernal/banked-irq.cc`.
 
 ## Building
 
 ```sh
-mos-mega65-banked-sd-clang -Os -o game.prg game.c
+mos-mega65-banked-nokernal-clang -Os -o game.prg game.c
 python3 prg-to-mega65.py game.prg game_sd game --asset tiles.bin
 ```
 
@@ -182,7 +182,7 @@ Define `MAPPER_BANK_n` to move bank *n*, the same in every file: with `-D`, or
 in a header passed with `-include`.
 
 ```sh
-mos-mega65-banked-sd-clang -DMAPPER_BANK_2=0x8012000 -Os -o game.prg game.c
+mos-mega65-banked-nokernal-clang -DMAPPER_BANK_2=0x8012000 -Os -o game.prg game.c
 ```
 
 `MAPPER_WINDOW_KB` set to 16 or 8 shrinks every bank to that size and moves the

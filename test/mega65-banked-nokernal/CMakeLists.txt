@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 
-project(test-mega65-banked-sd LANGUAGES C)
+project(test-mega65-banked-nokernal LANGUAGES C)
 
 include(../test.cmake)
 
@@ -11,13 +11,13 @@ include(../test.cmake)
 #
 # REMOVE names a file to delete from the finished directory, for the tests that
 # need the card to disagree with the link.
-function(add_mega65_banked_sd_test name)
+function(add_mega65_banked_nokernal_test name)
   cmake_parse_arguments(arg "" "REMOVE" "" ${ARGN})
   if(NOT XMEGA65_COMMAND)
     return()
   endif()
   if(NOT PYTHON3_COMMAND)
-    message(STATUS "python3 not found, skipping banked-sd test: test-${name}")
+    message(STATUS "python3 not found, skipping banked-nokernal test: test-${name}")
     return()
   endif()
   add_executable(${name}.prg ${name}.c)
@@ -42,9 +42,9 @@ function(add_mega65_banked_sd_test name)
   set_tests_properties(test-${name} PROPERTIES TIMEOUT 30)
 endfunction()
 
-# Like add_mega65_banked_sd_test, for MAPPER_LOADER_FLOPPY: the converter
+# Like add_mega65_banked_nokernal_test, for MAPPER_LOADER_FLOPPY: the converter
 # writes the banks to a D81, mounted as drive 8, and no card is served.
-function(add_mega65_banked_sd_floppy_test name)
+function(add_mega65_banked_nokernal_floppy_test name)
   cmake_parse_arguments(arg "" "" "ASSETS" ${ARGN})
   if(NOT XMEGA65_COMMAND OR NOT PYTHON3_COMMAND)
     return()
@@ -72,7 +72,7 @@ endfunction()
 
 # Asserts a byte budget on the linked image, which is how many bank slots the
 # link reserved without reading the linker script.
-function(add_mega65_banked_sd_size_test name max)
+function(add_mega65_banked_nokernal_size_test name max)
   if(NOT PYTHON3_COMMAND)
     return()
   endif()
@@ -82,26 +82,26 @@ function(add_mega65_banked_sd_size_test name max)
     $<TARGET_FILE:${name}.prg>)
 endfunction()
 
-add_mega65_banked_sd_test(boot-map)
-add_mega65_banked_sd_test(zp-extent)
-add_mega65_banked_sd_test(data-init)
-add_mega65_banked_sd_test(bank-window)
-add_mega65_banked_sd_test(bank-adjacency)
-add_mega65_banked_sd_test(bank-zero)
-add_mega65_banked_sd_test(bank-call)
-add_mega65_banked_sd_test(bank-args)
-add_mega65_banked_sd_test(bank-nested)
-add_mega65_banked_sd_test(bank-to-bank)
-add_mega65_banked_sd_test(bank-range)
-add_mega65_banked_sd_test(bank-interrupts)
-add_mega65_banked_sd_test(bank-irq-delivery)
-add_mega65_banked_sd_test(bank-load-failed REMOVE BANK2.BIN)
-add_mega65_banked_sd_test(sd-load-banks)
-add_mega65_banked_sd_test(bank-moved)
-add_mega65_banked_sd_test(bank-window-16)
-add_mega65_banked_sd_test(bank-tail)
-add_mega65_banked_sd_test(banked-call-args-first)
-add_mega65_banked_sd_floppy_test(floppy-load-banks)
+add_mega65_banked_nokernal_test(boot-map)
+add_mega65_banked_nokernal_test(zp-extent)
+add_mega65_banked_nokernal_test(data-init)
+add_mega65_banked_nokernal_test(bank-window)
+add_mega65_banked_nokernal_test(bank-adjacency)
+add_mega65_banked_nokernal_test(bank-zero)
+add_mega65_banked_nokernal_test(bank-call)
+add_mega65_banked_nokernal_test(bank-args)
+add_mega65_banked_nokernal_test(bank-nested)
+add_mega65_banked_nokernal_test(bank-to-bank)
+add_mega65_banked_nokernal_test(bank-range)
+add_mega65_banked_nokernal_test(bank-interrupts)
+add_mega65_banked_nokernal_test(bank-irq-delivery)
+add_mega65_banked_nokernal_test(bank-load-failed REMOVE BANK2.BIN)
+add_mega65_banked_nokernal_test(sd-load-banks)
+add_mega65_banked_nokernal_test(bank-moved)
+add_mega65_banked_nokernal_test(bank-window-16)
+add_mega65_banked_nokernal_test(bank-tail)
+add_mega65_banked_nokernal_test(banked-call-args-first)
+add_mega65_banked_nokernal_floppy_test(floppy-load-banks)
 # 700 bytes of i % 251: three logical sectors, and a pattern that shows where a
 # sector's data was put.
 if(PYTHON3_COMMAND)
@@ -110,12 +110,12 @@ if(PYTHON3_COMMAND)
     "import sys; data = bytes(i % 251 for i in range(700)); \
 open(sys.argv[1], 'wb').write(data)"
     ${pattern})
-  add_mega65_banked_sd_floppy_test(d81-load ASSETS ${pattern})
+  add_mega65_banked_nokernal_floppy_test(d81-load ASSETS ${pattern})
 endif()
 
 # One bank slot plus the window and the fixed region, and nothing for the
 # fourteen banks this program does not declare.
-add_mega65_banked_sd_size_test(bank-count 70000)
+add_mega65_banked_nokernal_size_test(bank-count 70000)
 
 add_subdirectory(no-compile)
 add_subdirectory(compile)
@@ -124,9 +124,9 @@ add_subdirectory(compile)
 if(PYTHON3_COMMAND)
   add_executable(layout-default.prg ../mega65-common/layout-probe.c)
   add_executable(layout-moved.prg bank-moved.c)
-  add_test(NAME test-bank-tables-sd
+  add_test(NAME test-bank-tables-nokernal
     COMMAND ${PYTHON3_COMMAND} ${CMAKE_CURRENT_SOURCE_DIR}/../mega65-common/check-bank-tables.py
       $<TARGET_FILE:layout-default.prg> $<TARGET_FILE:layout-moved.prg>)
-  add_test(NAME test-bank-report-sd
+  add_test(NAME test-bank-report-nokernal
     COMMAND ${PYTHON3_COMMAND} ${CMAKE_CURRENT_SOURCE_DIR}/check-bank-report.py)
 endif()

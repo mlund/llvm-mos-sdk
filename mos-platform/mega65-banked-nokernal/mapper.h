@@ -3,8 +3,8 @@
 // See https://github.com/llvm-mos/llvm-mos-sdk/blob/main/LICENSE for license
 // information.
 
-#ifndef _MEGA65_BANKED_SD_MAPPER_H_
-#define _MEGA65_BANKED_SD_MAPPER_H_
+#ifndef _MEGA65_BANKED_NOKERNAL_MAPPER_H_
+#define _MEGA65_BANKED_NOKERNAL_MAPPER_H_
 
 /**
  * @brief Default physical base of each bank, overridden by MAPPER_BANK_n.
@@ -61,4 +61,4 @@
  * map, megabyte bytes and CPU port in hardware.
  */
 
-#endif // _MEGA65_BANKED_SD_MAPPER_H_
+#endif // _MEGA65_BANKED_NOKERNAL_MAPPER_H_

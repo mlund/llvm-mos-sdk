@@ -10,7 +10,7 @@ ram_fixed, then one slot per declared bank. What is written follows the loader
 the program's files recorded:
 
   KERNAL LOAD (mega65-banked)   BASE.d81, autobooting, holding bank1-bankf
-  Hyppo (mega65-banked-sd)      OUTDIR as the SD card: BASE.PRG, BANKn.BIN
+  Hyppo (mega65-banked-nokernal)      OUTDIR as the SD card: BASE.PRG, BANKn.BIN
   F011 (MAPPER_LOADER_FLOPPY)   BASE.PRG, and BASE.D81 holding BANKn and assets
 """
 
