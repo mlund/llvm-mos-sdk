@@ -15,8 +15,8 @@
 //   - DMA copies palette from chip RAM to VIC-IV palette registers
 //
 // FCM addressing: char_address = screen_value * 64 (charptr is ignored).
-// Screen values are absolute character numbers: BANK_PHYS_BASE_4 / 64 +
-// tile_index. The converter reads the physical address from mapper.h.
+// The committed screen map holds tile indices, and startup adds the tiles'
+// character base, BANK_PHYS_BASE_4 / 64, so the image follows the bank layout.
 //
 // Binary data files are generated offline by convert-fcm.py and included
 // via C23 #embed. The CRT bank loader places them in chip RAM at startup.
@@ -31,16 +31,17 @@ MAPPER_BANK_COUNT(5);
 
 using namespace mega65::dma;
 
-// Bank 4 ($40000): 380 FCM tiles (8x8 pixels, 1 byte/pixel) = 24,320 bytes.
+// Bank 4: 380 FCM tiles (8x8 pixels, 1 byte/pixel) = 24,320 bytes.
 // Nearly fills the 24 KB bank (256 bytes to spare).
 __attribute__((section(".bank_4"), retain, used))
 const uint8_t fcm_tile_data[] = {
 #embed "fcm-tiles.bin"
 };
 
-// Bank 5 ($48000): screen map + palette (2,768 bytes of 24 KB).
-__attribute__((section(".bank_5"), retain, used))
-const uint8_t fcm_screen_map[] = {
+// Bank 5: screen map + palette (2,768 bytes of 24 KB). The map is written by
+// relocate_screen_map(), so it takes a writable section of its own.
+__attribute__((section(".bank_5.data"), retain, used))
+uint8_t fcm_screen_map[] = {
 #embed "fcm-screen.bin"
 };
 
@@ -49,9 +50,15 @@ const uint8_t fcm_palette_data[] = {
 #embed "fcm-palette.bin"
 };
 
-// Physical addresses for VIC-IV scrnptr and DMA palette source.
-static constexpr uint32_t SCREEN_MAP_ADDR = BANK_PHYS_BASE_5;
-static constexpr uint32_t PALETTE_ADDR = BANK_PHYS_BASE_5 + sizeof(fcm_screen_map);
+// VIC-IV and DMA read memory directly, so they want physical addresses; a
+// bank's linked address is a window address from $2000.
+static uint32_t in_bank_5(const uint8_t *linked) {
+  return BANK_PHYS_BASE_5 + ((uint16_t)linked - 0x2000);
+}
+
+// VIC-IV fetches characters only from chip RAM.
+static_assert(BANK_PHYS_BASE_4 + sizeof(fcm_tile_data) <= 0x60000,
+              "banked-fcm needs bank 4 in chip RAM");
 
 static constexpr uint8_t CELL_COLS = 40;
 static constexpr uint8_t CELL_ROWS = 25;
@@ -78,12 +85,10 @@ static void setup_vic() {
   VICIV.ctrlc =
       (VICIV.ctrlc & ~VIC4_FCLRLO_MASK) | VIC4_CHR16_MASK | VIC4_FCLRHI_MASK;
 
-  // Point screen RAM directly at the screen map in bank 4.
-  VICIV.scrnptr = SCREEN_MAP_ADDR;
+  // Point screen RAM directly at the screen map in bank 5.
+  VICIV.scrnptr = in_bank_5(fcm_screen_map);
 
   // FCM ignores charptr — char_address = screen_value * 64 always.
-  // The screen map encodes absolute character numbers (BANK_PHYS_BASE_4 / 64
-  // + tile_index) so the converter must know the physical tile address.
 
   // 80 bytes per screen row (40 chars x 2 bytes in CHR16).
   VICIV.linestep = CELL_COLS * CHR16_BYTES_PER_CHAR;
@@ -107,7 +112,8 @@ static void setup_vic() {
 // DMA palette data from bank 5 to VIC-IV palette registers ($FFD3100).
 static void setup_palette() {
   const auto copy =
-      make_dma_copy(PALETTE_ADDR, 0xFFD3100, sizeof(fcm_palette_data));
+      make_dma_copy(in_bank_5(fcm_palette_data), 0xFFD3100,
+                    sizeof(fcm_palette_data));
   trigger_dma(copy);
 }
 
@@ -120,7 +126,21 @@ static void setup_colour_ram() {
   trigger_dma(fill);
 }
 
+// Turn the map's tile indices into FCM character numbers: the tiles' physical
+// address over 64, which depends on where bank 4 is.
+static void relocate_screen_map() {
+  const uint16_t base = BANK_PHYS_BASE_4 / 64;
+  set_bank(5);
+  for (uint16_t i = 0; i < sizeof(fcm_screen_map); i += 2) {
+    const uint16_t tile = fcm_screen_map[i] | fcm_screen_map[i + 1] << 8;
+    fcm_screen_map[i] = (uint8_t)(tile + base);
+    fcm_screen_map[i + 1] = (uint8_t)((tile + base) >> 8);
+  }
+  set_bank(0);
+}
+
 int main() {
+  relocate_screen_map();
   setup_vic();
   setup_palette();
   setup_colour_ram();

@@ -32,6 +32,13 @@ extern "C" const uint8_t drums[];
 constexpr uint32_t SAMPLE_ADDR = BANK_PHYS_BASE_1;
 constexpr uint16_t SAMPLE_SIZE = 44031;
 
+// banked-audio.S splits the sample where bank 1 ends, and DMA plays it as one
+// buffer through a 16-bit top address: bank 2 must follow bank 1, and the
+// whole sample must share one 64 KB page.
+static_assert(BANK_SIZE_1 == 24576);
+static_assert(BANK_PHYS_BASE_2 == BANK_PHYS_BASE_1 + BANK_SIZE_1);
+static_assert(BANK_PHYS_BASE_1 >> 16 == (BANK_PHYS_BASE_1 + SAMPLE_SIZE) >> 16);
+
 int main() {
   DMA.auden = DMA_AUDEN;
   // Channels 0 and 1 take their left volume from ch0.volume and their right

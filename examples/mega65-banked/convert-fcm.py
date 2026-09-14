@@ -7,7 +7,7 @@
 
 Produces binary files for use with C23 #embed in banked-fcm.cc:
   - fcm-tiles.bin:   380 unique 8x8 FCM tiles (each 64 bytes, palette indices)
-  - fcm-screen.bin:  2000-byte CHR16 screen map (40x25, 16-bit LE tile numbers)
+  - fcm-screen.bin:  2000-byte screen map (40x25, 16-bit LE tile indices)
   - fcm-palette.bin: 768-byte palette (256 R + 256 G + 256 B, nybble-reversed)
   - fcm-preview.png: reconstructed preview image for visual verification
 
@@ -19,36 +19,16 @@ Pipeline:
      unique tiles. Medoids (real source tiles) are used as cluster
      representatives to avoid palette-index averaging artifacts.
   4. Palette entry 0 is set to the darkest colour for use as border/background.
-  5. Output binary files use VIC-IV nybble-reversed palette format and CHR16
-     absolute addressing (tile base = BANK_PHYS_BASE_4 / 64, read from mapper.h).
+  5. Output binary files use VIC-IV nybble-reversed palette format. The screen
+     map holds tile indices; banked-fcm.cc adds the tiles' character base.
 
 Usage: python3 convert-fcm.py <input.png> [output_dir]
 """
 
 import os
-import re
 import sys
 import numpy as np
 from PIL import Image
-
-# Parse BANK_PHYS_BASE_N from mapper.h so tile addresses stay in sync
-# with the platform's bank layout (including the +$800 KERNAL LOAD offset).
-MAPPER_H = os.path.join(os.path.dirname(__file__),
-                        "../../mos-platform/mega65-banked/mapper.h")
-
-def read_bank_phys_base(bank):
-    """Read BANK_PHYS_BASE_N from mapper.h."""
-    pattern = rf"#define\s+_MAPPER_DEFAULT_BANK_{bank}\s+_MAPPER_UL\((0x[0-9A-Fa-f]+)\)"
-    with open(MAPPER_H) as f:
-        for line in f:
-            m = re.match(pattern, line)
-            if m:
-                return int(m.group(1), 16)
-    raise ValueError(f"BANK_PHYS_BASE_{bank} not found in {MAPPER_H}")
-
-TILE_BANK = 4
-TILE_PHYS_BASE = read_bank_phys_base(TILE_BANK)
-TILE_BASE = TILE_PHYS_BASE // 64  # FCM absolute addressing: screen value = phys / 64
 
 MAX_TILES = 380       # Must fit in bank 4 (380 * 64 = 24320 < 24576)
 SCREEN_W, SCREEN_H = 320, 200
@@ -220,15 +200,13 @@ def main():
     print(f"  Screen map: 2000 bytes")
     print(f"  Palette: {len(palette)} bytes")
 
-    # Build CHR16 screen map: FCM absolute addressing (screen value = phys / 64).
-    # TILE_BASE is derived from BANK_PHYS_BASE_4 in mapper.h (currently
-    # $46800 / 64 = $11A0).
+    # Screen map of tile indices; banked-fcm.cc adds the character base.
     screen_map = bytearray(2000)
     for i in range(ROWS * COLS):
-        char_num = TILE_BASE + int(assignments[i])
-        screen_map[i * 2] = char_num & 0xFF
-        screen_map[i * 2 + 1] = (char_num >> 8) & 0xFF
-    print(f"  Screen values range: {TILE_BASE}-{TILE_BASE + int(assignments.max())}")
+        tile = int(assignments[i])
+        screen_map[i * 2] = tile & 0xFF
+        screen_map[i * 2 + 1] = (tile >> 8) & 0xFF
+    print(f"  Tile indices range: 0-{int(assignments.max())}")
 
     # Write binary files.
     tiles_path = os.path.join(output_dir, "fcm-tiles.bin")

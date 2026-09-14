@@ -3,11 +3,11 @@
 ; See https://github.com/llvm-mos/llvm-mos-sdk/blob/main/LICENSE for license
 ; information.
 
-; The sample is larger than one 24 KB bank, so it is split across banks 1 and
-; 2, whose physical addresses are adjacent ($12000 and $18000). Assembled
-; rather than written as two C arrays because #embed is a directive and cannot
-; come from a macro, so C would put the split and its offset in the caller's
-; face; here one symbol covers the whole sample.
+; The sample is larger than one bank, so it is split at 24 KB across banks 1
+; and 2; banked-audio.cc asserts that is bank 1's size and that the two are
+; adjacent. Assembled rather than written as two C arrays because #embed is a
+; directive and cannot come from a macro, so C would put the split and its
+; offset in the caller's face; here one symbol covers the whole sample.
 
 .section .bank_1.rodata,"aR",@progbits
 .globl drums
