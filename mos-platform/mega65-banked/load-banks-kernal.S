@@ -24,8 +24,6 @@ VIC3_ROMC = $20
 
 .weak __load_banks
 __load_banks:
-    jsr CLRCHN                  ; autoboot's LOAD of this program can leave
-                                ; the channels dirty
     ldx #0
 .Lnext:
     phx
@@ -68,6 +66,12 @@ load_bank:
 
     lda #VIC3_ROMC
     tsb VIC_CTRLA
+
+    ; Autoboot's LOAD of this program can leave the channels dirty, and
+    ; clearing a disk channel needs the ROM just mapped in.
+    phy
+    jsr CLRCHN
+    ply
 
     pla
     ldx #$00                    ; filename bank
