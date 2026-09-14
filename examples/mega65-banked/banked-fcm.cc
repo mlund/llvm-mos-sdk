@@ -21,13 +21,13 @@
 // Binary data files are generated offline by convert-fcm.py and included
 // via C23 #embed. The CRT bank loader places them in chip RAM at startup.
 
+// Only banks 1-5 are used; the rest are left out of the image.
+#define MAPPER_BANK_COUNT 5
+
 #include <cstdint>
 #include <dma.hpp>
 #include <mapper.h>
 #include <mega65.h>
-
-// Only banks 1-5 are used; the rest are left out of the image.
-MAPPER_BANK_COUNT(5);
 
 using namespace mega65::dma;
 

@@ -6,12 +6,12 @@
 // Loading an asset the build put on the card beside the banks. The CRT does
 // this for banks; anything else is the program's own call.
 
+// Bank 1 carries no linked content, only the file loaded into it below.
+#define MAPPER_BANK_COUNT 1
+
 #include <mapper.h>
 #include <mega65.h>
 #include <stdint.h>
-
-// Bank 1 carries no linked content, only the file loaded into it below.
-MAPPER_BANK_COUNT(1);
 
 #define WINDOW ((const volatile uint8_t *)0x2000)
 

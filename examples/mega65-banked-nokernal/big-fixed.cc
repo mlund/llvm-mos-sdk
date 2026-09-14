@@ -10,12 +10,11 @@
 
 #define MAPPER_WINDOW_KB 16
 #define MAPPER_BANK_1_KB 8
+#define MAPPER_BANK_COUNT 2
 
 #include <cstdint>
 #include <mapper.h>
 #include <mega65.h>
-
-MAPPER_BANK_COUNT(2);
 
 // Stands in for code and data past 20 KB: with a 24 KB window this alone would
 // not fit the fixed region.

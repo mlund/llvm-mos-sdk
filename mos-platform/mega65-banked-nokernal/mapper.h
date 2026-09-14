@@ -17,7 +17,7 @@
  * write protection over that region, which also costs the character generator
  * at $2D000, so a program that wants a charset brings its own.
  *
- * Banks 13-15 are attic RAM (HyperRAM at $8000000+, ~10x slower, out of reach
+ * Banks 13-31 are attic RAM (HyperRAM at $8000000+, ~10x slower, out of reach
  * of VIC-IV/audio DMA, absent on boards without HyperRAM): use for tables and
  * code off the hot path.
  */
@@ -36,6 +36,22 @@
 #define _MAPPER_DEFAULT_BANK_13 _MAPPER_UL(0x8000000)
 #define _MAPPER_DEFAULT_BANK_14 _MAPPER_UL(0x8006000)
 #define _MAPPER_DEFAULT_BANK_15 _MAPPER_UL(0x800C000)
+#define _MAPPER_DEFAULT_BANK_16 _MAPPER_UL(0x8012000)
+#define _MAPPER_DEFAULT_BANK_17 _MAPPER_UL(0x8018000)
+#define _MAPPER_DEFAULT_BANK_18 _MAPPER_UL(0x801E000)
+#define _MAPPER_DEFAULT_BANK_19 _MAPPER_UL(0x8024000)
+#define _MAPPER_DEFAULT_BANK_20 _MAPPER_UL(0x802A000)
+#define _MAPPER_DEFAULT_BANK_21 _MAPPER_UL(0x8030000)
+#define _MAPPER_DEFAULT_BANK_22 _MAPPER_UL(0x8036000)
+#define _MAPPER_DEFAULT_BANK_23 _MAPPER_UL(0x803C000)
+#define _MAPPER_DEFAULT_BANK_24 _MAPPER_UL(0x8042000)
+#define _MAPPER_DEFAULT_BANK_25 _MAPPER_UL(0x8048000)
+#define _MAPPER_DEFAULT_BANK_26 _MAPPER_UL(0x804E000)
+#define _MAPPER_DEFAULT_BANK_27 _MAPPER_UL(0x8054000)
+#define _MAPPER_DEFAULT_BANK_28 _MAPPER_UL(0x805A000)
+#define _MAPPER_DEFAULT_BANK_29 _MAPPER_UL(0x8060000)
+#define _MAPPER_DEFAULT_BANK_30 _MAPPER_UL(0x8066000)
+#define _MAPPER_DEFAULT_BANK_31 _MAPPER_UL(0x806C000)
 
 #define _MAPPER_PLATFORM_CHECK(n)
 #define _MAPPER_DEFAULT_LOADER 0

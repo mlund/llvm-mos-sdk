@@ -4,7 +4,7 @@
 // information.
 
 // Bank loader for MAPPER_LOADER_FLOPPY: every non-empty bank off the mounted
-// D81, as BANK1-BANKF, with mega65_d81_load().
+// D81, as BANK1-BANK1F, with mega65_d81_load().
 
 #include "_mapper.h"
 #include <mega65.h>
@@ -13,13 +13,15 @@
 // it. mega65_d81_load() is fixed code, callable at any time.
 __attribute__((noinline, section(".bank_0")))
 void __load_banks_floppy(void) {
-  char name[] = "BANK0";
-
-  for (unsigned char i = 0; i < 15; ++i) {
-    unsigned char bank = i + 1;
-    if (!__bank_used[i])
+  for (unsigned char bank = 1; bank < 32; ++bank) {
+    char name[7] = "BANK";
+    char *p = name + 4;
+    unsigned char digit = bank & 15;
+    if (!(__bank_used[bank >> 3] & 1 << (bank & 7)))
       continue;
-    name[4] = bank <= 9 ? '0' + bank : 'A' + (bank - 10);
+    if (bank >= 16)
+      *p++ = '1';
+    *p = digit < 10 ? '0' + digit : 'A' + (digit - 10);
     uint32_t base = (uint32_t)__bank_megabyte[bank] << 20 |
                     (uint32_t)(__bank_addr_mid[bank] & 0x0F) << 16 |
                     (uint16_t)(__bank_addr_page[bank] << 8);

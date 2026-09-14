@@ -13,11 +13,11 @@
 //   red(2) -> bank 1, green(5) -> bank 2, yellow(7) -> bank 4.
 // Banks 1-2 sit at $12000 and $18000, banks 3-7 from $40800; all chip RAM.
 
+// Only banks 1-4 are used; the rest are left out of the image.
+#define MAPPER_BANK_COUNT 4
+
 #include <cstdio>
 #include <mapper.h>
-
-// Only banks 1-4 are used; the rest are left out of the image.
-MAPPER_BANK_COUNT(4);
 
 #define BORDERCOLOR (*(volatile unsigned char *)0xD020)
 

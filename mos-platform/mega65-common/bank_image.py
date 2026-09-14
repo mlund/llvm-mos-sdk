@@ -12,9 +12,9 @@ slices at the wrong offset and the banks load as garbage.
 import struct
 from pathlib import Path
 
-BANKS = 15
-# A file's layout record: 16 bases, window KB, bank 1-15 KB, loader.
-RECORD = "<33I"
+BANKS = 31
+# A file's layout record: 32 bases, window KB, bank 1-31 KB, loader, count.
+RECORD = "<66I"
 
 # Regions no bank may overlap, beyond chip RAM's end and attic's bounds.
 RESERVED = {
@@ -117,7 +117,8 @@ def symbol_table(elf):
 def layouts(elf):
     """The distinct layouts the program's files recorded.
 
-    Each is 16 bases, the window in KB, banks 1-15 in KB, then the loader.
+    Each is 32 bases, the window in KB, banks 1-31 in KB, the loader, then
+    MAPPER_BANK_COUNT.
     """
     data = section(elf, ".mapper_layout")
     size = struct.calcsize(RECORD)
@@ -127,7 +128,12 @@ def layouts(elf):
 
 def split_layout(record):
     """(bases, sizes in bytes), both indexed by bank; bank 0 is the window."""
-    return record[:16], [kb * 1024 for kb in record[16:32]]
+    return record[:32], [kb * 1024 for kb in record[32:64]]
+
+
+def layout_count(record):
+    """The MAPPER_BANK_COUNT a record was made with."""
+    return record[65]
 
 
 def layout_problems(bases, sizes, count=BANKS):
@@ -163,4 +169,4 @@ LOADER_HYPPO, LOADER_FLOPPY, LOADER_KERNAL = 0, 1, 2
 
 def loader(found):
     """The loader the program's files recorded, or None without one record."""
-    return next(iter(found))[32] if len(found) == 1 else None
+    return next(iter(found))[64] if len(found) == 1 else None

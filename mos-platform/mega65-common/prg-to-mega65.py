@@ -9,7 +9,7 @@ The linked image is a 2-byte load address, the window region, the used part of
 ram_fixed, then one slot per declared bank. What is written follows the loader
 the program's files recorded:
 
-  mega65-banked                 BASE.d81, autobooting, holding bank1-bankf
+  mega65-banked                 BASE.d81, autobooting, holding bank1-bank1f
   mega65-banked, SD card        OUTDIR as the card: BASE.D81, autobooting, and
                                 BANKn.BIN
   mega65-banked-nokernal        OUTDIR as the card: BASE.PRG, BANKn.BIN

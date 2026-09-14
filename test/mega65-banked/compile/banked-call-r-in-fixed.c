@@ -1,9 +1,9 @@
 // The counterpart to no-compile/banked-call-r-in-bank.c: from fixed code it
 // links.
 
-#include <mapper.h>
+#define MAPPER_BANK_COUNT 2
 
-MAPPER_BANK_COUNT(2);
+#include <mapper.h>
 
 CODE_BANK(2) static char target(char v) { return v; }
 

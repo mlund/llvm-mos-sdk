@@ -1,11 +1,11 @@
 // banked_call_r evaluates its arguments before switching, so an argument may
 // read the bank mapped at the call.
 
+#define MAPPER_BANK_COUNT 2
+
 #include <mapper.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(2);
 
 RODATA_BANK(1) static const uint8_t in_bank_1[] = {0x5a};
 

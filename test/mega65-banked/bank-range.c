@@ -1,19 +1,17 @@
-// A bank id outside 0-15 must not reach the MAP registers unchecked.
+// A bank above MAPPER_BANK_COUNT must not reach the MAP registers unchecked.
 //
-// The MAP tables hold 16 entries each, so a caller passing 16 or more reads
-// past their end and hands whatever follows to
-// the MAP instruction.  MAPLO covers $0000-$7FFF, which includes zero page
-// and therefore the compiler's imaginary registers, so the damage from a wild
-// offset is not confined to the banked window.
+// The bank tables end at the declared count, so a larger id would read past
+// them and hand whatever follows to MAP. MAPLO covers $0000-$7FFF, which
+// includes zero page and therefore the compiler's imaginary registers, so the
+// damage from a wild offset is not confined to the banked window.
 //
-// The contract this pins down is that the id is masked to its low four bits:
-// set_bank(0x11) does what set_bank(1) does, and get_bank() then reports 1.
-// Masking rather than rejecting,
-// because there is no error to return and a branch would cost more than the
-// AND that avoids it.
+// The contract this pins down is that such an id maps bank 0, and get_bank()
+// reports 0.
 //
 // Exit codes (via xemu $D6CF protocol):
 //   0 = ran to completion; the dump says which bank was actually mapped
+
+#define MAPPER_BANK_COUNT 1
 
 #include <mapper.h>
 #include <stdint.h>
@@ -34,8 +32,9 @@ int main(void) {
   set_bank(0);
   WINDOW = 0x00;
 
-  // The out-of-range id: low four bits select bank 1.
-  set_bank(0x11);
+  // From bank 1, the id just past the count.
+  set_bank(1);
+  set_bank(2);
   PROBE[0] = WINDOW;
   PROBE[1] = get_bank();
 

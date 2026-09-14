@@ -1,10 +1,10 @@
 // Code runs from every chip RAM bank, loaded off the card by the CRT.
 
+#define MAPPER_BANK_COUNT 5
+
 #include <mapper.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(5);
 
 // In .bss, which is never remapped, so a banked function can report through it.
 static volatile uint8_t seen;

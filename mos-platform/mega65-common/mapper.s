@@ -7,7 +7,7 @@
 
 ; __set_bank_asm — map a bank into $2000-$7FFF.
 ;
-; Input: A = bank_id (0-15)
+; Input: A = bank_id; above MAPPER_BANK_COUNT maps bank 0
 ; Clobbers: A, X, Y, Z
 ;
 ; The first MAP sets the megabyte bytes, which the second cannot reach: X=$0F
@@ -29,9 +29,10 @@
 .section .text.__set_bank_asm,"ax",@progbits
 .globl __set_bank_asm
 __set_bank_asm:
-    and #$0f                ; ids past 15 would index off the end of the
-                            ; tables and hand junk to MAP, which covers
-                            ; $0000-$7FFF and so could move zero page
+    cmp #__bank_count+1     ; past MAPPER_BANK_COUNT the tables have ended,
+    bcc .Lin_range          ; and junk handed to MAP, which covers
+    lda #0                  ; $0000-$7FFF, could move zero page: map bank 0
+.Lin_range:
     sta _BANK_SHADOW        ; the bank mapped, so get_bank() agrees with MAP
     tax
 

@@ -31,7 +31,7 @@ is no overflow detection.
 | 0 | `$02000` | The default window; needs no loading |
 | 1-2 | `$12000`, `$18000` | Chip RAM |
 | 3-7 | `$40800` … `$58800` | Chip RAM, above the ROMs |
-| 8-15 | `$8000800` … `$8036800` | Attic RAM |
+| 8-31 | `$8000800` … `$80B6800` | Attic RAM |
 
 Chip RAM is all of `$00000-$5FFFF`, ROMs included: full speed, and fetched
 from directly by VIC-IV, so any of banks 0-7 can hold graphics.

@@ -32,11 +32,11 @@
 // since it keeps static stack allocation instead of pushing callees onto the
 // soft stack.
 
+#define MAPPER_BANK_COUNT 2
+
 #include <mapper.h>
 #include <mega65.h>
 #include <stdint.h>
-
-MAPPER_BANK_COUNT(2);
 
 // The KERNAL's indirect IRQ vector (iirq, mega65-rom/system.src).
 #define IIRQ (*(void (**)(void))0x0314)

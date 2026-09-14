@@ -1,12 +1,12 @@
 // mega65_d81_load() needs neither the KERNAL nor Hyppo, so it works here too:
 // it reads bank 1's own file back off the autoboot disk.
 
+#define MAPPER_BANK_COUNT 2
+
 #include <mapper.h>
 #include <mega65.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(2);
 
 RODATA_BANK(1) static const uint8_t signature[] = {0xb1, 0x01};
 

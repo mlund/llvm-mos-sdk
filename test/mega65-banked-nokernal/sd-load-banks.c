@@ -1,11 +1,11 @@
 // Bank content reaches chip, fast and attic RAM. Attic needs the other Hyppo
 // trap, since loadfile forces the top address byte to zero.
 
+#define MAPPER_BANK_COUNT 31
+
 #include <mapper.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(14);
 
 // Each payload spells out its own bank, so what is expected comes from the
 // bank number rather than from a second copy of the bytes.
@@ -17,6 +17,9 @@ RODATA_BANK(7) static const uint8_t rom_high[] = {0xb0 | 7, 7};
 RODATA_BANK(8) static const uint8_t fast[] = {0xb0 | 8, 8};
 RODATA_BANK(13) static const uint8_t attic[] = {0xb0 | 13, 13};
 RODATA_BANK(14) static const uint8_t attic_next[] = {0xb0 | 14, 14};
+// Two-digit file names, BANK10.BIN and up.
+RODATA_BANK(16) static const uint8_t two_digits[] = {0xb0 | 16, 16};
+RODATA_BANK(31) static const uint8_t last[] = {0xb0 | 31, 31};
 
 static volatile uint8_t seen;
 CODE_BANK(13) static void from_attic(void) { seen = 0xd6; }
@@ -38,6 +41,8 @@ int main(void) {
   check(8, fast);
   check(13, attic);
   check(14, attic_next);
+  check(16, two_digits);
+  check(31, last);
 
   seen = 0;
   banked_call(4, from_rom_region);

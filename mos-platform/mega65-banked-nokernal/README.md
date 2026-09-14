@@ -34,7 +34,7 @@ linker put it. About 19.5 KB of the fixed region is left after the runtime.
 | 1-2 | `$12000`, `$18000` | Chip RAM |
 | 3-7 | `$20000` … `$38000` | Chip RAM, where the C65 ROMs would be |
 | 8-12 | `$40000` … `$58000` | Chip RAM |
-| 13-15 | `$8000000` … `$800C000` | Attic RAM |
+| 13-31 | `$8000000` … `$806C000` | Attic RAM |
 
 Bank 0 is the window unmapped, so `.bank_0` content ships inside the main
 program rather than a bank file.

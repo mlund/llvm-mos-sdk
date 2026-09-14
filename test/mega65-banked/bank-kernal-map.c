@@ -10,13 +10,13 @@
 // Exit codes (via xemu $D6CF protocol):
 //   0 = ran to completion; the dump says what the window held
 
+#define MAPPER_BANK_COUNT 1
+
 #include <cbm.h>
 #include <mapper.h>
 #include <mega65.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(1);
 
 // Below $C000: the ROM mapped for the call covers $C000-$CFFF, so probes
 // there would read ROM rather than what was written.

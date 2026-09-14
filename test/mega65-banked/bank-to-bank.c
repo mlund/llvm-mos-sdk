@@ -6,11 +6,11 @@
 // table in its own bank, so the values say which bank was live rather than
 // what the shadow believes.
 
+#define MAPPER_BANK_COUNT 2
+
 #include <mapper.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(2);
 
 static volatile uint8_t seen[3];
 static volatile uint8_t idx; // a literal index would fold and read nothing

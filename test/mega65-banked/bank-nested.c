@@ -15,11 +15,11 @@
 // Exit codes (via xemu $D6CF protocol):
 //   0 = ran to completion; the dump carries the bank seen at each step
 
+#define MAPPER_BANK_COUNT 2
+
 #include <mapper.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(2);
 
 // In ram_fixed, which is never remapped, so it reads back the same whichever
 // bank is live. Well clear of the code below (~$8200) and of the soft stack,

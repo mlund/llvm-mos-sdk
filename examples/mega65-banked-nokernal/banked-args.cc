@@ -7,11 +7,11 @@
 // that reads it stay in bank 1; the fixed region only asks for a colour, so
 // nothing about the table has to be visible outside the bank.
 
+#define MAPPER_BANK_COUNT 1
+
 #include <cstdint>
 #include <mapper.h>
 #include <mega65.h>
-
-MAPPER_BANK_COUNT(1);
 
 RODATA_BANK(1)
 const uint8_t ramp[8] = {COLOR_BLACK,     COLOR_BLUE,  COLOR_PURPLE,

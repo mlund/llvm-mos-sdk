@@ -7,11 +7,11 @@
 //
 //   main (fixed) -> outer (bank 1) -> middle (fixed) -> inner (bank 2)
 
+#define MAPPER_BANK_COUNT 2
+
 #include <mapper.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(2);
 
 // In .bss, which is never remapped, so it reads the same whichever bank is live.
 static volatile uint8_t depth[5];

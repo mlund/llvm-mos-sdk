@@ -1,9 +1,9 @@
 // banked_call_r from banked code would unmap its caller mid-call, so it
 // must not link.
 
-#include <mapper.h>
+#define MAPPER_BANK_COUNT 2
 
-MAPPER_BANK_COUNT(2);
+#include <mapper.h>
 
 CODE_BANK(2) static char target(char v) { return v; }
 

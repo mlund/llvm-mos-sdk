@@ -1,9 +1,9 @@
 // A caller's own names reach the banked function unchanged: the macros keep
 // their temporaries in the reserved namespace.
 
-#include <mapper.h>
+#define MAPPER_BANK_COUNT 1
 
-MAPPER_BANK_COUNT(1);
+#include <mapper.h>
 
 CODE_BANK(1) static int add(int a, int b) { return a + b; }
 

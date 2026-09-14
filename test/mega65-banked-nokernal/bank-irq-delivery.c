@@ -8,12 +8,12 @@
 // The wait is bounded, so a handler that never runs fails an assertion with a
 // line number rather than hanging until the test times out.
 
+#define MAPPER_BANK_COUNT 1
+
 #include <mapper.h>
 #include <mega65.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(1);
 
 #define IRQ_VECTOR (*(volatile uint16_t *)0xfffe)
 #define VIC_IRQ_RASTER 0x01

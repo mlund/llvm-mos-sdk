@@ -3,12 +3,11 @@
 // keeps all 24 KB and covers it.
 
 #define MAPPER_BANK_1_KB 16
+#define MAPPER_BANK_COUNT 2
 
 #include <mapper.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(2);
 
 WINDOW_TAIL static uint8_t shared[4];
 

@@ -10,9 +10,8 @@ README gives its memory map, bank addresses and its own rules.
 ### Using banks
 
 ```c
+#define MAPPER_BANK_COUNT 2    // highest bank used
 #include <mapper.h>
-
-MAPPER_BANK_COUNT(2);          // highest bank used
 
 RODATA_BANK(1) const unsigned char sine[256] = { ... };
 
@@ -23,8 +22,9 @@ int main(void) {
 }
 ```
 
-`MAPPER_BANK_COUNT(n)` excludes banks above `n` from the image; without it all
-15 are included (mostly empty, read off disk).
+`MAPPER_BANK_COUNT`, 0-31, excludes higher banks from the image and the bank
+tables; define it the same in every file. Without it all 31 are included
+(mostly empty, read off disk).
 
 `CODE_BANK` adds `noinline` to prevent inlining back into the fixed region.
 `RODATA_BANK` adds `used` and `retain` to prevent discarding unreferenced data.
@@ -41,7 +41,7 @@ Keep a table in the same bank as the code reading it, so one call covers both.
 | `get_bank()` | The currently mapped bank |
 | `set_bank(bank)` | Map a bank directly; prefer `banked_call` |
 
-`bank` is masked to its low four bits, so 0x11 selects bank 1.
+A `bank` above `MAPPER_BANK_COUNT` maps bank 0.
 
 ```c
 int n = banked_call_r(1, measure, text, len);
@@ -96,6 +96,7 @@ Define uniformly in every file via `-D` or a header (`-include`).
 
 | Macro | Effect |
 |---|---|
+| `MAPPER_BANK_COUNT` | Highest bank used: 0-31 (default 31) |
 | `MAPPER_BANK_n` | Physical address of bank *n* |
 | `MAPPER_WINDOW_KB` | Window size: 24 (default), 16 or 8 KB |
 | `MAPPER_BANK_n_KB` | Bank *n* smaller than the window: 16 or 8 KB |

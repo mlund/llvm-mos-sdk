@@ -1,7 +1,8 @@
 // Test CRT bank loader: verify that attic RAM bank data loaded from D81.
 //
-// Each attic bank section (.bank_8 through .bank_15) contains a known
-// 2-byte signature. The CRT init __load_banks (.init.250) loads BANK8-BANKF
+// Each attic bank section (.bank_8-.bank_16 and .bank_31) contains a known
+// 2-byte signature. The CRT init __load_banks (.init.250) loads BANK8-BANK10
+// and BANK1F
 // from the D81 disk via KERNAL 28-bit SETBNK + LOAD. main() switches to
 // each bank and verifies the signature at virtual address $2000 (the banked
 // window start, mapped to attic RAM via MAP with megabyte byte $80).
@@ -32,10 +33,17 @@ __attribute__((used, retain, section(".bank_14")))
 static const uint8_t bank14_sig[] = {0xBE, 0x0E};
 __attribute__((used, retain, section(".bank_15")))
 static const uint8_t bank15_sig[] = {0xBF, 0x0F};
+__attribute__((used, retain, section(".bank_16")))
+static const uint8_t bank16_sig[] = {0xC0, 0x10};
+__attribute__((used, retain, section(".bank_31")))
+static const uint8_t bank31_sig[] = {0xCF, 0x1F};
+
+static const uint8_t banks[] = {8, 9, 10, 11, 12, 13, 14, 15, 16, 31};
 
 int main(void) {
   // Verify each attic bank was loaded from D81 by checking the known signature.
-  for (uint8_t bank = 8; bank <= 15; bank++) {
+  for (uint8_t i = 0; i < sizeof banks; i++) {
+    uint8_t bank = banks[i];
     set_bank(bank);
     volatile uint8_t *data = (volatile uint8_t *)0x2000;
     if (data[0] != (0xB0 + bank) || data[1] != bank)

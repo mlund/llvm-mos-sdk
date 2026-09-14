@@ -7,11 +7,11 @@
 //
 // Bank 0 is left alone: it is the window unmapped, where this program lives.
 
+#define MAPPER_BANK_COUNT 3
+
 #include <mapper.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(3);
 
 #define WINDOW ((volatile uint8_t *)0x2000)
 #define WINDOW_SIZE 0x6000

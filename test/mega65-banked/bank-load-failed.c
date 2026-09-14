@@ -4,11 +4,11 @@
 // red border. The D81 is rebuilt without BANK2, so the image still says bank
 // 2 holds something while the disk does not.
 
+#define MAPPER_BANK_COUNT 2
+
 #include <mapper.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(2);
 
 #define MISSING_BANK 2
 

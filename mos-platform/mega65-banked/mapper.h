@@ -15,11 +15,11 @@
  * VIC-IV fetches from directly; the ROMs at $20000-$3FFFF split them into
  * 0-2 and 3-7.
  *
- * Banks 3-15 sit +$800 into a 64KB page so KERNAL LOAD never sees a zero
+ * Banks 3-31 sit +$800 into a 64KB page so KERNAL LOAD never sees a zero
  * address high byte, which makes it corrupt the destination. Banks 1 and 2
  * clear that by starting at $12000 and $18000, above the C65 DOS work area.
  *
- * Banks 8-15 are in attic RAM (HyperRAM at $8000000+). Attic RAM is
+ * Banks 8-31 are in attic RAM (HyperRAM at $8000000+). Attic RAM is
  * ~10x slower than chip RAM and out of reach of VIC-IV and audio DMA.
  * It is useful for large data sets, lookup tables, and code that does
  * not need peak performance. Two banks are packed per 64KB page
@@ -41,6 +41,22 @@
 #define _MAPPER_DEFAULT_BANK_13 _MAPPER_UL(0x8026800)
 #define _MAPPER_DEFAULT_BANK_14 _MAPPER_UL(0x8030800)
 #define _MAPPER_DEFAULT_BANK_15 _MAPPER_UL(0x8036800)
+#define _MAPPER_DEFAULT_BANK_16 _MAPPER_UL(0x8040800)
+#define _MAPPER_DEFAULT_BANK_17 _MAPPER_UL(0x8046800)
+#define _MAPPER_DEFAULT_BANK_18 _MAPPER_UL(0x8050800)
+#define _MAPPER_DEFAULT_BANK_19 _MAPPER_UL(0x8056800)
+#define _MAPPER_DEFAULT_BANK_20 _MAPPER_UL(0x8060800)
+#define _MAPPER_DEFAULT_BANK_21 _MAPPER_UL(0x8066800)
+#define _MAPPER_DEFAULT_BANK_22 _MAPPER_UL(0x8070800)
+#define _MAPPER_DEFAULT_BANK_23 _MAPPER_UL(0x8076800)
+#define _MAPPER_DEFAULT_BANK_24 _MAPPER_UL(0x8080800)
+#define _MAPPER_DEFAULT_BANK_25 _MAPPER_UL(0x8086800)
+#define _MAPPER_DEFAULT_BANK_26 _MAPPER_UL(0x8090800)
+#define _MAPPER_DEFAULT_BANK_27 _MAPPER_UL(0x8096800)
+#define _MAPPER_DEFAULT_BANK_28 _MAPPER_UL(0x80A0800)
+#define _MAPPER_DEFAULT_BANK_29 _MAPPER_UL(0x80A6800)
+#define _MAPPER_DEFAULT_BANK_30 _MAPPER_UL(0x80B0800)
+#define _MAPPER_DEFAULT_BANK_31 _MAPPER_UL(0x80B6800)
 
 /* KERNAL LOAD corrupts $00-high destinations; ROMs stay write-protected. */
 #define _MAPPER_PLATFORM_CHECK(n)                                              \

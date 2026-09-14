@@ -1,25 +1,20 @@
-// A bank id outside 0-15 must not reach the MAP registers unchecked.
+// A bank above MAPPER_BANK_COUNT must not reach the MAP registers unchecked.
 //
-// The bank tables hold 16 entries, so a caller passing 16 or more reads past
-// the end of them and hands whatever follows to MAP. MAPLO covers
-// $0000-$7FFF, which includes the compiler's imaginary registers, so a wild
-// offset is not confined to the window.
+// The bank tables end at the declared count, so a larger id would read past
+// them and hand whatever follows to MAP. MAPLO covers $0000-$7FFF, which
+// includes the compiler's imaginary registers, so a wild offset is not
+// confined to the window.
 //
-// The contract is that the id is masked: set_bank(0x11) does what set_bank(1)
-// does, and get_bank() then reports 1, through banked_call() too. Masking rather than rejecting, because there is no error to return
-// and a branch would cost more than the AND that avoids it.
+// The contract is that such an id maps bank 0, and get_bank() reports 0.
+
+#define MAPPER_BANK_COUNT 1
 
 #include <mapper.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
 
-MAPPER_BANK_COUNT(1);
-
 // Past the boot code, so bank 0 can be written here too.
 #define WINDOW (*(volatile uint8_t *)0x3000)
-
-static volatile uint8_t seen;
-CODE_BANK(1) static void report(void) { seen = get_bank(); }
 
 int main(void) {
   set_bank(1);
@@ -29,16 +24,19 @@ int main(void) {
   set_bank(0);
   WINDOW = 0x00;
 
-  set_bank(0x11);
-  xemu_assert(WINDOW == 0x5a);
-  xemu_assert(get_bank() == 1);
-
-  set_bank(0);
+  // Just past the count, then far past it, each from bank 1.
+  set_bank(1);
+  set_bank(2);
   xemu_assert(WINDOW == 0x00);
-
-  banked_call(0x11, report);
-  xemu_assert(seen == 1);
   xemu_assert(get_bank() == 0);
 
+  set_bank(1);
+  set_bank(0xff);
+  xemu_assert(WINDOW == 0x00);
+  xemu_assert(get_bank() == 0);
+
+  set_bank(1);
+  xemu_assert(WINDOW == 0x5a);
+  set_bank(0);
   xemu_exit(0);
 }

@@ -18,13 +18,13 @@
 // The CRT bank loader (.init.250) loads BANK1-BANK3 from the D81 disk
 // into physical RAM at startup. Build produces both a PRG and a D81.
 
+// Only banks 1-3 are used; the rest are left out of the image.
+#define MAPPER_BANK_COUNT 3
+
 #include <array>
 #include <cstdint>
 #include <mapper.h>
 #include <mega65.h>
-
-// Only banks 1-3 are used; the rest are left out of the image.
-MAPPER_BANK_COUNT(3);
 
 // ---------------------------------------------------------------------------
 // Shared state — lives in fixed region, accessible from all banks.

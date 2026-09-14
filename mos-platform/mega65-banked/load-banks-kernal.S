@@ -20,43 +20,72 @@ VIC3_ROMC = $20
 
 .weak __load_banks
 __load_banks:
-    ldx #0
+    ldx #1
 .Lnext:
     phx
     jsr load_bank
     plx
     inx
-    cpx #15
+    cpx #32
     bne .Lnext
     rts
 
-; Loads bank X+1 if the link put anything in it. Clobbers A, X, Y and flags;
+; Loads bank X if the link put anything in it. Clobbers A, X, Y and flags;
 ; leaves the Z register 0.
 load_bank:
-    lda __bank_used,x
+    ; __bank_used holds bank X at bit X % 8 of byte X / 8.
+    txa
+    and #7
+    tay
+    lda #1
+    cpy #0
+    beq .Lmask
+.Lshift:
+    asl a
+    dey
+    bne .Lshift
+.Lmask:
+    pha
+    txa
+    lsr a
+    lsr a
+    lsr a
+    tay
+    pla
+    and __bank_used,y
     beq .Lskip
     phx
-    ; The tables are indexed by bank, one past the loop's index.
-    lda __bank_addr_page+1,x
+
+    ; BANK1-BANKF, then BANK10-BANK1F, in PETSCII.
+    ldy #4
+    txa
+    cmp #16
+    bcc .Ldigit
+    lda #$31                    ; '1'
+    sta name_buf,y
+    iny
+    txa
+    and #15
+.Ldigit:
+    cmp #10
+    bcc .Ldecimal
+    adc #6                      ; carry set from cmp; +7 skips ':'-'@'
+.Ldecimal:
+    adc #$30                    ; carry clear
+    sta name_buf,y
+    iny
+    sty name_len
+
+    lda __bank_addr_page,x
     pha
-    ldy __bank_addr_mid+1,x     ; SETBNK 28-bit form: Y = address[23:16],
-    lda __bank_megabyte+1,x
+    ldy __bank_addr_mid,x       ; SETBNK 28-bit form: Y = address[23:16],
+    lda __bank_megabyte,x
     lsr a
     lsr a
     lsr a
     lsr a
     ora #$80                    ; A = $80 | address[27:24]
     pha
-
-    ; BANK1-BANK9, then BANKA-BANKF.
-    txa
-    clc
-    adc #$31                    ; PETSCII '1' + index
-    cpx #9
-    bcc .Lname_ok
-    adc #6                      ; carry set from cpx; +7 skips ':'-'@'
-.Lname_ok:
-    sta name_buf+4
 
     lda #VIC3_ROMC
     tsb VIC_CTRLA
@@ -76,7 +105,7 @@ load_bank:
     ldx #8                      ; device
     jsr SETLFS
 
-    lda #5
+    lda name_len
     ldx #<name_buf
     ldy #>name_buf
     jsr SETNAM
@@ -117,16 +146,15 @@ load_bank:
     trb VIC_CTRLA
 
     plp
-    pla                         ; loop index; leaves C alone
+    pla                         ; A = bank number; leaves C alone
     bcs .Lfail
 .Lskip:
     rts
 .Lfail:
-    tax
-    inx
-    txa                         ; A = bank number
     jmp __bank_load_failed
 
 ; PETSCII as d81.py writes names: $41-$5A, not the shifted $C1-$DA.
 name_buf:
-    .byte $42, $41, $4E, $4B, $31
+    .byte $42, $41, $4E, $4B, 0, 0
+name_len:
+    .byte 0

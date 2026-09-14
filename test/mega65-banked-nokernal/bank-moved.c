@@ -2,12 +2,11 @@
 // loader and the bank switch both read the tables this layout emits.
 
 #define MAPPER_BANK_2 0x8012000
+#define MAPPER_BANK_COUNT 2
 
 #include <mapper.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(2);
 
 RODATA_BANK(2) static const uint8_t payload[] = {0xb2, 0x02};
 

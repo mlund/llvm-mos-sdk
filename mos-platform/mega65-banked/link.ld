@@ -15,12 +15,12 @@
  * All non-annotated code and data goes into ram_fixed ($8000-$CFFF).
  * Functions placed in .bank_N sections are called via banked_call().
  *
- * Physical memory (ROM at $20000-$3FFFF must be skipped; banks 3-15 sit
+ * Physical memory (ROM at $20000-$3FFFF must be skipped; banks 3-31 sit
  * +$800 into a 64KB page so KERNAL LOAD never sees a zero high byte):
  *   Chip RAM:   Bank 0: $02000  Bank 1: $12000  Bank 2: $18000
  *               Bank 3: $40800  Bank 4: $46800  Bank 5: $4C800
  *               Bank 6: $52800  Bank 7: $58800
- *   Attic RAM:  Bank 8: $8000800 ... Bank 15: $8036800 (HyperRAM, ~10x slower)
+ *   Attic RAM:  Bank 8: $8000800 ... Bank 31: $80B6800 (HyperRAM, ~10x slower)
  *
  * Banks 1-2 start at $12000, clear of both ram_fixed and the C65 DOS
  * work area ($10000-$11FFF), which CBDOS claims whenever it runs. Bank 2
@@ -137,4 +137,20 @@ OUTPUT_FORMAT {
     FULL(bank_13)
     FULL(bank_14)
     FULL(bank_15)
+    FULL(bank_16)
+    FULL(bank_17)
+    FULL(bank_18)
+    FULL(bank_19)
+    FULL(bank_20)
+    FULL(bank_21)
+    FULL(bank_22)
+    FULL(bank_23)
+    FULL(bank_24)
+    FULL(bank_25)
+    FULL(bank_26)
+    FULL(bank_27)
+    FULL(bank_28)
+    FULL(bank_29)
+    FULL(bank_30)
+    FULL(bank_31)
 }

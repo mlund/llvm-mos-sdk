@@ -1,11 +1,11 @@
 // The whole 24 KB window follows the bank, including its last byte -- an
 // offset that is right at $2000 and wrong higher up would otherwise pass.
 
+#define MAPPER_BANK_COUNT 3
+
 #include <mapper.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(3);
 
 // The first is where the boot code sits in bank 0, so it is only ever written
 // with a bank mapped.

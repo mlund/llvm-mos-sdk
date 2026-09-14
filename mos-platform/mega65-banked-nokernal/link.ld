@@ -22,7 +22,7 @@
  *   0: $02000    1: $12000    2: $18000
  *   3: $20000    4: $26000    5: $2C000    6: $32000    7: $38000
  *   8: $40000    9: $46000   10: $4C000   11: $52000   12: $58000
- *   13: $8000000  14: $8006000  15: $800C000  (attic, ~10x slower)
+ *   13-31: $8000000 ... $806C000, $6000 apart  (attic, ~10x slower)
  *
  * Banks 1-2 sit above the C65 DOS work area ($10000-$11FFF) and end at
  * $1DFFF, below the colour RAM window at $1F800.
@@ -113,4 +113,20 @@ OUTPUT_FORMAT {
     FULL(bank_13)
     FULL(bank_14)
     FULL(bank_15)
+    FULL(bank_16)
+    FULL(bank_17)
+    FULL(bank_18)
+    FULL(bank_19)
+    FULL(bank_20)
+    FULL(bank_21)
+    FULL(bank_22)
+    FULL(bank_23)
+    FULL(bank_24)
+    FULL(bank_25)
+    FULL(bank_26)
+    FULL(bank_27)
+    FULL(bank_28)
+    FULL(bank_29)
+    FULL(bank_30)
+    FULL(bank_31)
 }

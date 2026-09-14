@@ -13,11 +13,11 @@
 // Exit codes (via xemu $D6CF protocol):
 //   0 = ran to completion; the dump says which banks answered
 
+#define MAPPER_BANK_COUNT 15
+
 #include <mapper.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(15);
 
 #define PROBE ((volatile uint8_t *)0xC000)
 

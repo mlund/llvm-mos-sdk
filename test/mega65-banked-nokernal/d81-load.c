@@ -3,13 +3,12 @@
 // 700 bytes of i % 251.
 
 #define MAPPER_LOADER_FLOPPY
+#define MAPPER_BANK_COUNT 13  // the banks it reads back through
 
 #include <mapper.h>
 #include <mega65.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(0);
 
 static void check_pattern(uint8_t bank, uint16_t offset) {
   const volatile uint8_t *p = (const volatile uint8_t *)(0x2000 + offset);

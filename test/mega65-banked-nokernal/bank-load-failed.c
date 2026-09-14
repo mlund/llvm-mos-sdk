@@ -6,12 +6,12 @@
 // The card directory is built from the link and BANK2.BIN then removed, so the
 // image still says bank 2 holds something while the card does not.
 
+#define MAPPER_BANK_COUNT 2
+
 #include <mapper.h>
 #include <mega65.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(2);
 
 #define MISSING_BANK 2
 

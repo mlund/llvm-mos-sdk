@@ -39,15 +39,18 @@ def check(prg):
     found = bank_image.layouts(elf)
     if len(found) != 1:
         return [f"{prg}: {len(found)} distinct layouts recorded, expected 1"]
-    bases, sizes = bank_image.split_layout(next(iter(found)))
-    problems = [f"{prg}: {p}" for p in bank_image.layout_problems(bases, sizes)]
+    record = next(iter(found))
+    bases, sizes = bank_image.split_layout(record)
+    count = bank_image.layout_count(record)
+    problems = [f"{prg}: {p}" for p in bank_image.layout_problems(bases, sizes, count)]
     addr = {name: value for name, (value, _) in bank_image.symbol_table(elf).items()}
     for name, want in expected(bases, sizes).items():
+        want = want[: count + 1]
         if name not in addr:
             problems.append(f"{prg}: {name} not linked")
             continue
         start = 2 + addr[name] - load
-        got = list(image[start : start + 16])
+        got = list(image[start : start + count + 1])
         if got != want:
             problems.append(f"{prg}: {name} is {bytes(got).hex(' ')}, expected {bytes(want).hex(' ')}")
     return problems

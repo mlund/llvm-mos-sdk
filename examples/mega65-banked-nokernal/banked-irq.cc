@@ -11,11 +11,11 @@
 // which, so reaching into $2000-$7FFF from it would read whatever happened to
 // be there.
 
+#define MAPPER_BANK_COUNT 1
+
 #include <cstdint>
 #include <mapper.h>
 #include <mega65.h>
-
-MAPPER_BANK_COUNT(1);
 
 #define IRQ_VECTOR (*(volatile uint16_t *)0xfffe)
 

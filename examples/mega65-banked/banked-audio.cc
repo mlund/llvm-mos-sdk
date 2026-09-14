@@ -18,11 +18,11 @@
 // Attic RAM cannot serve this. Audio DMA cannot reach banks 8-15 however much
 // room they have, so a sample belongs in a chip RAM bank.
 
+#define MAPPER_BANK_COUNT 2
+
 #include <mapper.h>
 #include <mega65.h>
 #include <stdint.h>
-
-MAPPER_BANK_COUNT(2);
 
 typedef unsigned _BitInt(24) uint24_t;
 

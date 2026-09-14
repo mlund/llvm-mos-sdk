@@ -7,12 +7,11 @@
 // writes FLOPPY-COLORS.D81 beside FLOPPY-COLORS.PRG; mount it as drive 8.
 
 #define MAPPER_LOADER_FLOPPY
+#define MAPPER_BANK_COUNT 2
 
 #include <cstdint>
 #include <mapper.h>
 #include <mega65.h>
-
-MAPPER_BANK_COUNT(2);
 
 CODE_BANK(1) void set_red_border() { VICIV.bordercol = COLOR_RED; }
 

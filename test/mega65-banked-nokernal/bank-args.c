@@ -4,11 +4,11 @@
 // only exists in bank 1, so neither the call nor the bank switch can be folded
 // away -- a constant-folded answer would pass without either happening.
 
+#define MAPPER_BANK_COUNT 2
+
 #include <mapper.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(2);
 
 static volatile uint8_t arg_index = 2;
 static volatile int arg_bias = 100;

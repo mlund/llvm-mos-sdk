@@ -1,11 +1,11 @@
 // Switching banks leaves the caller's interrupt state alone. The erratum
 // this pins down is written up in mega65-common/mapper.s.
 
+#define MAPPER_BANK_COUNT 1
+
 #include <mapper.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(1);
 
 #define FLAG_I 0x04
 

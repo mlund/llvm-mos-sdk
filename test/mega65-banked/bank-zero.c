@@ -1,13 +1,13 @@
 // banked_call(0, ...) reaches .bank_0 content, which this platform keeps in the
 // fixed region.
 //
-// MAPPER_BANK_COUNT(0) reserves no slots, which is the low end of the range.
+// MAPPER_BANK_COUNT 0 reserves no slots, which is the low end of the range.
+
+#define MAPPER_BANK_COUNT 0
 
 #include <mapper.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(0);
 
 static volatile uint8_t idx;
 static volatile uint8_t seen;

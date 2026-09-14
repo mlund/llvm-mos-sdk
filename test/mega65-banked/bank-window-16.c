@@ -2,12 +2,11 @@
 // $6000-$7FFF, outside every mapped bank.
 
 #define MAPPER_WINDOW_KB 16
+#define MAPPER_BANK_COUNT 1
 
 #include <mapper.h>
 #include <stdint.h>
 #include "../mega65-common/xemu-test.h"
-
-MAPPER_BANK_COUNT(1);
 
 extern const char __bank_window_size[];
 extern const char __stack[];

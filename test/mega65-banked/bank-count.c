@@ -1,4 +1,4 @@
-// A program that declares one bank must not pay for fifteen.
+// A program that declares one bank must not pay for thirty-one.
 //
 // Each bank is a MEMORY region emitted by OUTPUT_FORMAT whether or not
 // anything was linked into it, so with every region declared unconditionally
@@ -8,10 +8,10 @@
 // Every other banked target in the SDK gates each region's LENGTH on a size
 // symbol so unused banks collapse to nothing; this asks for the same here.
 
+#define MAPPER_BANK_COUNT 1
+
 #include <mapper.h>
 #include <stdint.h>
-
-MAPPER_BANK_COUNT(1);
 
 __attribute__((used, retain, section(".bank_1")))
 const uint8_t bank_1_payload[16] = {0xB1};
