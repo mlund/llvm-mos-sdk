@@ -49,8 +49,9 @@ banked_call_v(1, draw, x, y);
 ```
 
 The `_r` and `_v` forms switch the bank around a direct call, marshalling the
-real signature. The caller must be in the fixed region, or the switch would
-unmap it (link fails). Up to eight arguments are evaluated before the switch.
+real signature. The switch is inline, so the caller must be in the fixed region:
+from a bank it would unmap the caller mid-call, and the link fails. Up to eight
+arguments are evaluated before the switch.
 
 ### Rules
 
@@ -63,8 +64,10 @@ long-lived belongs in the fixed region.
 **Everything not given a bank goes in the fixed region** — code, string
 literals, static variables. This is the usual limit a program hits first.
 
-**A bank may call another bank.** `banked_call` is in the fixed region, so the
-caller's bank is back before control returns to it.
+**A bank may call another bank**, through `banked_call`: the trampoline sits in
+the fixed region, so it keeps running across the switch and the caller's bank is
+back before control returns. `banked_call_r`/`_v` put the switch in the caller's
+own code, so only fixed code may use them.
 
 **Do not pass `-T`.** A supplementary linker script suppresses the platform's
 `OUTPUT_FORMAT`, producing an ELF instead of the flat image the converter
