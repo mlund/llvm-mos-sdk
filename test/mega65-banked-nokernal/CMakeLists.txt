@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 
-project(test-mega65-banked-nokernal LANGUAGES C)
+project(test-mega65-banked-nokernal LANGUAGES C CXX)
 
 include(../test.cmake)
 
@@ -20,7 +20,12 @@ function(add_mega65_banked_nokernal_test name)
     message(STATUS "python3 not found, skipping banked-nokernal test: test-${name}")
     return()
   endif()
-  add_executable(${name}.prg ${name}.c)
+  # A .cc test where one exists: argument binding differs in C++.
+  set(source ${name}.c)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${name}.cc)
+    set(source ${name}.cc)
+  endif()
+  add_executable(${name}.prg ${source})
   add_custom_command(TARGET ${name}.prg POST_BUILD
     COMMAND ${PYTHON3_COMMAND} ${PRG_TO_MEGA65_SCRIPT}
       $<TARGET_FILE:${name}.prg>
@@ -90,6 +95,7 @@ add_mega65_banked_nokernal_test(bank-adjacency)
 add_mega65_banked_nokernal_test(bank-zero)
 add_mega65_banked_nokernal_test(bank-call)
 add_mega65_banked_nokernal_test(bank-args)
+add_mega65_banked_nokernal_test(bank-ref-arg)
 add_mega65_banked_nokernal_test(bank-nested)
 add_mega65_banked_nokernal_test(bank-to-bank)
 add_mega65_banked_nokernal_test(bank-range)

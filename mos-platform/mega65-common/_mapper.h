@@ -154,27 +154,57 @@ extern const uint8_t __bank_addr_page[];
  * So the caller must be in the fixed region; from a bank the switch would unmap
  * it mid-call, and the link fails. Bank callers want banked_call(). Up to eight
  * arguments are evaluated before the switch, so they may read the bank mapped
- * at the call.
+ * at the call. Each argument binds as the callee's own parameter type, so a
+ * reference parameter reaches the caller's object rather than a temporary; in
+ * C++ that means the callee must name one function, not an overload set.
  */
 #define _BANKED_NARGS(...)                                                     \
   _BANKED_NARGS_(__VA_OPT__(, ) __VA_ARGS__, 8, 7, 6, 5, 4, 3, 2, 1, 0)
 #define _BANKED_NARGS_(z, a, b, c, d, e, f, g, h, n, ...) n
 #define _BANKED_CAT(a, b) _BANKED_CAT_(a, b)
 #define _BANKED_CAT_(a, b) a##b
-#define _BANKED_T0()
-#define _BANKED_T1(a) _BANKED_T0() __auto_type __banked_a1 = (a);
-#define _BANKED_T2(a, b) _BANKED_T1(a) __auto_type __banked_a2 = (b);
-#define _BANKED_T3(a, b, c) _BANKED_T2(a, b) __auto_type __banked_a3 = (c);
-#define _BANKED_T4(a, b, c, d)                                                 \
-  _BANKED_T3(a, b, c) __auto_type __banked_a4 = (d);
-#define _BANKED_T5(a, b, c, d, e)                                              \
-  _BANKED_T4(a, b, c, d) __auto_type __banked_a5 = (e);
-#define _BANKED_T6(a, b, c, d, e, f)                                           \
-  _BANKED_T5(a, b, c, d, e) __auto_type __banked_a6 = (f);
-#define _BANKED_T7(a, b, c, d, e, f, g)                                        \
-  _BANKED_T6(a, b, c, d, e, f) __auto_type __banked_a7 = (g);
-#define _BANKED_T8(a, b, c, d, e, f, g, h)                                     \
-  _BANKED_T7(a, b, c, d, e, f, g) __auto_type __banked_a8 = (h);
+#ifdef __cplusplus
+extern "C++" {
+/* The callee's own parameter type, so each argument binds the way the callee
+ * takes it: a value is copied before the switch, a reference binds and the
+ * callee reaches the caller's object rather than a temporary. */
+template <unsigned _I, class _F> struct __banked_param;
+template <unsigned _I, class _R, class... _A>
+struct __banked_param<_I, _R(_A...)> {
+  using type = __type_pack_element<_I, _A...>;
+};
+template <unsigned _I, class _R, class... _A>
+struct __banked_param<_I, _R (*)(_A...)> : __banked_param<_I, _R(_A...)> {};
+#if __cpp_noexcept_function_type
+template <unsigned _I, class _R, class... _A>
+struct __banked_param<_I, _R(_A...) noexcept> : __banked_param<_I, _R(_A...)> {
+};
+template <unsigned _I, class _R, class... _A>
+struct __banked_param<_I, _R (*)(_A...) noexcept>
+    : __banked_param<_I, _R(_A...)> {};
+#endif
+}
+#define _BANKED_BIND(fn, i) typename __banked_param<i, decltype(fn)>::type
+#else
+/* C has no reference parameters, so a copy is always what the callee takes. */
+#define _BANKED_BIND(fn, i) __auto_type
+#endif
+#define _BANKED_T0(fn)
+#define _BANKED_T1(fn, a) _BANKED_T0(fn) _BANKED_BIND(fn, 0) __banked_a1 = (a);
+#define _BANKED_T2(fn, a, b)                                                   \
+  _BANKED_T1(fn, a) _BANKED_BIND(fn, 1) __banked_a2 = (b);
+#define _BANKED_T3(fn, a, b, c)                                                \
+  _BANKED_T2(fn, a, b) _BANKED_BIND(fn, 2) __banked_a3 = (c);
+#define _BANKED_T4(fn, a, b, c, d)                                             \
+  _BANKED_T3(fn, a, b, c) _BANKED_BIND(fn, 3) __banked_a4 = (d);
+#define _BANKED_T5(fn, a, b, c, d, e)                                          \
+  _BANKED_T4(fn, a, b, c, d) _BANKED_BIND(fn, 4) __banked_a5 = (e);
+#define _BANKED_T6(fn, a, b, c, d, e, f)                                       \
+  _BANKED_T5(fn, a, b, c, d, e) _BANKED_BIND(fn, 5) __banked_a6 = (f);
+#define _BANKED_T7(fn, a, b, c, d, e, f, g)                                    \
+  _BANKED_T6(fn, a, b, c, d, e, f) _BANKED_BIND(fn, 6) __banked_a7 = (g);
+#define _BANKED_T8(fn, a, b, c, d, e, f, g, h)                                 \
+  _BANKED_T7(fn, a, b, c, d, e, f, g) _BANKED_BIND(fn, 7) __banked_a8 = (h);
 #define _BANKED_A0()
 #define _BANKED_A1(a) __banked_a1
 #define _BANKED_A2(a, b) _BANKED_A1(a), __banked_a2
@@ -186,14 +216,15 @@ extern const uint8_t __bank_addr_page[];
   _BANKED_A6(a, b, c, d, e, f), __banked_a7
 #define _BANKED_A8(a, b, c, d, e, f, g, h)                                     \
   _BANKED_A7(a, b, c, d, e, f, g), __banked_a8
-#define _BANKED_TEMPS(...)                                                     \
-  _BANKED_CAT(_BANKED_T, _BANKED_NARGS(__VA_ARGS__))(__VA_ARGS__)
+#define _BANKED_TEMPS(fn, ...)                                                 \
+  _BANKED_CAT(_BANKED_T, _BANKED_NARGS(__VA_ARGS__))                           \
+  (fn __VA_OPT__(, ) __VA_ARGS__)
 #define _BANKED_ARGS(...)                                                      \
   _BANKED_CAT(_BANKED_A, _BANKED_NARGS(__VA_ARGS__))(__VA_ARGS__)
 
 #define banked_call_r(bank, fn, ...)                                           \
   ({                                                                           \
-    _BANKED_TEMPS(__VA_ARGS__)                                                 \
+    _BANKED_TEMPS(fn __VA_OPT__(, ) __VA_ARGS__)                               \
     uint8_t __banked_prev = __banked_call_enter(bank);                         \
     __auto_type __banked_result = (fn)(_BANKED_ARGS(__VA_ARGS__));             \
     set_bank(__banked_prev);                                                   \
@@ -202,7 +233,7 @@ extern const uint8_t __bank_addr_page[];
 
 #define banked_call_v(bank, fn, ...)                                           \
   ({                                                                           \
-    _BANKED_TEMPS(__VA_ARGS__)                                                 \
+    _BANKED_TEMPS(fn __VA_OPT__(, ) __VA_ARGS__)                               \
     uint8_t __banked_prev = __banked_call_enter(bank);                         \
     (fn)(_BANKED_ARGS(__VA_ARGS__));                                           \
     set_bank(__banked_prev);                                                   \

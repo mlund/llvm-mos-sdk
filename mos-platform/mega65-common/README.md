@@ -51,7 +51,10 @@ banked_call_v(1, draw, x, y);
 The `_r` and `_v` forms switch the bank around a direct call, marshalling the
 real signature. The switch is inline, so the caller must be in the fixed region:
 from a bank it would unmap the caller mid-call, and the link fails. Up to eight
-arguments are evaluated before the switch.
+arguments are evaluated before the switch, each bound as the callee's own
+parameter type, so a reference parameter reaches the caller's object rather than
+a temporary. In C++ the callee must therefore name one function, not an overload
+set.
 
 ### Rules
 
